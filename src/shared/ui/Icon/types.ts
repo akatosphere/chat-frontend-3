@@ -1,0 +1,45 @@
+export type IconName =
+	| 'logo'
+	| 'info'
+	| 'back'
+	| 'forward'
+	| 'chat'
+	| 'close'
+	| 'paperclip'
+	| 'trash'
+	| 'contacts'
+	| 'settings'
+	| 'aservice'
+	| 'check'
+	| 'doubleCheck'
+	| 'volumeOff'
+	| 'volumeOn'
+	| 'microphone'
+	| 'copyMessage'
+	| 'send'
+	| 'phone'
+	| 'search'
+	| 'download'
+	| 'checkCircle'
+	| 'reply'
+	| 'edit'
+	| 'blackList'
+	| 'support'
+	| 'logout'
+	| 'down'
+	| 'arrowLeft'
+	| 'up'
+	| 'clear'
+	| 'videoCall'
+	| 'block'
+	| 'createNew'
+	| 'addContacts'
+	| 'pushPin'
+	| 'messageRead'
+	| 'unReadMessage';
+
+export interface IconProps extends React.SVGProps<SVGSVGElement> {
+	name: IconName;
+	color?: string;
+	size?: number | string;
+}

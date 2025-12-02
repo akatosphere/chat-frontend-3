@@ -1,0 +1,17 @@
+const DoubleCheckIcon: React.FC<React.SVGProps<SVGSVGElement>> = props => {
+	return (
+		<svg
+			viewBox='0 0 18 18'
+			fill='none'
+			xmlns='http://www.w3.org/2000/svg'
+			{...props}
+		>
+			<path
+				d='M13.6181 4.90021L12.5265 3.80859L7.61806 8.71698L8.70968 9.80859L13.6181 4.90021ZM16.9006 3.80859L8.70968 11.9996L5.47355 8.77117L4.38194 9.86279L8.70968 14.1905L18 4.90021L16.9006 3.80859ZM0 9.86279L4.32774 14.1905L5.41935 13.0989L1.09935 8.77117L0 9.86279Z'
+				fill='currentColor'
+			/>
+		</svg>
+	);
+};
+
+export default DoubleCheckIcon;

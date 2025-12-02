@@ -1,0 +1,21 @@
+const ForwardIcon: React.FC<React.SVGProps<SVGSVGElement>> = props => {
+	return (
+		<svg
+			width='7'
+			height='12'
+			viewBox='0 0 7 12'
+			fill='none'
+			xmlns='http://www.w3.org/2000/svg'
+			{...props}
+		>
+			<path
+				fillRule='evenodd'
+				clipRule='evenodd'
+				d='M0.292893 0.292893C-0.0976311 0.683417 -0.0976311 1.31658 0.292893 1.70711L4.58579 6L0.292893 10.2929C-0.0976311 10.6834 -0.0976311 11.3166 0.292893 11.7071C0.683417 12.0976 1.31658 12.0976 1.70711 11.7071L6.70711 6.70711C7.09763 6.31658 7.09763 5.68342 6.70711 5.29289L1.70711 0.292893C1.31658 -0.0976311 0.683417 -0.0976311 0.292893 0.292893Z'
+				fill='currentColor'
+			/>
+		</svg>
+	);
+};
+
+export default ForwardIcon;
