@@ -6,13 +6,10 @@
 }
 
 .label {
-	font-size: 14px;
-	font-weight: 500;
 	color: #333;
 
-	.required {
-		color: #e53e3e;
-		margin-left: 2px;
+	&.hasError {
+		color: #f00;
 	}
 }
 

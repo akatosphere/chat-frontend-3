@@ -1,5 +1,6 @@
+'use client';
 import React, { useRef, forwardRef, useImperativeHandle } from 'react';
-import styles from './CodeInput.module.scss';
+import styles from '@/shared/ui/CodeInput/CodeInput.module.scss';
 import clsx from 'clsx';
 
 interface CodeInputProps {
@@ -17,7 +18,10 @@ export const CodeInput = forwardRef<HTMLInputElement, CodeInputProps>(
 		useImperativeHandle(ref, () => localInputRef.current as HTMLInputElement);
 
 		const handleClick = () => {
-			localInputRef.current?.focus();
+			if (localInputRef.current) {
+				localInputRef.current.focus();
+				localInputRef.current.setSelectionRange(value.length, value.length);
+			}
 		};
 
 		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

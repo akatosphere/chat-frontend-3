@@ -6,7 +6,7 @@ import {
 	FieldErrors,
 	FieldValues
 } from 'react-hook-form';
-import { Input, InputProps } from '../Input/Input';
+import { Input, InputProps } from '@/shared/ui/Input/Input';
 
 interface FormInputProps<TFormValues extends FieldValues> extends Omit<
 	InputProps,
