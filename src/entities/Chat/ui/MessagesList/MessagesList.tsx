@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useRef, useState } from 'react';
 
-import { useGetMessagesQuery } from '@/shared/api/services/messagesApi/messagesApi';
+import { useGetMessagesForMessageListQuery } from '@/shared/api/services/messagesApi/messagesApi';
 
 import { MessageBubble } from '@/entities/Chat/ui/MessageBubble/MessageBubble';
 import { Down } from '@icons/index';
@@ -53,7 +53,7 @@ const MessagesListComponent = ({ userUid, className }: MessagesProps) => {
 	// ===== ПОЛУЧЕНИЕ ДАННЫХ =====
 
 	// хук для получения сообщений через api
-	const { data, error, isLoading, refetch } = useGetMessagesQuery(
+	const { data, error, isLoading, refetch } = useGetMessagesForMessageListQuery(
 		{ userUid },
 		{
 			// обновление каждые 4 секунды, если есть userUid

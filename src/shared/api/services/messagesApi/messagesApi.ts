@@ -18,7 +18,10 @@ interface GetMessagesResponse {
 
 export const messagesApi = rtkApi.injectEndpoints({
 	endpoints: builder => ({
-		getMessages: builder.query<GetMessagesResponse, { userUid: string }>({
+		getMessagesForMessageList: builder.query<
+			GetMessagesResponse,
+			{ userUid: string }
+		>({
 			query: ({ userUid }) => ({
 				url: `/chat/message/text/${userUid}/`,
 				method: 'GET',
@@ -29,7 +32,7 @@ export const messagesApi = rtkApi.injectEndpoints({
 			providesTags: ['Messages']
 		})
 	}),
-	overrideExisting: true
+	overrideExisting: false
 });
 
-export const { useGetMessagesQuery } = messagesApi;
+export const { useGetMessagesForMessageListQuery } = messagesApi;
