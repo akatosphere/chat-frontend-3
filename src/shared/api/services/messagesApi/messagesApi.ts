@@ -29,7 +29,7 @@ export const messagesApi = rtkApi.injectEndpoints({
 			providesTags: ['Messages']
 		})
 	}),
-	overrideExisting: false
+	overrideExisting: true
 });
 
 export const { useGetMessagesQuery } = messagesApi;

@@ -8,6 +8,7 @@ import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import { Text } from '@/shared/ui/Text';
 
 import cls from './Chats.module.scss';
+import { ProfileView } from '@/entities/Chat/ui/ProfileView/ProfileView';
 
 const ChatsPageComponent = () => {
 	const params = useParams();
@@ -49,6 +50,9 @@ const ChatsPageComponent = () => {
 						<Text>Выберите чат для начала общения</Text>
 					</div>
 				)}
+			</Container>
+			<Container type={ContainerType.SIDEBAR}>
+				<ProfileView />
 			</Container>
 		</Container>
 	);
