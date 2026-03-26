@@ -8,7 +8,7 @@ export interface SearchSectionData<T> {
 	items: T[];
 	type: 'local' | 'global';
 	isLoading?: boolean;
-	showHeader?: boolean; //  Флаг: показывать ли заголовок секции
+	showHeader?: boolean;
 }
 
 export function useHybridSearch<
@@ -156,9 +156,7 @@ export function useHybridSearch<
 		// Секция 2: Глобальный поиск
 		if (globalResults.length > 0) {
 			result.push({
-				title: isGlobal
-					? 'Пользователи А-Чата'
-					: 'Глобальный поиск: пользователи',
+				title: isGlobal ? 'Глобальный поиск' : 'Пользователи А-Чата',
 				items: globalResults,
 				type: 'global',
 				isLoading: isLoading && globalResults.length === 0,

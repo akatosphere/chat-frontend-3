@@ -22,14 +22,8 @@ import {
 import { ChatActionBar } from '../ChatActionBar/ChatActionBar';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import { Modal } from '@/shared/ui/Modal';
+
 import cls from './ChatHeader.module.scss';
-
-// Импортируем хук мутации (раскомментируй, когда API будет готов)
-
-// import {
-// 	useAddContactByPhoneMutation,
-// 	AddContactByPhoneRequest
-// } from '@/entities/Contacts/model';
 
 interface ChatHeaderProps {
 	userName?: string;
@@ -42,7 +36,6 @@ interface ChatHeaderProps {
 	onBlock?: () => void;
 	onBack?: () => void;
 	onActionBarVisibilityChange?: (isVisible: boolean) => void;
-	// Данные для API-запроса (передаём из ChatPage)
 	contactPhone?: string;
 	contactFirstName?: string;
 	contactLastName?: string;
@@ -53,16 +46,11 @@ export const ChatHeader = ({
 	userStatus = 'Статус неизвестен',
 	userAvatar,
 	isInContacts = false,
-	// isOnline,
 	onCall,
 	onAddToContacts,
 	onBlock,
 	onBack,
-	onActionBarVisibilityChange,
-	//  Деструктурируем данные контакта
-	contactPhone,
-	contactFirstName,
-	contactLastName
+	onActionBarVisibilityChange
 }: ChatHeaderProps) => {
 	const [isSearchVisible, setIsSearchVisible] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
@@ -76,16 +64,7 @@ export const ChatHeader = ({
 
 	const isActionBarVisible = !isInContacts && !manuallyClosedActionBar;
 
-	// =================================================================
-	// RTK Query мутация — РАСКОММЕНТИРУЙ, КОГДА API БУДЕТ ГОТОВ
-	// =================================================================
-	// const [addContact, { isLoading: isAddingContact, error: addContactError }] =
-	// 	useAddContactByPhoneMutation();
-
-	// MOCK: эмуляция загрузки для демонстрации
 	const isAddingContact = false;
-	const addContactError = null;
-	// =================================================================
 
 	useClickOutside(searchRef, () => {
 		if (isSearchVisible) {
@@ -101,7 +80,6 @@ export const ChatHeader = ({
 		}
 	}, [isSearchVisible]);
 
-	//  Автозакрытие модалки успеха
 	useEffect(() => {
 		if (isSuccessModalOpen) {
 			const timer = setTimeout(() => {
@@ -128,77 +106,11 @@ export const ChatHeader = ({
 		}
 	}, []);
 
-	// =================================================================
-	//  ОБРАБОТЧИК ДОБАВЛЕНИЯ В КОНТАКТЫ — С REAL API (закомментировано)
-	// =================================================================
 	const handleAddToContacts = useCallback(async () => {
-		//  Вариант 1: MOCK (сейчас активен) — просто показываем модалку
 		onAddToContacts?.();
 		setManuallyClosedActionBar(true);
 		setIsSuccessModalOpen(true);
-
-		// =================================================================
-		//  Вариант 2: REAL API — РАСКОММЕНТИРУЙ, КОГДА БЭКЕНД ГОТОВ
-		// ================================================================
-		/*
-		if (!contactPhone || !contactFirstName || !contactLastName) {
-			console.error('❌ Недостаточно данных для добавления контакта');
-			return;
-		}
-
-		const payload: AddContactByPhoneRequest = {
-			phone: contactPhone,
-			first_name: contactFirstName,
-			last_name: contactLastName,
-		};
-
-		try {
-			await addContact(payload).unwrap();
-			setManuallyClosedActionBar(true);
-			setIsSuccessModalOpen(true);
-
-			onAddToContacts?.();
-			
-		} catch (err: unknown) {
-		
-			if (err && typeof err === 'object' && 'status' in err) {
-				const rtkErr = err as { status: number; data?: unknown };
-				
-				switch (rtkErr.status) {
-					case 401:
-						console.error('🔐 Не авторизован — требуется вход');
-
-						break;
-					case 400: {
-						const validationErrors = rtkErr.data as Record<string, string[]>;
-						const firstError = Object.values(validationErrors || {})?.[0]?.[0];
-						console.error('❌ Ошибка валидации:', firstError);
-	
-						break;
-					}
-					case 409: {
-						console.log('ℹ️Контакт уже в списке');
-						setIsSuccessModalOpen(true); // Всё равно показываем успех
-						break;
-					}
-					default:
-						console.error('❌ Неизвестная ошибка:', rtkErr);
-				}
-			} else {
-				console.error('❓ Неожиданная ошибка:', err);
-			}
-		}
-		*/
-		// =================================================================
-	}, [
-		onAddToContacts,
-		// Раскомментировать зависимости, когда включишь API:
-		// addContact,
-		contactPhone,
-		contactFirstName,
-		contactLastName
-	]);
-	// =================================================================
+	}, [onAddToContacts]);
 
 	const handleBlock = useCallback(() => {
 		onBlock?.();

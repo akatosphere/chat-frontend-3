@@ -6,7 +6,7 @@
 	text-decoration: none;
 	color: inherit;
 	background: transparent;
-	border-radius: 6px;
+	border-radius: 8px;
 	border: none;
 	outline: none;
 	transition: background-color 0.2s ease;
@@ -23,23 +23,7 @@
 		box-shadow: none;
 	}
 
-	@media (hover: hover) {
-		&:hover {
-			background-color: var(--color-violet-100);
-		}
-	}
-
 	&.chatItemActive {
-		background-color: var(--color-violet-800);
-		color: var(--color-white);
-		opacity: 1;
-
-		@media (hover: hover) {
-			&:hover {
-				background-color: var(--color-violet-700);
-			}
-		}
-
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);
 			outline-offset: -2px;

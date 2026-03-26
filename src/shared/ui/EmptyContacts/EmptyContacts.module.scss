@@ -1,6 +1,7 @@
 @use '@/app/styles/mixins/mixin.scss' as *;
 
 .wrapper {
+	height: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;

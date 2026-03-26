@@ -1,4 +1,4 @@
-import { ContactsSchema } from '../types/contacts.types';
+import { ContactsSchema } from '../types/contacts.types/contacts.types';
 
 /**
  * Сортирует контакты по статусу онлайн/офлайн:

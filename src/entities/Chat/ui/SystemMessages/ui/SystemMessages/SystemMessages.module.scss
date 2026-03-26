@@ -1,0 +1,13 @@
+.systemMessage {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 8px 16px;
+	margin: 8px 0;
+}
+
+.messageWrapper {
+	background-color: var(--color-violet-800);
+	border-radius: 8px;
+	padding: 2px 8px;
+}

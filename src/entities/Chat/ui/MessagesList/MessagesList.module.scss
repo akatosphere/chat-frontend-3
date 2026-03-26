@@ -1,3 +1,43 @@
 .messages {
+	overflow-y: auto;
+	height: 100%;
 	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.wrapper {
+	position: relative;
+	height: 100%;
+}
+
+.emptyState {
+	height: 100%;
+	display: grid;
+	place-items: center;
+	color: #747474;
+}
+
+.scrollButton {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	width: 44px;
+	height: 44px;
+	display: grid;
+	place-items: center;
+	background-color: #fff;
+	border: 1px solid rgba(0, 0, 0, 30%);
+	border-radius: 99px;
+	cursor: pointer;
+
+	svg {
+		width: 12.7px;
+		height: 22.6px;
+	}
+
+	path {
+		fill: #7769e1;
+	}
 }

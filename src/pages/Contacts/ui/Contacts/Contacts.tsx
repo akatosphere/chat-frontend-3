@@ -6,7 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import { ContactsList } from '@/entities/Contacts';
 import { Text } from '@/shared/ui/Text';
-import { ChatView } from '@/widgets/ChatView';
+import { ChatView } from '@/entities/Chat';
+
 import cls from './Contacts.module.scss';
 
 const ContactsPageComponent = () => {

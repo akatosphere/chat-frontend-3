@@ -3,8 +3,8 @@
 import { memo, useMemo } from 'react';
 import Link from 'next/link';
 import { UserCard, UserCardType } from '@/shared/ui/UserCard';
-import type { Chat } from '../../model/types/chat.types';
-import { mapChatToUserCard } from '../../model/mapper/chatMapper';
+import type { Chat } from '../../model/types/chat.types/chat.types';
+import { mapChatToUserCard } from '../../model/mapper/mapChatType/chatMapper';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 
 import cls from './ChatListItem.module.scss';
@@ -50,7 +50,6 @@ export const ChatListItem = memo(({ chat, isActive }: ChatListItemProps) => {
 						userData={userCardData}
 						type={UserCardType.CHAT}
 						sendingMessage={false}
-						invertColors={isActive} //  Инвертируем при активном чате
 					/>
 				</div>
 			</div>

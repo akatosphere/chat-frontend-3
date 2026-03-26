@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { ChatListItem } from '../ChatListItem/ChatListItem';
-import { Chat } from '../../model/types/chat.types';
+import { Chat } from '../../model/types/chat.types/chat.types';
+
 import cls from './ChatListContent.module.scss';
 
 // Вспомогательный компонент для рендера элемента списка

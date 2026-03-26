@@ -24,7 +24,7 @@ interface UserCardProps {
 	className?: string;
 	userData?: IUserCard;
 	type: UserCardType;
-	invertColors?: boolean; // Новый проп для инверсии цветов
+	isActive?: boolean; // Новый проп для инверсии цветов
 	sendingMessage?: boolean;
 	onDelete?: () => void;
 }
@@ -73,7 +73,7 @@ export const UserCard = ({
 	className,
 	userData,
 	type,
-	invertColors = false,
+	isActive = false,
 	sendingMessage,
 	onDelete
 }: UserCardProps) => {
@@ -82,14 +82,19 @@ export const UserCard = ({
 	}
 
 	//  Определяем цвета в зависимости от режима
-	const nameColor = invertColors ? undefined : TextColor.BLACK;
-	const statusColor = invertColors ? undefined : TextColor.GRAY;
-	const phoneColor = invertColors ? undefined : TextColor.BLACK;
-	const lastMsgColor = invertColors ? undefined : TextColor.GRAY;
-	const nicknameColor = invertColors ? undefined : TextColor.BLACK;
+	const nameColor = isActive ? undefined : TextColor.BLACK;
+	const statusColor = isActive ? undefined : TextColor.GRAY;
+	const phoneColor = isActive ? undefined : TextColor.BLACK;
+	const lastMsgColor = isActive ? undefined : TextColor.GRAY;
+	const nicknameColor = isActive ? undefined : TextColor.BLACK;
 
 	return (
-		<div className={classNames(cls.userCard, {}, [className, cls[type]])}>
+		<div
+			className={classNames(cls.userCard, { [cls.isActive]: isActive }, [
+				className,
+				cls[type]
+			])}
+		>
 			<Avatar
 				className={cls.avatar}
 				alt={userData.user?.username}
@@ -103,7 +108,7 @@ export const UserCard = ({
 					<div className={cls.leftHeader}>
 						<Text
 							color={nameColor}
-							inheritColor={invertColors} //  Наследуем цвет при инверсии
+							inheritColor={isActive} //  Наследуем цвет при инверсии
 							fontSize={TextSize.L}
 							fontWeight={FontWeight.MEDIUM}
 							tag={TitleTag.H3}
@@ -129,7 +134,7 @@ export const UserCard = ({
 
 							<Text
 								color={statusColor}
-								inheritColor={invertColors}
+								inheritColor={isActive}
 								fontSize={TextSize.S}
 								fontWeight={FontWeight.REGULAR}
 								tag={TextTag.SPAN}
@@ -148,7 +153,7 @@ export const UserCard = ({
 						fontSize={TextSize.M}
 						fontWeight={FontWeight.REGULAR}
 						color={phoneColor}
-						inheritColor={invertColors}
+						inheritColor={isActive}
 					>
 						{userData.user?.phone}
 					</Text>
@@ -161,7 +166,7 @@ export const UserCard = ({
 							<Text
 								className={cls.lastMes}
 								color={lastMsgColor}
-								inheritColor={invertColors}
+								inheritColor={isActive}
 								fontSize={TextSize.S}
 								fontWeight={FontWeight.REGULAR}
 								textAlign={TextAlign.LEFT}
@@ -189,7 +194,7 @@ export const UserCard = ({
 						<LastSeen
 							wasOnlineAt={userData.user?.was_online_at || null}
 							isOnline={userData.user?.is_online || null}
-							invertColors={invertColors}
+							invertColors={isActive}
 						></LastSeen>
 					)}
 
@@ -200,7 +205,7 @@ export const UserCard = ({
 							fontSize={TextSize.M}
 							fontWeight={FontWeight.REGULAR}
 							color={nicknameColor}
-							inheritColor={invertColors}
+							inheritColor={isActive}
 						>
 							{userData.user?.nickname}
 						</Text>

@@ -10,6 +10,7 @@ import {
 import { Close } from '@icons/index';
 import { Text, TextSize, TextTag, TextType, TextColor } from '@/shared/ui/Text';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
+
 import cls from './ChatActionBar.module.scss';
 
 export interface ChatActionBarProps {

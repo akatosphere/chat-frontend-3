@@ -17,6 +17,7 @@ export enum TextTag {
 }
 
 export enum TextSize {
+	XS = 'var(--font-size-12)',
 	S = 'var(--font-size-14)',
 	M = 'var(--font-size-16)',
 	L = 'var(--font-size-18)',

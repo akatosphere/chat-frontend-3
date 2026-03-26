@@ -1,0 +1,19 @@
+.dateSeparator {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	padding: 8px 0;
+	margin: 16px 0;
+	pointer-events: none;
+	z-index: 10;
+
+	.separatorContent {
+		pointer-events: auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background-color: var(--color-violet-800);
+		border-radius: 8px;
+		padding: 2px 8px;
+	}
+}

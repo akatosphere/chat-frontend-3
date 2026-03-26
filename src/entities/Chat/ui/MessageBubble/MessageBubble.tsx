@@ -3,7 +3,7 @@ import { formatUnixToLocalTime } from '@/shared/lib/formatUnixToLocalTime/format
 import { FontWeight, Text, TextColor, TextSize } from '@/shared/ui/Text';
 import { MessageStatusNode } from './MessageStatusNode';
 import { classNames } from '@/shared/lib/classNames/classNames';
-import styles from './MessageBubble.scss';
+import styles from './MessageBubble.module.scss';
 
 interface MessageBubbleProps {
 	id: string;
