@@ -1,10 +1,12 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-	compiler: {
-		styledComponents: true
+	experimental: {
+		optimizePackageImports: ['lucide-react', '@public/assets/icons']
 	},
-
+	images: {
+		domains: ['api.test.chat.ktsf.ru']
+	},
 	turbopack: {
 		rules: {
 			'*.svg': {
@@ -12,53 +14,13 @@ const nextConfig: NextConfig = {
 					{
 						loader: '@svgr/webpack',
 						options: {
-							icon: true,
-							svgo: true,
-							svgoConfig: {
-								plugins: [
-									{
-										name: 'preset-default',
-										params: {
-											overrides: { removeViewBox: false }
-										}
-									}
-								]
-							}
+							icon: true
 						}
 					}
 				],
 				as: '*.js'
 			}
 		}
-	},
-	// тестовое
-	images: {
-		remotePatterns: [
-			{
-				protocol: 'https',
-				hostname: 'api.test.chat.ktsf.ru',
-				port: '',
-				pathname: '/media/**'
-			},
-			{
-				protocol: 'https',
-				hostname: 'interesnyefakty.org',
-				port: '',
-				pathname: '/wp-content/uploads/**'
-			}
-			// ← можно добавить другие хосты при необходимости
-		]
-	},
-	async headers() {
-		return [
-			{
-				source: '/api/proxy/:path*',
-				headers: [
-					{ key: 'Access-Control-Allow-Credentials', value: 'true' },
-					{ key: 'Access-Control-Allow-Origin', value: '*' } // В продакшене укажи конкретный домен
-				]
-			}
-		];
 	}
 };
 

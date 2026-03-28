@@ -1,6 +1,5 @@
 import { profileReducer } from '@/entities/Profile';
 import { authReducer } from '@/features/auth/model/slices/authSlice';
-import { citiesReducer } from '@/pages/Cities';
 import { localApi } from '@/shared/api/localApi';
 import { rtkApi } from '@/shared/api/rtkApi';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
@@ -32,8 +31,7 @@ const rootReducer = combineReducers({
 	[rtkApi.reducerPath]: rtkApi.reducer,
 	[localApi.reducerPath]: localApi.reducer,
 	auth: authReducer,
-	profile: profileReducer,
-	cities: citiesReducer
+	profile: profileReducer
 });
 
 const persistConfig: PersistConfig<StateSchema> = {

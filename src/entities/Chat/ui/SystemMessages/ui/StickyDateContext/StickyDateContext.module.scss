@@ -1,0 +1,28 @@
+.stickyDateProvider {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.scrollContainer {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	&::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--color-gray-500);
+		border-radius: 3px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}

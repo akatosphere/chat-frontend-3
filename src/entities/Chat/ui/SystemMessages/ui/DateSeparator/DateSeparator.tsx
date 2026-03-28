@@ -3,25 +3,33 @@
 import React, { forwardRef } from 'react';
 import { formatDateSeparator } from '@/entities/Chat/model/lib/service/dateFormating/dateFormater';
 import { Text, TextColor, TextSize, TextTag, TextType } from '@/shared/ui/Text';
-
 import cls from './DateSeparator.module.scss';
 
 interface DateSeparatorProps {
 	date: Date;
 	className?: string;
-	observerId?: string;
+	isHidden?: boolean;
 }
 
 const DateSeparator = forwardRef<HTMLDivElement, DateSeparatorProps>(
-	({ date, className = '', observerId }, ref) => {
+	({ date, className = '', isHidden = false }, ref) => {
 		const label = formatDateSeparator(date);
+
+		const hiddenStyles: React.CSSProperties = isHidden
+			? {
+					opacity: 0,
+					visibility: 'hidden',
+					pointerEvents: 'none'
+				}
+			: {};
 
 		return (
 			<div
 				ref={ref}
 				className={`${cls.dateSeparator} ${className}`}
-				data-observer-id={observerId}
 				data-date={date.toISOString()}
+				data-hidden={isHidden ? 'true' : undefined}
+				style={hiddenStyles}
 			>
 				<span className={cls.separatorContent}>
 					<Text
@@ -39,5 +47,4 @@ const DateSeparator = forwardRef<HTMLDivElement, DateSeparatorProps>(
 );
 
 DateSeparator.displayName = 'DateSeparator';
-
 export default DateSeparator;

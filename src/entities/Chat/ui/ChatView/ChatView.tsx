@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { ChatHeader, MessagesList } from '@/entities/Chat';
-import { MessageFormComponent } from '@/features/messageForm';
+
 import { useChatHeaderData } from '@/entities/Chat/model/lib/hooks/useChatHeaderData/useChatHeaderData';
 import {
 	selectChatByUid,
@@ -19,6 +19,7 @@ import { Chat, ChatMessage } from '../../model/types/chat.types/chat.types';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 import cls from './ChatView.module.scss';
+import { MessageFormComponent } from '../ChatBottom';
 
 interface ChatViewProps {
 	chatUid: string;
@@ -257,7 +258,7 @@ export const ChatView = ({
 
 			{hasMessages ? (
 				<>
-					<MessagesList userUid='user-me' className={messagesClass} />
+					<MessagesList userUid={chatUid} className={messagesClass} />
 					<MessageFormComponent />
 				</>
 			) : (

@@ -1,12 +1,13 @@
 'use client';
 
-import { memo, useMemo } from 'react';
-import Link from 'next/link';
-import { UserCard, UserCardType } from '@/shared/ui/UserCard';
-import type { Chat } from '../../model/types/chat.types/chat.types';
-import { mapChatToUserCard } from '../../model/mapper/mapChatType/chatMapper';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
+import { UserCard, UserCardType } from '@/shared/ui/UserCard';
+import Link from 'next/link';
+import { memo, useMemo } from 'react';
+import { mapChatToUserCard } from '../../model/mapper/mapChatType/chatMapper';
+import type { Chat } from '../../model/types/chat.types/chat.types';
 
+import { classNames } from '@/shared/lib/classNames/classNames';
 import cls from './ChatListItem.module.scss';
 
 export interface ChatListItemProps {
@@ -37,7 +38,7 @@ export const ChatListItem = memo(({ chat, isActive }: ChatListItemProps) => {
 	return (
 		<Link
 			href={`/chats/${uid}`}
-			className={`${cls.chatItem} ${isActive ? cls.chatItemActive : ''}`}
+			className={classNames(cls.chatItem, { [cls.chatItemActive]: isActive })}
 			aria-label={`Чат с ${chat.name}`}
 			scroll={false}
 			prefetch={!isMobile}
@@ -50,6 +51,7 @@ export const ChatListItem = memo(({ chat, isActive }: ChatListItemProps) => {
 						userData={userCardData}
 						type={UserCardType.CHAT}
 						sendingMessage={false}
+						isActive={isActive}
 					/>
 				</div>
 			</div>

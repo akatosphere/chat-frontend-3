@@ -1,0 +1,54 @@
+.KebabMenuList {
+	width: 220px;
+	border-radius: 8px;
+	background-color: var(--color-white);
+}
+
+.kebabMenuItem {
+	width: 100%;
+	height: 44px;
+	padding: 8px 12px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--color-gray-100);
+	transition: 0.2s ease box-shadow;
+	cursor: pointer;
+
+	&:first-child {
+		border-radius: 8px 8px 0 0;
+	}
+
+	&:last-child {
+		border-bottom: none;
+		border-radius: 0 0 8px 8px;
+	}
+
+	&:hover {
+		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 20%);
+	}
+
+	.kebabMenuItemText {
+		color: var(--color-black);
+	}
+
+	.kebabMenuItemIcon {
+		color: var(--color-gray-500);
+
+		& > svg {
+			width: 21px;
+		}
+	}
+
+	&.danger {
+		color: var(--color-red);
+
+		.kebabMenuItemText {
+			color: var(--color-red);
+		}
+
+		.kebabMenuItemIcon {
+			color: var(--color-red);
+		}
+	}
+}

@@ -32,9 +32,9 @@ export interface ChatUser extends BaseUser {
  * Используется внутри useMessageSearch хука
  */
 export interface BaseSearchMessage {
-	id: string; // string для ключей React
+	id: string;
 	type: MessageType;
-	createdAt: number; // timestamp
+	createdAt: number;
 	updatedAt?: number;
 }
 
@@ -80,9 +80,9 @@ export interface FileAttachment {
 	uid: string;
 	file_url: string;
 	file_webp_url?: string;
-	file_type: string; // MIME-type
-	created_at: string; // ISO 8601
-	updated_at: string; // ISO 8601
+	file_type: string;
+	created_at: string;
+	updated_at: string;
 }
 
 export type FilesSummary = {
@@ -109,6 +109,7 @@ export interface ChatMessage {
 	new: boolean;
 	created_at: number;
 	updated_at: number;
+	type?: MessageType;
 }
 
 // ============================================================================
@@ -122,7 +123,7 @@ export interface MessagePreview {
 	id: number;
 	uid: string;
 	is_deleted?: boolean;
-	from_user: string; // UID отправителя
+	from_user: string;
 	first_name: string;
 	last_name: string;
 	content: string;
@@ -225,7 +226,7 @@ export interface Chat {
 	name: string;
 	chat_type: ChatType;
 	chat_key: string;
-	last_activity_at: number; // timestamp
+	last_activity_at: number;
 	last_seen_message: ChatMessage | null;
 	last_message: ChatMessage | null;
 	first_new_message: ChatMessage | null;
@@ -473,12 +474,12 @@ export type SystemEventData =
  * Простой плоский интерфейс — без наследования от BaseMessage
  */
 export interface SystemMessageData {
-	id: string; // ✅ string для ключей React
-	type: MessageType.SYSTEM; // ✅ дискриминатор
-	createdAt: number; // ✅ timestamp (как в ChatMessage)
-	eventType: SystemEventType; // ✅ тип события
-	eventData: SystemEventData; // ✅ данные события
-	displayText?: string; // ✅ опционально: готовый текст для отображения
+	id: string;
+	type: MessageType.SYSTEM;
+	createdAt: number;
+	eventType: SystemEventType;
+	eventData: SystemEventData;
+	displayText?: string;
 }
 
 // ============================================================================
@@ -492,11 +493,6 @@ export const getFilesSummary = (
 	return { types, count: files.length };
 };
 
-/**
- * Конвертирует ISO-дату в Unix timestamp
- * @param isoDate - строка в формате ISO 8601
- * @returns timestamp в миллисекундах
- */
 export const parseIsoDateToTimestamp = (isoDate: string): number => {
 	const timestamp = new Date(isoDate).getTime();
 	return Number.isNaN(timestamp) ? 0 : timestamp;

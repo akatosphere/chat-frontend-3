@@ -1,100 +1,87 @@
 'use client';
 
-import { memo, useEffect, useRef, useState } from 'react';
-
-import { useGetMessagesForMessageListQuery } from '@/shared/api/services/messagesApi/messagesApi';
-
+import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { MessageBubble } from '@/entities/Chat/ui/MessageBubble/MessageBubble';
 import { Down } from '@icons/index';
-
+import { useGetMessagesQuery } from '@/entities/Chat/api/chatApi';
+import { shouldShowDateSeparator } from '@/entities/Chat/model/lib/service/dateFormating/dateFormater';
+import SmartDateSeparator from '../SystemMessages/ui/SmartDateSeparator/SmartDateSeparator';
+import { StickyDateProvider } from '../SystemMessages/ui/StickyDateContext/StickyDateContext';
+import SystemMessage from '../SystemMessages/ui/SystemMessages/SystemMessages';
+import {
+	SystemMessageData,
+	ChatMessage
+} from '../../model/types/chat.types/chat.types';
+import {
+	isSystemMessageType,
+	mapChatMessageToSystemMessageData
+} from '../../model/mapper/mapChatType/chatMapper';
 import styles from './MessagesList.module.scss';
 
 // ===== ТИПЫ =====
 
-// тип сообщения (локальный)
-interface Message {
+interface TextMessage {
 	id: string;
 	text: string;
 	time: number;
 	status: 'received' | 'sending' | 'unread' | 'read';
 }
 
-// тип сообщения с бэка
-interface MessageApi {
-	uid: string;
-	content: string;
-	from_me: boolean;
-	created_at: string;
-}
+type MessageListItem =
+	| { type: 'text'; data: TextMessage }
+	| { type: 'system'; data: SystemMessageData }
+	| { type: 'separator'; date: Date; id: string };
 
-// тип ответа с пагинацией (добавлено по ревью)
-interface MessagesApiResponse {
-	results: MessageApi[];
-	next: string | null;
-	previous?: string | null;
-	count?: number;
-}
-
-// пропсы компонента messages
+// Пропсы компонента
 interface MessagesProps {
 	userUid: string;
-	className: string;
+	className?: string;
 }
 
-// маппинг api -> локальная модель
-const mapMessage = (m: MessageApi): Message => ({
-	id: m.uid,
-	text: m.content,
-	time: new Date(m.created_at).getTime(),
-	status: m.from_me ? 'read' : 'received'
+const toLocalTextMessage = (msg: ChatMessage): TextMessage => ({
+	id: String(msg.id),
+	text: msg.content,
+	time: msg.created_at,
+	status: msg.new ? 'unread' : 'read'
 });
 
-const MessagesListComponent = ({ userUid, className }: MessagesProps) => {
-	// ===== ПОЛУЧЕНИЕ ДАННЫХ =====
+//  Прокси для URL
+const toProxyPath = (url: string | null): string | null => {
+	if (!url) {
+		return null;
+	}
+	if (url.startsWith('/api/proxy')) {
+		return url;
+	}
 
-	// хук для получения сообщений через api
-	const { data, error, isLoading, refetch } = useGetMessagesForMessageListQuery(
-		{ userUid },
-		{
-			// обновление каждые 4 секунды, если есть userUid
-			pollingInterval: userUid ? 4000 : 0,
-			// пропуск запроса если нет userUid
-			skip: !userUid
-		}
+	try {
+		const pathname = url.startsWith('http') ? new URL(url).pathname : url;
+		const apiPath = pathname.replace(/^\/api\/v1/, '');
+		return `/api/proxy${apiPath}`;
+	} catch {
+		return null;
+	}
+};
+
+const MessagesListComponent = ({ userUid, className }: MessagesProps) => {
+	// ===== API =====
+	const { data, error, isLoading, refetch } = useGetMessagesQuery(
+		{ user_uid: userUid },
+		{ skip: !userUid }
 	);
 
 	// ===== REFS =====
-
-	// реф для контейнера с сообщениями
 	const containerRef = useRef<HTMLDivElement>(null);
-
-	// реф для "нижней точки" скролла
 	const bottomRef = useRef<HTMLDivElement>(null);
-
-	// реф для отслеживания позиции скролла (без лишних ререндеров)
 	const isAtBottomRef = useRef(true);
-
-	// реф для AbortController (добавлено по ревью)
-	// нужен чтобы:
-	// 1. отменять предыдущие fetch-запросы
-	// 2. не обновлять state если компонент размонтирован
+	const isLoadingHistoryRef = useRef(false);
 	const abortControllerRef = useRef<AbortController | null>(null);
 
 	// ===== STATE =====
-
-	// состояние сообщений
-	const [messages, setMessages] = useState<Message[]>([]);
-
-	// ссылка на следующую страницу (pagination с бэка)
+	const [messages, setMessages] = useState<TextMessage[]>([]);
 	const [nextUrl, setNextUrl] = useState<string | null>(null);
-
-	// флаг загрузки старых сообщений (защита от дублей запросов)
 	const [isFetchingMore, setIsFetchingMore] = useState(false);
-
-	// состояние "пользователь внизу"
 	const [isAtBottom, setIsAtBottom] = useState(true);
-
-	// количество новых сообщений, когда пользователь не внизу
 	const [newCount, setNewCount] = useState(0);
 
 	// ===== ОБРАБОТКА ДАННЫХ С БЭКА =====
@@ -104,236 +91,261 @@ const MessagesListComponent = ({ userUid, className }: MessagesProps) => {
 			return;
 		}
 
-		// маппим данные в локальный формат
-		const mapped = data.results.map(mapMessage);
+		const textMessages = data.results.filter(
+			(msg): msg is ChatMessage => !isSystemMessageType(msg)
+		);
 
-		// сохраняем ссылку на следующую страницу
+		const mapped = textMessages.map(toLocalTextMessage);
+
 		setNextUrl(data.next);
 
 		setMessages(prev => {
-			// первый рендер просто кладем все сообщения
 			if (!prev.length) {
 				return mapped;
 			}
-
-			// для быстрого сравнения id
 			const prevIds = new Set(prev.map(p => p.id));
-
-			// находим реально новые сообщения
 			const incoming = mapped.filter(m => !prevIds.has(m.id));
-
-			// если есть новые сообщения
 			if (incoming.length) {
-				// если пользователь не внизу увеличиваем счетчик
-				if (!isAtBottomRef.current) {
+				if (!isLoadingHistoryRef.current && !isAtBottomRef.current) {
 					setNewCount(c => c + incoming.length);
 				}
-
-				// добавляем новые сообщения в конец
 				return [...prev, ...incoming];
 			}
-
 			return prev;
 		});
 	}, [data]);
 
 	// ===== СКРОЛЛ =====
-
-	const handleScroll = () => {
+	const handleScroll = useCallback(() => {
 		const el = containerRef.current;
 		if (!el) {
 			return;
 		}
 
-		const threshold = 50; // расстояние до низа
-
-		// проверяем "находимся ли внизу"
+		const threshold = 50;
 		const isBottom =
 			el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
 
 		isAtBottomRef.current = isBottom;
 		setIsAtBottom(isBottom);
 
-		// если внизу, сбрасываем счетчик новых сообщений
 		if (isBottom) {
 			setNewCount(0);
 		}
-
-		// если пользователь долистал вверх подгружаем старые сообщения
-		// добавлен guard чтобы не дергать loadMore слишком часто
-		if (el.scrollTop < 50 && !isFetchingMore) {
+		if (el.scrollTop < 50 && !isFetchingMore && !isLoadingHistoryRef.current) {
 			loadMore();
 		}
-	};
+	}, [isFetchingMore]);
 
 	// ===== АВТОСКРОЛЛ ВНИЗ =====
-
 	useEffect(() => {
-		// скроллим вниз только если пользователь уже был внизу
-		if (isAtBottomRef.current) {
-			bottomRef.current?.scrollIntoView({
-				behavior: 'smooth'
-			});
+		if (
+			!isLoadingHistoryRef.current &&
+			isAtBottomRef.current &&
+			messages.length > 0
+		) {
+			bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
 		}
-	}, [messages]);
+	}, [messages, isAtBottom]);
 
-	// ===== ПОДГРУЗКА СООБЩЕНИЙ (INFINITE SCROLL ВВЕРХ) =====
-
+	// ===== ПОДГРУЗКА =====
 	const loadMore = async () => {
-		// защита:
-		// - нет следующей страницы
-		// - уже идет загрузка
 		if (!nextUrl || isFetchingMore) {
 			return;
 		}
 
-		// отменяем предыдущий запрос (если пользователь быстро скроллит)
+		isLoadingHistoryRef.current = true;
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 		}
-
-		// создаем новый контроллер
 		abortControllerRef.current = new AbortController();
-
 		setIsFetchingMore(true);
 
 		const el = containerRef.current;
 
-		// сохраняем текущую высоту списка
-		const prevHeight = el?.scrollHeight;
+		const saveScrollPosition = () => {
+			if (!el) {
+				return null;
+			}
+			return { scrollHeight: el.scrollHeight, scrollTop: el.scrollTop };
+		};
 
 		try {
-			const res = await fetch(nextUrl, {
-				// передаем сигнал для возможности отмены
-				signal: abortControllerRef.current.signal
+			const fetchUrl = toProxyPath(nextUrl);
+			if (!fetchUrl) {
+				throw new Error('Invalid nextUrl');
+			}
+
+			const res = await fetch(fetchUrl, {
+				signal: abortControllerRef.current.signal,
+				redirect: 'follow',
+				credentials: 'include'
 			});
 
-			// обработка HTTP ошибок (добавлено по ревью)
 			if (!res.ok) {
 				throw new Error(`HTTP error! status: ${res.status}`);
 			}
 
-			// типизируем ответ
-			const data: MessagesApiResponse = await res.json();
+			const responseData: { results: ChatMessage[]; next: string | null } =
+				await res.json();
 
-			// маппим старые сообщения
-			const older: Message[] = data.results.map(mapMessage);
+			const older: TextMessage[] = responseData.results
+				.filter(msg => !isSystemMessageType(msg))
+				.map(toLocalTextMessage);
 
-			// обновляем ссылку на следующую страницу
-			setNextUrl(data.next);
+			setNextUrl(responseData.next);
+			const scrollPos = saveScrollPosition();
 
-			// добавляем старые сообщения в начало
-			// защита от дублей (race-condition с polling)
 			setMessages(prev => {
 				const prevIds = new Set(prev.map(p => p.id));
 				const uniqueOlder = older.filter(m => !prevIds.has(m.id));
 
+				if (uniqueOlder.length > 0 && el && scrollPos) {
+					requestAnimationFrame(() => {
+						const newScrollHeight = el.scrollHeight;
+						const heightDiff = newScrollHeight - scrollPos.scrollHeight;
+						el.scrollTop = scrollPos.scrollTop + heightDiff;
+					});
+				}
 				return [...uniqueOlder, ...prev];
 			});
-
-			// фиксируем позицию скролла
-			requestAnimationFrame(() => {
-				// prevHeight может быть 0 -> проверяем именно undefined
-				if (!el || prevHeight === undefined) {
-					return;
-				}
-
-				const newHeight = el.scrollHeight;
-
-				// компенсируем разницу высоты
-				el.scrollTop = newHeight - prevHeight;
-			});
-		} catch (error) {
-			// игнорируем abort ошибки (это нормальное поведение)
-			if (error instanceof DOMException && error.name === 'AbortError') {
+		} catch (err) {
+			if (err instanceof DOMException && err.name === 'AbortError') {
 				return;
 			}
-
-			// теперь ошибка не теряется
-			console.error('Failed to load older messages:', error);
+			console.error('Failed to load older messages:', err);
 		} finally {
 			setIsFetchingMore(false);
-
-			// очищаем контроллер
+			isLoadingHistoryRef.current = false;
 			abortControllerRef.current = null;
 		}
 	};
 
-	// очистка при размонтировании компонента
+	// ===== CLEANUP =====
 	useEffect(() => {
 		return () => {
-			// отменяем незавершенный запрос
 			if (abortControllerRef.current) {
 				abortControllerRef.current.abort();
 			}
 		};
 	}, []);
 
-	// ===== РУЧНОЙ СКРОЛЛ ВНИЗ =====
-
+	// ===== СКРОЛЛ ВНИЗ ВРУЧНУЮ =====
 	const scrollToBottom = () => {
-		bottomRef.current?.scrollIntoView({
-			behavior: 'smooth'
-		});
-
+		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
 		setNewCount(0);
 	};
 
-	// ===== UI СОСТОЯНИЯ =====
+	// ===== ФОРМИРОВАНИЕ СПИСКА С РАЗДЕЛИТЕЛЯМИ И СИСТЕМНЫМИ СООБЩЕНИЯМИ =====
 
-	// состояние загрузки
-	if (isLoading) {
+	const messagesWithSeparators = useMemo((): MessageListItem[] => {
+		if (!data?.results?.length) {
+			return [];
+		}
+
+		const result: MessageListItem[] = [];
+
+		data.results.forEach((message, index) => {
+			const prevMessage = index > 0 ? data.results[index - 1] : undefined;
+
+			if (isSystemMessageType(message)) {
+				result.push({
+					type: 'system',
+					data: mapChatMessageToSystemMessageData(message)
+				});
+				return;
+			}
+
+			const createdAt = message.created_at;
+			const prevCreatedAt =
+				prevMessage && !isSystemMessageType(prevMessage)
+					? prevMessage.created_at
+					: undefined;
+
+			if (shouldShowDateSeparator(createdAt, prevCreatedAt)) {
+				result.push({
+					type: 'separator',
+					date: new Date(createdAt),
+					id: `separator-${createdAt}-${index}`
+				});
+			}
+
+			result.push({
+				type: 'text',
+				data: toLocalTextMessage(message)
+			});
+		});
+
+		return result;
+	}, [data]);
+	// ===== UI СОСТОЯНИЯ =====
+	if (isLoading && messages.length === 0) {
 		return <div className={styles.emptyState}>Загрузка сообщений...</div>;
 	}
 
-	// состояние ошибки
 	if (error) {
 		return (
 			<div className={styles.emptyState}>
 				<p>Ошибка загрузки сообщений</p>
-				<button onClick={refetch}>Попробовать снова</button>
+				<button onClick={() => refetch()}>Попробовать снова</button>
 			</div>
 		);
 	}
 
-	// ===== ОСНОВНОЙ РЕНДЕР =====
+	// ===== РЕНДЕР =====
 
 	return (
-		<div className={`${styles.wrapper} ${className}`}>
-			<div
-				ref={containerRef}
-				onScroll={handleScroll}
-				className={styles.messages}
-			>
-				{messages.map(m => (
-					<MessageBubble
-						key={m.id}
-						id={m.id}
-						text={m.text}
-						time={m.time}
-						status={m.status}
-						onClick={() => {}}
-					/>
-				))}
-
-				{/* якорь для скролла вниз */}
-				<div ref={bottomRef} />
-			</div>
-
-			{/* кнопка для скролла вниз, если пользователь не внизу */}
-			{!isAtBottom && (
-				<button
-					className={styles.scrollButton}
-					onClick={scrollToBottom}
-					// accessibility улучшение (по ревью)
-					aria-label='Прокрутить к новым сообщениям'
+		<StickyDateProvider
+			containerRef={containerRef as React.RefObject<HTMLDivElement>}
+		>
+			<div className={`${styles.wrapper} ${className}`}>
+				<div
+					ref={containerRef}
+					onScroll={handleScroll}
+					className={styles.messages}
 				>
-					<Down />
-					{/* показываем количество новых сообщений */}
-					{newCount > 0 && <span>({newCount})</span>}
-				</button>
-			)}
-		</div>
+					{messagesWithSeparators.map(item => {
+						// 🔹 Разделитель даты
+						if (item.type === 'separator') {
+							return (
+								<SmartDateSeparator
+									key={item.id}
+									id={item.id}
+									date={item.date}
+								/>
+							);
+						}
+
+						if (item.type === 'system') {
+							return <SystemMessage key={item.data.id} message={item.data} />;
+						}
+
+						return (
+							<MessageBubble
+								key={item.data.id}
+								id={item.data.id}
+								text={item.data.text}
+								time={item.data.time}
+								status={item.data.status}
+								onClick={() => {}}
+							/>
+						);
+					})}
+					<div ref={bottomRef} />
+				</div>
+
+				{!isAtBottom && (
+					<button
+						className={styles.scrollButton}
+						onClick={scrollToBottom}
+						aria-label='Прокрутить к новым сообщениям'
+					>
+						<Down />
+						{newCount > 0 && <span>({newCount})</span>}
+					</button>
+				)}
+			</div>
+		</StickyDateProvider>
 	);
 };
 

@@ -1,11 +1,15 @@
 import type {
 	Chat,
 	ChatMessage,
-	RawApiChatMessage
+	RawApiChatMessage,
+	SystemEventData,
+	SystemMessageData
 } from '../../types/chat.types/chat.types';
 import type { IUserCard } from '@/shared/ui/UserCard';
 import {
 	ChatType,
+	MessageType,
+	SystemEventType,
 	ChatType as UserCardChatType
 } from '../../types/chat.types/chat.types';
 
@@ -56,9 +60,6 @@ const mapLastMessage = (
 	};
 };
 
-/**
- * Маппинг данных чата из API в формат UserCard
- */
 export const mapChatToUserCard = (chat: Chat): IUserCard => {
 	const chatData = chat.chat;
 	const chatName = chat.name || '';
@@ -101,10 +102,6 @@ export const mapChatToUserCard = (chat: Chat): IUserCard => {
 	};
 };
 
-/**
- * Маппинг: RawApiChatMessage → ChatMessage
- */
-
 export const mapApiMessageToFrontend = (
 	apiMsg: RawApiChatMessage
 ): ChatMessage => ({
@@ -125,7 +122,6 @@ export const mapApiMessageToFrontend = (
 	has_forwarded_message: apiMsg.forwarded_messages?.length > 0,
 	new: apiMsg.new ?? false,
 
-	// место конвертации: ISO string → timestamp
 	created_at: new Date(apiMsg.created_at).getTime(),
 	updated_at: new Date(apiMsg.updated_at).getTime()
 });
@@ -133,3 +129,56 @@ export const mapApiMessageToFrontend = (
 export const mapApiMessagesList = (
 	apiResults: readonly RawApiChatMessage[]
 ): ChatMessage[] => apiResults.map(mapApiMessageToFrontend);
+
+export const mapChatMessageToSystemMessageData = (
+	msg: ChatMessage
+): SystemMessageData => {
+	let eventType: SystemEventType = SystemEventType.CHAT_CREATED;
+	let eventData: SystemEventData = {
+		type: SystemEventType.CHAT_CREATED,
+		payload: {
+			name: 'Чат',
+			ownerFullName: msg.from_user
+		}
+	};
+	let displayText: string | undefined;
+
+	try {
+		const parsed = JSON.parse(msg.content) as {
+			eventType?: SystemEventType;
+			eventData?: { payload: Record<string, unknown> };
+			text?: string;
+		};
+
+		if (parsed.eventType && parsed.eventData?.payload) {
+			eventType = parsed.eventType;
+
+			eventData = {
+				type: eventType,
+				payload: parsed.eventData.payload
+			} as SystemEventData;
+		}
+
+		if (parsed.text) {
+			displayText = parsed.text;
+		}
+	} catch {
+		displayText = msg.content || undefined;
+	}
+
+	return {
+		id: String(msg.id),
+
+		type: MessageType.SYSTEM,
+		createdAt: msg.created_at,
+		eventType,
+		eventData,
+		displayText
+	};
+};
+
+export const isSystemMessageType = (
+	msg: ChatMessage
+): msg is ChatMessage & { type: typeof MessageType.SYSTEM } => {
+	return msg.type === MessageType.SYSTEM;
+};
