@@ -12,6 +12,7 @@ export const rtkApi = createApi({
 		'Chats',
 		'Messages',
 		'Contacts',
+		'Contact',
 		'ChatList',
 		'GlobalContactSearch'
 	],

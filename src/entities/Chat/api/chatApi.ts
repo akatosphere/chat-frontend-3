@@ -8,7 +8,8 @@ import type {
 	GetChatsRequest,
 	MessageListResponse,
 	RawMessageListResponse,
-	GetMessagesRequest
+	GetMessagesRequest,
+	Contact
 } from '../model/types/chat.types/chat.types';
 
 // ─────────────────────────────────────────────────────────────
@@ -89,6 +90,20 @@ export const chatApi = rtkApi.injectEndpoints({
 				...response,
 				results: response.results.map(mapApiMessageToFrontend)
 			})
+		}),
+
+		// ─── Пользователь (contact) ─────────────────────────────
+		getContactByUid: build.query<Contact, string>({
+			query: userUid => ({
+				url: `/contact/${userUid}/`,
+				method: 'GET'
+			}),
+			// 'result' is declared but its value is never read.
+			// 'error' is declared but its value is never read.
+			providesTags: (result, error, userUid) => [
+				{ type: 'Contact', id: userUid }
+			],
+			keepUnusedDataFor: 60
 		})
 	}),
 	overrideExisting: false
@@ -104,7 +119,8 @@ export const {
 	useGetChatByIdQuery,
 	useGetMessagesQuery,
 	useLazyGetMessagesQuery,
-	endpoints: { getChats, getChatById, getMessages }
+	useGetContactByUidQuery,
+	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
 
 // ─────────────────────────────────────────────────────────────

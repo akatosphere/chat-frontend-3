@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { ChatList, ChatView } from '@/entities/Chat';
 import { Container, ContainerType } from '@/shared/ui/Container';
 import { useParams, useRouter } from 'next/navigation';
@@ -8,13 +8,15 @@ import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import { Text } from '@/shared/ui/Text';
 
 import cls from './Chats.module.scss';
-import { ProfileView } from '@/entities/Chat/ui/ProfileView/ProfileView';
+import { ChatProfileView } from '@/entities/Chat/ui/ChatProfileView/ChatProfileView';
 
 const ChatsPageComponent = () => {
 	const params = useParams();
 	const router = useRouter();
 	const chatUid = params?.uid as string | undefined;
 	const isMobile = useMediaQuery();
+
+	const [profileShown, setProfileShown] = useState(true);
 
 	// МОБИЛЬНАЯ ЛОГИКА: показываем только один экран
 	if (isMobile) {
@@ -51,9 +53,12 @@ const ChatsPageComponent = () => {
 					</div>
 				)}
 			</Container>
-			<Container type={ContainerType.SIDEBAR}>
-				<ProfileView />
-			</Container>
+
+			{profileShown && chatUid && (
+				<Container type={ContainerType.SIDEBAR}>
+					<ChatProfileView userUid={chatUid} />
+				</Container>
+			)}
 		</Container>
 	);
 };

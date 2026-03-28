@@ -23,6 +23,28 @@ export interface ChatUser extends BaseUser {
 	is_blocked: boolean;
 }
 
+export interface Contact {
+	uid: string;
+	is_deleted: boolean;
+	username: string;
+	nickname: string;
+	first_name: string;
+	last_name: string;
+	avatar: string;
+	avatar_url: string;
+	avatar_webp: string;
+	avatar_webp_url: string;
+	avatar_small_url: string;
+	avatar_master_url: string;
+	is_filled: boolean;
+	additional_information: string;
+	birthday: string;
+	is_online: boolean;
+	was_online_at: number;
+	is_blocked: boolean;
+	chat_id: number;
+}
+
 // ============================================================================
 //  ТИПЫ ДЛЯ ПОИСКА ПО СООБЩЕНИЯМ (useMessageSearch)
 // ============================================================================
