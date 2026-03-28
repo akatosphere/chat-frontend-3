@@ -42,12 +42,13 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				: 'не в сети';
 
 		const birthday = formatDateRu(data.birthday);
+		const notifications_on = true;
 
 		const rows = [
 			{ label: 'Никнейм', value: `@${data.nickname}`, type: 'primary' },
 			{ label: 'Номер телефона', value: data.username, type: 'primary' },
 			{ label: 'День рождения', value: birthday, type: 'default' },
-			{ label: 'О себе', value: null, type: 'default' }
+			{ label: 'О себе', value: data.additional_information, type: 'default' }
 		];
 
 		return (
@@ -77,8 +78,21 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 					<p>Уведомления</p>
 					<button>
 						<svg width='60' height='48' viewBox='0 0 60 48' fill='none'>
-							<rect y='8' width='52' height='32' rx='16' fill='#7769E1' />
-							<rect x='24' y='12' width='24' height='24' rx='12' fill='white' />
+							<rect
+								y='8'
+								width='52'
+								height='32'
+								rx='16'
+								fill={notifications_on ? '#7769E1' : '#b3b3b3'}
+							/>
+							<rect
+								x={notifications_on ? '24' : '4'}
+								y='12'
+								width='24'
+								height='24'
+								rx='12'
+								fill='white'
+							/>
 						</svg>
 					</button>
 				</div>
