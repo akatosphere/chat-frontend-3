@@ -98,8 +98,6 @@ export const chatApi = rtkApi.injectEndpoints({
 				url: `/contact/${userUid}/`,
 				method: 'GET'
 			}),
-			// 'result' is declared but its value is never read.
-			// 'error' is declared but its value is never read.
 			providesTags: (result, error, userUid) => [
 				{ type: 'Contact', id: userUid }
 			],

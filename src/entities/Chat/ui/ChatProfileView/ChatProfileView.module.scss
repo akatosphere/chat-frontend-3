@@ -46,6 +46,12 @@
 	height: 24px;
 }
 
+.emptyState {
+	height: 100%;
+	display: grid;
+	place-items: center;
+}
+
 .profile {
 	position: relative;
 	padding: 12px 14px;

@@ -1,5 +1,11 @@
-import { useGetContactByUidQuery } from '../../api/chatApi';
+import {
+	useGetChatByIdQuery,
+	useGetContactByUidQuery
+} from '../../api/chatApi';
+
+import { Text, TextColor } from '@/shared/ui/Text';
 import { Close, CopyMessage, MenuIcon } from '@icons/index';
+
 import s from './ChatProfileView.module.scss';
 
 interface ChatProfileViewProps {
@@ -29,6 +35,29 @@ function formatDateRu(unixDate: string) {
 
 export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const { data, isLoading, error } = useGetContactByUidQuery(userUid);
+	const chatData = useGetChatByIdQuery(userUid);
+
+	const notifications_on = chatData.data
+		? (chatData.data.notifications ?? true)
+		: true;
+
+	console.log(chatData); //  404
+
+	if (isLoading) {
+		return (
+			<div className={s.emptyState}>
+				<Text color={TextColor.GRAY}>Загружаем данные пользователя...</Text>
+			</div>
+		);
+	}
+
+	if (!data) {
+		return (
+			<div className={s.emptyState}>
+				<Text color={TextColor.ERROR}>Ошибка загрузки пользователя</Text>
+			</div>
+		);
+	}
 
 	if (data) {
 		const was_online_at = data.was_online_at;
@@ -42,7 +71,6 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				: 'не в сети';
 
 		const birthday = formatDateRu(data.birthday);
-		const notifications_on = true;
 
 		const rows = [
 			{ label: 'Никнейм', value: `@${data.nickname}`, type: 'primary' },
@@ -142,9 +170,5 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				</div>
 			</div>
 		);
-	}
-
-	if (!data) {
-		return <p>Передан неверный ID пользователя</p>;
 	}
 };
