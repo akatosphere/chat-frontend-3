@@ -107,7 +107,7 @@ export const ChatProfileAttachs = ({
 									key={item.id}
 									src={item.url}
 									className={s.mediaItem}
-									controls
+									controls={false}
 									preload='metadata'
 								/>
 							)
