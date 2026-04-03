@@ -1,8 +1,8 @@
 // ─── Компоненты ────────────────────────────────────────────────
 
+export { ContactsListItem } from './ui/ContactsItem/ContactsItem';
 export { ContactsList } from './ui/ContactsList/ContactsList';
 export { ContactsListContent } from './ui/ContactsListContent/ContactsListContent';
-export { ContactsListItem } from './ui/ContactsItem/ContactsItem';
 
 // ─── ОСНОВНЫЕ ТИПЫ КОНТАКТОВ ───────────────────────────────────────────
 export type {
@@ -15,18 +15,18 @@ export type { PaginatedResponse } from './model/types/contacts.types/contacts.ty
 
 // ─── ДОБАВЛЕНИЕ КОНТАКТА: ЗАПРОСЫ/ОТВЕТЫ ───────────────────────────────
 export type {
+	AddContactApiResponse,
 	AddContactByPhoneRequest,
 	AddContactResponse,
-	ContactValidationError,
 	ContactAuthError,
-	AddContactApiResponse
+	ContactValidationError
 } from './model/types/contacts.types/contacts.types';
 
 // ─── УДАЛЕНИЕ КОНТАКТОВ ────────────────────────────────────────────────
 export type {
-	DeleteContactResponse,
 	BulkDeleteRequest,
-	BulkDeleteResponse
+	BulkDeleteResponse,
+	DeleteContactResponse
 } from './model/types/contacts.types/contacts.types';
 
 // ─── ГЛОБАЛЬНЫЙ ПОИСК: ТИПЫ ────────────────────────────────────────────
@@ -45,7 +45,8 @@ export type {
 // ─── API & Hooks ───────────────────────────────────────────────
 export {
 	contactApi,
+	useAddContactByPhoneMutation,
 	useGetContactsQuery,
 	useLazyGetContactsQuery,
-	useAddContactByPhoneMutation
+	useLazySearchGlobalContactsQuery
 } from './api/contactsApi';

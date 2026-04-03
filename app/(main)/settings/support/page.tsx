@@ -1,4 +1,4 @@
-import { SupportPage } from '@/pages/SupportPage';
+import { Support } from '@/entities/Settings';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,6 +8,6 @@ export const metadata: Metadata = {
 	description: 'Страница поддержки пользователя| А-Чат'
 };
 
-export default function Support() {
-	return <SupportPage />;
+export default function SupportPage() {
+	return <Support />;
 }

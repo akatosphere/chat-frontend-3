@@ -1,6 +1,6 @@
+import { RootState } from '@/app/providers/StoreProvider';
 import { rtkApi } from '@/shared/api/rtkApi';
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '@/app/providers/StoreProvider';
 import { mapApiMessageToFrontend } from '../model/mapper/mapChatType/chatMapper';
 import type {
 	Chat,
@@ -9,7 +9,9 @@ import type {
 	MessageListResponse,
 	RawMessageListResponse,
 	GetMessagesRequest,
-	Contact
+	Contact,
+	UpdateChatPropertiesRequest,
+	UpdateChatPropertiesResponse
 } from '../model/types/chat.types/chat.types';
 
 // ─────────────────────────────────────────────────────────────
@@ -102,6 +104,26 @@ export const chatApi = rtkApi.injectEndpoints({
 				{ type: 'Contact', id: userUid }
 			],
 			keepUnusedDataFor: 60
+		}),
+
+		deleteChat: build.mutation({
+			query: (id: number) => ({
+				url: `/chat/list/${id}/`,
+				method: 'DELETE'
+			}),
+			invalidatesTags: ['Chats']
+		}),
+
+		updateChatProperties: build.mutation<
+			UpdateChatPropertiesResponse,
+			{ id: number } & Partial<UpdateChatPropertiesRequest>
+		>({
+			query: ({ id, ...body }) => ({
+				url: `/chat/list/${id}/`,
+				method: 'POST',
+				body
+			}),
+			invalidatesTags: (result, error, { id }) => [{ type: 'Chats', id }]
 		})
 	}),
 	overrideExisting: false
@@ -118,6 +140,8 @@ export const {
 	useGetMessagesQuery,
 	useLazyGetMessagesQuery,
 	useGetContactByUidQuery,
+	useDeleteChatMutation,
+	useUpdateChatPropertiesMutation,
 	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
 

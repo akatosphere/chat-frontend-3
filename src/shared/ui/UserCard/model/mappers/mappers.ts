@@ -1,8 +1,8 @@
 import { BlackListSchema } from '@/entities/BlackList';
 import { ChatItemSchema } from '@/entities/Chat';
+import { ContactsSchema } from '@/entities/Contacts';
 import { ProfileSchema } from '@/entities/Profile';
 import { IUserCard } from '../types/IUserCard';
-import { ContactsSchema } from '@/entities/Contacts';
 
 export const mapChatToUserCard = (user: ChatItemSchema): IUserCard => ({
 	user: {
@@ -19,6 +19,7 @@ export const mapChatToUserCard = (user: ChatItemSchema): IUserCard => ({
 		was_online_at: user.chat.was_online_at
 	},
 	notifications: user.notifications,
+	is_favorite: user.is_favorite,
 	new_message_count: user.new_message_count,
 	chat_type: user.chat_type,
 	chat_key: user.chat_key,

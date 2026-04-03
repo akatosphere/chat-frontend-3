@@ -1,8 +1,8 @@
 import { SettingsHeaderBlock } from '@/entities/Settings';
 import { SupportForm } from '@/features/support';
-import styles from './SupportPage.module.scss';
+import styles from './Support.module.scss';
 
-export function SupportPage() {
+export function Support() {
 	return (
 		<section className={styles.support}>
 			<SettingsHeaderBlock

@@ -12,6 +12,10 @@
 		padding: 4px 8px;
 		align-items: start;
 
+		&.isFavorite {
+			background-color: var(--color-white);
+		}
+
 		&:hover {
 			background-color: var(--color-violet-30);
 		}
@@ -122,12 +126,14 @@
 	}
 }
 
-.userCard.isActive {
-	.notification > svg {
-		color: var(--color-white);
-	}
+.pinnedIcon {
+	color: var(--color-gray-500);
+}
 
-	.status > svg {
+.userCard.isActive {
+	.notification > svg,
+	.status > svg,
+	.pinnedIcon {
 		color: var(--color-white);
 	}
 }

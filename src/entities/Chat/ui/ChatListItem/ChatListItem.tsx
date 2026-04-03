@@ -13,6 +13,7 @@ import cls from './ChatListItem.module.scss';
 export interface ChatListItemProps {
 	chat: Chat;
 	isActive: boolean;
+	onContextMenu: (e: React.MouseEvent) => void;
 }
 
 const propsAreEqual = (
@@ -28,35 +29,39 @@ const propsAreEqual = (
 	);
 };
 
-export const ChatListItem = memo(({ chat, isActive }: ChatListItemProps) => {
-	const uid = chat.chat.uid;
+export const ChatListItem = memo(
+	({ chat, isActive, onContextMenu }: ChatListItemProps) => {
+		const uid = chat.chat.uid;
 
-	const userCardData = useMemo(() => mapChatToUserCard(chat), [chat]);
+		const userCardData = useMemo(() => mapChatToUserCard(chat), [chat]);
 
-	const isMobile = useMediaQuery();
+		const isMobile = useMediaQuery();
 
-	return (
-		<Link
-			href={`/chats/${uid}`}
-			className={classNames(cls.chatItem, { [cls.chatItemActive]: isActive })}
-			aria-label={`Чат с ${chat.name}`}
-			scroll={false}
-			prefetch={!isMobile}
-			data-chat-uid={uid}
-			data-is-mobile={isMobile}
-		>
-			<div className={cls.itemContent}>
-				<div className={cls.userCard}>
-					<UserCard
-						userData={userCardData}
-						type={UserCardType.CHAT}
-						sendingMessage={false}
-						isActive={isActive}
-					/>
+		return (
+			<Link
+				href={`/chats/${uid}`}
+				className={classNames(cls.chatItem, { [cls.chatItemActive]: isActive })}
+				aria-label={`Чат с ${chat.name}`}
+				scroll={false}
+				prefetch={!isMobile}
+				data-chat-uid={uid}
+				data-is-mobile={isMobile}
+				onContextMenu={onContextMenu}
+			>
+				<div className={cls.itemContent}>
+					<div className={cls.userCard}>
+						<UserCard
+							userData={userCardData}
+							type={UserCardType.CHAT}
+							sendingMessage={false}
+							isActive={isActive}
+						/>
+					</div>
 				</div>
-			</div>
-		</Link>
-	);
-}, propsAreEqual);
+			</Link>
+		);
+	},
+	propsAreEqual
+);
 
 ChatListItem.displayName = 'ChatListItem';

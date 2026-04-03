@@ -1,6 +1,7 @@
 export interface IUserCard {
 	user?: UserCardInfo;
 	notifications?: boolean;
+	is_favorite?: boolean;
 	new_message_count?: number;
 	chat_type?: ChatType;
 	chat_key?: string;

@@ -13,7 +13,14 @@ import {
 	TextType,
 	TitleTag
 } from '@/shared/ui/Text';
-import { SentRead, SentTime, Trash, VolumeOff, VolumeOn } from '@icons/index';
+import {
+	Pin,
+	SentRead,
+	SentTime,
+	Trash,
+	VolumeOff,
+	VolumeOn
+} from '@icons/index';
 import { ReactNode } from 'react';
 import { Button, ButtonColor, ButtonSize, ButtonTheme } from '../../Button';
 import { LastSeen } from '../../LastSeen';
@@ -81,6 +88,8 @@ export const UserCard = ({
 		return null;
 	}
 
+	console.log(userData.is_favorite);
+
 	//  Определяем цвета в зависимости от режима
 	const nameColor = isActive ? undefined : TextColor.BLACK;
 	const statusColor = isActive ? undefined : TextColor.GRAY;
@@ -90,10 +99,11 @@ export const UserCard = ({
 
 	return (
 		<div
-			className={classNames(cls.userCard, { [cls.isActive]: isActive }, [
-				className,
-				cls[type]
-			])}
+			className={classNames(
+				cls.userCard,
+				{ [cls.isActive]: isActive, [cls.isFavorite]: userData.is_favorite },
+				[className, cls[type]]
+			)}
 		>
 			<Avatar
 				className={cls.avatar}
@@ -175,7 +185,7 @@ export const UserCard = ({
 								{userData.last_message?.content}
 							</Text>
 
-							{userData.last_message?.new && (
+							{userData.last_message?.new ? (
 								<Text
 									className={cls.newMesCount}
 									fontSize={TextSize.M}
@@ -186,7 +196,9 @@ export const UserCard = ({
 								>
 									{formatUnreadCount(userData.new_message_count)}
 								</Text>
-							)}
+							) : userData.is_favorite ? (
+								<Pin className={cls.pinnedIcon} />
+							) : null}
 						</>
 					)}
 					{/* для контактов и черного списка */}

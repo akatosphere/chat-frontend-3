@@ -300,6 +300,22 @@ export interface GetMessagesRequest {
 	search?: string;
 }
 
+// Запрос для обновления свойств чата
+export interface UpdateChatPropertiesRequest {
+	is_favorite?: boolean;
+	notifications?: boolean;
+	index?: number;
+	last_seen_message?: number | ChatMessage | null;
+}
+
+export interface UpdateChatPropertiesResponse {
+	is_favorite: boolean;
+	notifications: boolean;
+	index: number;
+	last_seen_message: number | ChatMessage | null;
+	last_seen_message_uid: string;
+}
+
 // ============================================================================
 // ВСПОМОГАТЕЛЬНЫЕ ТИПЫ (для UI-компонентов)
 // ============================================================================

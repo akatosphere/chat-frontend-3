@@ -1,22 +1,22 @@
 'use client';
 
-import { memo, useMemo, useCallback, useEffect } from 'react';
-import { filterChatsLocal, Search, useHybridSearch } from '@/shared/ui/Search';
-import { useGetChatsQuery, useLazyGetChatsQuery } from '../../api/chatApi';
-import { UserCardSkeleton } from '@/shared/ui/Skeleton';
-import { EmptyChats } from '@/shared/ui/EmptyChats/EmptyChats';
-import { UserCardType } from '@/shared/ui/UserCard';
-import { Chat, GetChatsRequest } from '../../model/types/chat.types/chat.types';
-import { sortChatsByLastMessage } from '../../model/lib/utils/sortChatsByLastMessage/sortChatsByLastMessage';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
-import { ChatListContent } from '../ChatListContent/ChatListContent';
 import {
 	Button,
 	ButtonColor,
 	ButtonTheme,
 	ButtonType
 } from '@/shared/ui/Button';
+import { EmptyChats } from '@/shared/ui/EmptyChats/EmptyChats';
+import { filterChatsLocal, Search, useHybridSearch } from '@/shared/ui/Search';
+import { UserCardSkeleton } from '@/shared/ui/Skeleton';
+import { UserCardType } from '@/shared/ui/UserCard';
 import { CreateNew } from '@icons/index';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useGetChatsQuery, useLazyGetChatsQuery } from '../../api/chatApi';
+import { sortChatsByLastMessage } from '../../model/lib/utils/sortChatsByLastMessage/sortChatsByLastMessage';
+import { Chat, GetChatsRequest } from '../../model/types/chat.types/chat.types';
+import { ChatListContent } from '../ChatListContent/ChatListContent';
 
 import cls from './ChatList.module.scss';
 
@@ -49,7 +49,7 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 
 			refetchOnReconnect: true,
 
-			refetchOnMountOrArgChange: true
+			refetchOnMountOrArgChange: false
 		}
 	);
 

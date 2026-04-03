@@ -1,3 +1,4 @@
+import type { IUserCard } from '@/shared/ui/UserCard';
 import type {
 	Chat,
 	ChatMessage,
@@ -5,7 +6,6 @@ import type {
 	SystemEventData,
 	SystemMessageData
 } from '../../types/chat.types/chat.types';
-import type { IUserCard } from '@/shared/ui/UserCard';
 import {
 	ChatType,
 	MessageType,
@@ -93,6 +93,7 @@ export const mapChatToUserCard = (chat: Chat): IUserCard => {
 			was_online_at: chatData.was_online_at || undefined
 		},
 		notifications: chat.notifications,
+		is_favorite: chat.is_favorite,
 		new_message_count: chat.new_message_count,
 		chat_type: mapChatType(chat.chat_type),
 		chat_key: chat.chat_key,
