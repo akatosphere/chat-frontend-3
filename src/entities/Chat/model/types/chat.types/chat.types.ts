@@ -475,6 +475,30 @@ export interface MessagePinnedData {
 	messageContent?: string;
 }
 
+export interface FilesResponse {
+	results: {
+		uid: string;
+		download_name: string;
+		file_url: string;
+		file_type: string;
+		size: number;
+		created_at: string;
+		media_kind?: string;
+	}[];
+}
+
+export interface LinksResponse {
+	results: {
+		url: string;
+		title: string;
+		from_user: {
+			first_name: string;
+			last_name: string;
+		};
+		created_at: string;
+	}[];
+}
+
 /**
  * Объединённый тип для eventData в системном сообщении
  * Discriminated union по eventType

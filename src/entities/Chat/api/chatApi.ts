@@ -11,7 +11,9 @@ import type {
 	GetMessagesRequest,
 	Contact,
 	UpdateChatPropertiesRequest,
-	UpdateChatPropertiesResponse
+	UpdateChatPropertiesResponse,
+	FilesResponse,
+	LinksResponse
 } from '../model/types/chat.types/chat.types';
 
 // ─────────────────────────────────────────────────────────────
@@ -124,6 +126,34 @@ export const chatApi = rtkApi.injectEndpoints({
 				body
 			}),
 			invalidatesTags: (result, error, { id }) => [{ type: 'Chats', id }]
+		}),
+
+		// ─── Файлы ─────────────────────────────────────────
+		getFiles: build.query<FilesResponse, { user_uid: string; page?: number }>({
+			query: ({ user_uid, ...params }) => ({
+				url: `/chat/message/files/${user_uid}/`,
+				method: 'GET',
+				params: {
+					page_size: 30,
+					ordering: '-created_at',
+					...params
+				}
+			}),
+			providesTags: [{ type: 'Files', id: 'LIST' }]
+		}),
+
+		// ─── Ссылки ────────────────────────────────────────
+		getLinks: build.query<LinksResponse, { user_uid: string; page?: number }>({
+			query: ({ user_uid, ...params }) => ({
+				url: `/chat/message/links/${user_uid}/`,
+				method: 'GET',
+				params: {
+					page_size: 30,
+					ordering: '-created_at',
+					...params
+				}
+			}),
+			providesTags: [{ type: 'Links', id: 'LIST' }]
 		})
 	}),
 	overrideExisting: false
@@ -142,6 +172,8 @@ export const {
 	useGetContactByUidQuery,
 	useDeleteChatMutation,
 	useUpdateChatPropertiesMutation,
+	useGetFilesQuery,
+	useGetLinksQuery,
 	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
 

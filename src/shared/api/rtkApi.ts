@@ -14,7 +14,9 @@ export const rtkApi = createApi({
 		'Contacts',
 		'Contact',
 		'ChatList',
-		'GlobalContactSearch'
+		'GlobalContactSearch',
+		'Files',
+		'Links'
 	],
 	endpoints: _ => ({})
 });
