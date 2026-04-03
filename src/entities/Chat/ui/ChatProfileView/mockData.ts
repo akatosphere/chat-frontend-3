@@ -3,7 +3,7 @@ import {
 	ChatLinkItem,
 	ChatMediaItem,
 	ChatVoiceItem
-} from './ChatProfile.type';
+} from './model/ChatProfile.type';
 
 export const mockMediaItems: ChatMediaItem[] = [
 	{

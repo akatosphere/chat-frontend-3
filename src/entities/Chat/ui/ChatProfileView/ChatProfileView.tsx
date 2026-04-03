@@ -5,6 +5,7 @@ import {
 	useGetLinksQuery,
 	selectChatByUid
 } from '../../api/chatApi';
+import { formatDateRu } from './lib/formatDateRu';
 
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/providers/StoreProvider';
@@ -16,7 +17,7 @@ import {
 	ChatNotificationsState,
 	ChatVoiceItem,
 	MessageWithAttachments
-} from './ChatProfile.type';
+} from './model/ChatProfile.type';
 
 import { ChatProfileAttachs } from './ChatProfileAttachs';
 import { Text, TextColor } from '@/shared/ui/Text';
@@ -33,27 +34,6 @@ import {
 
 interface ChatProfileViewProps {
 	userUid: string;
-}
-
-function formatDateRu(unixDate: string) {
-	const date = new Date(unixDate);
-	const day = String(date.getDate()).padStart(2, '0');
-	const months = [
-		'января',
-		'февраля',
-		'марта',
-		'апреля',
-		'мая',
-		'июня',
-		'июля',
-		'августа',
-		'сентября',
-		'октября',
-		'ноября',
-		'декабря'
-	];
-
-	return `${day} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
