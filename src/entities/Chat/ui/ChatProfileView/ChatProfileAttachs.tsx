@@ -5,7 +5,7 @@ import {
 	ChatLinkItem,
 	ChatMediaItem,
 	ChatVoiceItem
-} from './ChatProfile.type';
+} from './model/ChatProfile.type';
 
 import s from './ChatProfileView.module.scss';
 
