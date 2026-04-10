@@ -24,9 +24,10 @@ import {
 
 import { ChatProfileAttachs } from './ChatProfileAttachs';
 import { Text, TextColor } from '@/shared/ui/Text';
-import { ActionAdd, Close, CopyMessage, MenuIcon } from '@icons/index';
+import { ActionAdd, Check, Close, CopyMessage, MenuIcon } from '@icons/index';
 
 import s from './ChatProfileView.module.scss';
+import { useState } from 'react';
 
 interface ChatProfileViewProps {
 	userUid: string;
@@ -60,6 +61,28 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		enabled: chat?.notifications ?? false
 	};
 	const notificationsOn = notificationsState.enabled;
+
+	const [copiedId, setCopiedId] = useState<number | null>(null);
+
+	const copyToClipboard = async (text: string, label?: string) => {
+		if (!text) {
+			return;
+		}
+
+		try {
+			await navigator.clipboard.writeText(text);
+			console.log(`Скопировано: ${label || text}`);
+		} catch (err) {
+			console.error('Не удалось скопировать:', err);
+		}
+	};
+
+	const handleCopy = async (value: string, label: string, index: number) => {
+		await copyToClipboard(value, label);
+		setCopiedId(index);
+
+		setTimeout(() => setCopiedId(null), 2000);
+	};
 
 	/**
 	 * Обработчик переключения уведомлений
@@ -272,8 +295,13 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 									</p>
 								</div>
 								{item.type === 'primary' && (
-									<button className={s.copyIcon}>
-										<CopyMessage />
+									<button
+										className={copiedId === i ? s.checkIcon : s.copyIcon}
+										onClick={() => handleCopy(item.value, item.label, i)}
+										title={`Копировать ${item.label.toLowerCase()}`}
+										aria-label={`Копировать ${item.label}`}
+									>
+										{copiedId === i ? <Check /> : <CopyMessage />}
 									</button>
 								)}
 							</div>

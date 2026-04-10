@@ -102,6 +102,18 @@
 	}
 }
 
+.checkIcon {
+	margin-left: 2px;
+	width: 24px;
+	height: 24px;
+	display: grid;
+	place-items: center;
+
+	path {
+		stroke: #7769e1;
+	}
+}
+
 .row {
 	padding: 8px 16px;
 	display: flex;
