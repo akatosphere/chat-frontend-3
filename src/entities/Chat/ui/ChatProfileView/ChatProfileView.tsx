@@ -8,7 +8,8 @@ import {
 	selectChatByUid,
 	useUpdateChatPropertiesMutation,
 	useAddContactByPhoneMutation,
-	useUnblockUserMutation
+	useUnblockUserMutation,
+	useBlockUserMutation
 } from '../../api/chatApi';
 import { formatDateRu } from './lib/formatDateRu';
 
@@ -57,6 +58,11 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	// для обновления свойств чата (уведомления)
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
 
+	// Новые мутации
+	const [addContactByPhone] = useAddContactByPhoneMutation();
+	const [unblockUser] = useUnblockUserMutation();
+	const [blockUser] = useBlockUserMutation();
+
 	const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
 
 	const kebabMenuItems: KebabMenuItem[] = [
@@ -83,16 +89,11 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			icon: <Block />,
 			danger: true,
 			onClick: () => {
-				console.log('Заблокировать пользователя');
-				// TODO: добавить мутацию блокировки
+				handleBlock(); // ← Вот это было не так!
 				setIsKebabMenuOpen(false);
 			}
 		}
 	];
-
-	// Новые мутации
-	const [addContactByPhone] = useAddContactByPhoneMutation();
-	const [unblockUser] = useUnblockUserMutation();
 
 	/**
 	 * notificationsState
@@ -143,6 +144,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			console.error('Не удалось обновить уведомления:', error);
 		}
 	};
+
 	/**
 	 * Добавить пользователя в контакты
 	 */
@@ -174,6 +176,19 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			console.log('Пользователь успешно разблокирован');
 		} catch (error) {
 			console.error('Не удалось разблокировать пользователя', error);
+		}
+	};
+
+	/**
+	 * Заблокировать пользователя
+	 */
+	const handleBlock = async () => {
+		try {
+			console.log('Начинаем блокировку пользователя:', userUid);
+			await blockUser(userUid).unwrap();
+			console.log('Пользователь успешно заблокирован');
+		} catch (error) {
+			console.error('Ошибка при блокировке:', error);
 		}
 	};
 
@@ -297,8 +312,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			<div
 				className={s.profile}
 				style={{
-					backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 50%),
-						${data.avatar_url ? `url(${data.avatar_url})` : `url(/images/png/NoAvatarAvatar.png)`}`
+					backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 50%), ${data.avatar_url ? `url(${data.avatar_url})` : `url(/images/png/NoAvatarAvatar.png)`}`
 				}}
 			>
 				<p className={s.name}>

@@ -134,7 +134,19 @@ export const chatApi = rtkApi.injectEndpoints({
 				{ type: 'Chats', id: 'LIST' }
 			]
 		}),
-
+		// ─── Blacklist (блокировка) ────────────────────────────────
+		blockUser: build.mutation<void, string>({
+			query: userUid => ({
+				url: `/contact/blacklist/add/${userUid}/`,
+				method: 'POST',
+				body: {}
+			}),
+			invalidatesTags: (_, __, userUid) => [
+				{ type: 'Contact', id: userUid },
+				{ type: 'Chats' },
+				{ type: 'Chats', id: 'LIST' }
+			]
+		}),
 		// ─── Добавление в контакты ────────────────────────────────
 		addContactByPhone: build.mutation<
 			AddContactResponse,
@@ -215,6 +227,7 @@ export const {
 	useGetFilesQuery,
 	useGetLinksQuery,
 	useUnblockUserMutation,
+	useBlockUserMutation, // ← добавлено
 	useAddContactByPhoneMutation,
 	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
