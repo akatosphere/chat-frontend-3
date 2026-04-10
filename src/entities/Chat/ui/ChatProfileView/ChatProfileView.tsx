@@ -4,7 +4,9 @@ import {
 	useGetFilesQuery,
 	useGetLinksQuery,
 	selectChatByUid,
-	useUpdateChatPropertiesMutation
+	useUpdateChatPropertiesMutation,
+	useAddContactByPhoneMutation,
+	useUnblockUserMutation
 } from '../../api/chatApi';
 import { formatDateRu } from './lib/formatDateRu';
 
@@ -43,6 +45,10 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	// для обновления свойств чата (уведомления)
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
 
+	// Новые мутации
+	const [addContactByPhone] = useAddContactByPhoneMutation();
+	const [unblockUser] = useUnblockUserMutation();
+
 	/**
 	 * notificationsState
 	 * Источник: chat.list -> chat.notifications
@@ -68,6 +74,41 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			}).unwrap();
 		} catch (error) {
 			console.error('Не удалось обновить уведомления:', error);
+		}
+	};
+
+	/**
+	 * Добавить пользователя в контакты
+	 */
+	const handleAddToContacts = async () => {
+		if (!data?.username || !data?.first_name || !data?.last_name) {
+			console.warn(
+				'Недостаточно данных для добавления в контакты (нет телефона / имени)'
+			);
+			return;
+		}
+
+		try {
+			await addContactByPhone({
+				phone: data.username,
+				first_name: data.first_name,
+				last_name: data.last_name
+			}).unwrap();
+			console.log('Пользователь успешно добавлен в контакты');
+		} catch (error) {
+			console.error('Не удалось добавить в контакты:', error);
+		}
+	};
+
+	/**
+	 * Разблокировать пользователя
+	 */
+	const handleUnblock = async () => {
+		try {
+			await unblockUser(userUid).unwrap();
+			console.log('Пользователь успешно разблокирован');
+		} catch (error) {
+			console.error('Не удалось разблокировать пользователя:', error);
 		}
 	};
 
@@ -239,17 +280,19 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				)}
 			</div>
 
-			{/* скрыть если уже в контактах */}
-			<button className={s.action} onClick={() => {}}>
-				<ActionAdd />
-				<span>Добавить в контакты</span>
-			</button>
+			{!chat && !data.is_blocked && (
+				<button className={s.action} onClick={handleAddToContacts}>
+					<ActionAdd />
+					<span>Добавить в контакты</span>
+				</button>
+			)}
 
-			{/* скрыть если юзер не заблокирован */}
-			<button className={s.action} onClick={() => {}}>
-				<ActionAdd />
-				<span>Разблокировать</span>
-			</button>
+			{data.is_blocked && (
+				<button className={s.action} onClick={handleUnblock}>
+					<ActionAdd />
+					<span>Разблокировать</span>
+				</button>
+			)}
 
 			{/* Вложения (реальные данные) */}
 			<ChatProfileAttachs

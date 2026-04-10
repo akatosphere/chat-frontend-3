@@ -13,7 +13,9 @@ import type {
 	UpdateChatPropertiesRequest,
 	UpdateChatPropertiesResponse,
 	FilesResponse,
-	LinksResponse
+	LinksResponse,
+	AddContactByPhoneRequest,
+	AddContactResponse
 } from '../model/types/chat.types/chat.types';
 import {
 	CHATS_ORDERING,
@@ -120,6 +122,28 @@ export const chatApi = rtkApi.injectEndpoints({
 			keepUnusedDataFor: 60
 		}),
 
+		// ─── Blacklist (разблокировка) ─────────────────────────────
+		unblockUser: build.mutation<void, string>({
+			query: userUid => ({
+				url: `/contact/blacklist/delete/${userUid}/`,
+				method: 'DELETE'
+			}),
+			invalidatesTags: (_, __, userUid) => [{ type: 'Contact', id: userUid }]
+		}),
+
+		// ─── Добавление в контакты ────────────────────────────────
+		addContactByPhone: build.mutation<
+			AddContactResponse,
+			AddContactByPhoneRequest
+		>({
+			query: body => ({
+				url: '/contact/messenger-add-by-phone/',
+				method: 'POST',
+				body
+			}),
+			invalidatesTags: ['Contact', 'Chats']
+		}),
+
 		deleteChat: build.mutation({
 			query: (id: number) => ({
 				url: `/chat/list/${id}/`,
@@ -186,6 +210,8 @@ export const {
 	useUpdateChatPropertiesMutation,
 	useGetFilesQuery,
 	useGetLinksQuery,
+	useUnblockUserMutation,
+	useAddContactByPhoneMutation,
 	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
 
