@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
 	useGetContactByUidQuery,
 	useGetMessagesQuery,
@@ -24,10 +26,19 @@ import {
 
 import { ChatProfileAttachs } from './ChatProfileAttachs';
 import { Text, TextColor } from '@/shared/ui/Text';
-import { ActionAdd, Check, Close, CopyMessage, MenuIcon } from '@icons/index';
+import { KebabMenu, KebabMenuItem } from '@/shared/ui/KebabMenu';
+import {
+	ActionAdd,
+	Check,
+	Close,
+	CopyMessage,
+	MenuIcon,
+	Send,
+	Clear,
+	Block
+} from '@icons/index';
 
 import s from './ChatProfileView.module.scss';
-import { useState } from 'react';
 
 interface ChatProfileViewProps {
 	userUid: string;
@@ -35,11 +46,8 @@ interface ChatProfileViewProps {
 
 export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const { data, isLoading } = useGetContactByUidQuery(userUid);
-	const chat = useSelector(
-		(state: RootState) => selectChatByUid(state, userUid)
-
-		// kebab menu
-		// modal
+	const chat = useSelector((state: RootState) =>
+		selectChatByUid(state, userUid)
 	);
 
 	const { data: messages } = useGetMessagesQuery({ user_uid: userUid });
@@ -48,6 +56,39 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 
 	// для обновления свойств чата (уведомления)
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
+
+	const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
+
+	const kebabMenuItems: KebabMenuItem[] = [
+		{
+			text: 'Поделиться профилем',
+			icon: <Send />,
+			onClick: () => {
+				console.log('Поделиться профилем');
+				// TODO: реализовать логику шаринга
+				setIsKebabMenuOpen(false);
+			}
+		},
+		{
+			text: 'Очистить чат',
+			icon: <Clear />,
+			onClick: () => {
+				console.log('Очистить чат');
+				// TODO: добавить мутацию очистки чата при необходимости
+				setIsKebabMenuOpen(false);
+			}
+		},
+		{
+			text: 'Заблокировать',
+			icon: <Block />,
+			danger: true,
+			onClick: () => {
+				console.log('Заблокировать пользователя');
+				// TODO: добавить мутацию блокировки
+				setIsKebabMenuOpen(false);
+			}
+		}
+	];
 
 	// Новые мутации
 	const [addContactByPhone] = useAddContactByPhoneMutation();
@@ -233,8 +274,24 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 					<Close className={s.closeIcon} />
 					<p className={s.title}>Информация</p>
 				</div>
-				<MenuIcon className={s.menuIcon} />
+
+				<button
+					className={s.menuButton}
+					onClick={() => setIsKebabMenuOpen(prev => !prev)}
+					aria-label='Открыть меню'
+				>
+					<MenuIcon className={s.menuIcon} />
+				</button>
 			</div>
+
+			{isKebabMenuOpen && (
+				<KebabMenu
+					visible={isKebabMenuOpen}
+					items={kebabMenuItems}
+					onClose={() => setIsKebabMenuOpen(false)}
+					className={s.kebabMenu}
+				/>
+			)}
 
 			{/* Профиль пользователя */}
 			<div
