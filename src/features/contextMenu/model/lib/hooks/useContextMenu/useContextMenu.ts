@@ -8,7 +8,7 @@ interface ContextMenuState {
 	items: KebabMenuItem[];
 }
 
-export const useContextMenu = () => {
+export const useContextMenu = (onHide?: () => void) => {
 	const [state, setState] = useState<ContextMenuState>({
 		isVisible: false,
 		position: null,
@@ -61,7 +61,8 @@ export const useContextMenu = () => {
 
 	const hideMenu = useCallback(() => {
 		setState({ isVisible: false, position: null, items: [] });
-	}, []);
+		onHide?.();
+	}, [onHide]);
 
 	const handleContextMenu = useCallback(
 		(e: React.MouseEvent, items: KebabMenuItem[]) => {
