@@ -106,9 +106,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			await unblockUser(userUid).unwrap();
 			console.log('Пользователь успешно разблокирован');
 		} catch (error) {
-			const message =
-				error?.data?.detail || 'Не удалось разблокировать пользователя';
-			console.error(message, error);
+			console.error('Не удалось разблокировать пользователя', error);
 		}
 	};
 
