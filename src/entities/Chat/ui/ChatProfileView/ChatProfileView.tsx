@@ -3,7 +3,8 @@ import {
 	useGetMessagesQuery,
 	useGetFilesQuery,
 	useGetLinksQuery,
-	selectChatByUid
+	selectChatByUid,
+	useUpdateChatPropertiesMutation
 } from '../../api/chatApi';
 import { formatDateRu } from './lib/formatDateRu';
 
@@ -25,23 +26,11 @@ import { Close, CopyMessage, MenuIcon } from '@icons/index';
 
 import s from './ChatProfileView.module.scss';
 
-import {
-	mockMediaItems,
-	mockFileItems,
-	mockVoiceItems,
-	mockLinkItems
-} from './mockData';
-
 interface ChatProfileViewProps {
 	userUid: string;
 }
 
 export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
-	// todo
-	// добавить адаптивность
-	// кнопка добавить в контакты
-	// кнопка разблокировать
-
 	const { data, isLoading } = useGetContactByUidQuery(userUid);
 	const chat = useSelector((state: RootState) =>
 		selectChatByUid(state, userUid)
@@ -51,10 +40,12 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const { data: filesResponse } = useGetFilesQuery({ user_uid: userUid });
 	const { data: linksResponse } = useGetLinksQuery({ user_uid: userUid });
 
+	// для обновления свойств чата (уведомления)
+	const [updateChatProperties] = useUpdateChatPropertiesMutation();
+
 	/**
 	 * notificationsState
-	 * Источник: chat.list
-	 * Поле: chat.notifications
+	 * Источник: chat.list -> chat.notifications
 	 */
 	const notificationsState: ChatNotificationsState = {
 		enabled: chat?.notifications ?? false
@@ -62,9 +53,26 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const notificationsOn = notificationsState.enabled;
 
 	/**
-	 * mediaItems
-	 * Источник: messages
-	 * Берем вложения (attachments) и фильтруем image/video
+	 * Обработчик переключения уведомлений
+	 */
+	const handleToggleNotifications = async () => {
+		if (!chat?.id) {
+			console.warn('ID чата не найден - уведомления нельзя переключить');
+			return;
+		}
+
+		try {
+			await updateChatProperties({
+				id: chat.id,
+				notifications: !notificationsOn
+			}).unwrap();
+		} catch (error) {
+			console.error('Не удалось обновить уведомления:', error);
+		}
+	};
+
+	/**
+	 * mediaItems - изображения и видео из сообщений
 	 */
 	const mediaItems: ChatMediaItem[] =
 		messages?.results
@@ -78,8 +86,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			})) ?? [];
 
 	/**
-	 * fileItems
-	 * Источник: GET /chat/message/files/{user_uid}
+	 * fileItems - файлы из отдельного эндпоинта
 	 */
 	const fileItems: ChatFileItem[] =
 		filesResponse?.results.map(f => ({
@@ -92,8 +99,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		})) ?? [];
 
 	/**
-	 * linkItems
-	 * Источник: GET /chat/message/links/{user_uid}
+	 * linkItems - ссылки из отдельного эндпоинта
 	 */
 	const linkItems: ChatLinkItem[] =
 		linksResponse?.results.map(l => ({
@@ -104,9 +110,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		})) ?? [];
 
 	/**
-	 * voiceItems
-	 * Источник: files
-	 * Фильтрация по audio
+	 * voiceItems - голосовые сообщения (фильтр по audio)
 	 */
 	const voiceItems: ChatVoiceItem[] =
 		filesResponse?.results
@@ -133,106 +137,115 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		);
 	}
 
-	if (data) {
-		const was_online_at = data.was_online_at;
-		const status = data.is_online
-			? 'в сети'
-			: was_online_at
-				? `был(а) ${new Date(was_online_at * 1000).toLocaleTimeString('ru-RU', {
-						hour: '2-digit',
-						minute: '2-digit'
-					})}`
-				: 'не в сети';
+	// Данные для отображения профиля
+	const was_online_at = data.was_online_at;
+	const status = data.is_online
+		? 'в сети'
+		: was_online_at
+			? `был(а) ${new Date(was_online_at * 1000).toLocaleTimeString('ru-RU', {
+					hour: '2-digit',
+					minute: '2-digit'
+				})}`
+			: 'не в сети';
 
-		const birthday = formatDateRu(data.birthday);
+	const birthday = formatDateRu(data.birthday);
 
-		const rows = [
-			{ label: 'Никнейм', value: `@${data.nickname}`, type: 'primary' },
-			{ label: 'Номер телефона', value: data.username, type: 'primary' },
-			{ label: 'День рождения', value: birthday, type: 'default' },
-			{ label: 'О себе', value: data.additional_information, type: 'default' }
-		];
+	const rows = [
+		{ label: 'Никнейм', value: `@${data.nickname}`, type: 'primary' as const },
+		{ label: 'Номер телефона', value: data.username, type: 'primary' as const },
+		{ label: 'День рождения', value: birthday, type: 'default' as const },
+		{
+			label: 'О себе',
+			value: data.additional_information,
+			type: 'default' as const
+		}
+	];
 
-		return (
-			<div className={s.container}>
-				<div className={s.header}>
-					<div className={s.headerLeft}>
-						<Close className={s.closeIcon} />
-						<p className={s.title}>Информация</p>
-					</div>
-					<MenuIcon className={s.menuIcon} />
+	return (
+		<div className={s.container}>
+			<div className={s.header}>
+				<div className={s.headerLeft}>
+					<Close className={s.closeIcon} />
+					<p className={s.title}>Информация</p>
 				</div>
-
-				{/* <div
-					className={s.profile}
-					style={{
-						backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 50%),
-							${data.avatar_url ? `url(${data.avatar_url})` : `url(/images/png/NoAvatarAvatar.png)`}`
-					}}
-				>
-					<p className={s.name}>
-						{data.first_name} {data.last_name}
-					</p>
-					<p className={s.status}>{status}</p>
-				</div>
-
-				<div className={s.notifications}>
-					<p>Уведомления</p>
-					<button>
-						<svg width='60' height='48' viewBox='0 0 60 48' fill='none'>
-							<rect
-								y='8'
-								width='52'
-								height='32'
-								rx='16'
-								fill={notificationsOn ? '#7769E1' : '#b3b3b3'}
-							/>
-							<rect
-								x={notificationsOn ? '24' : '4'}
-								y='12'
-								width='24'
-								height='24'
-								rx='12'
-								fill='white'
-							/>
-						</svg>
-					</button>
-				</div>
-
-				<div className={s.card}>
-					{rows.map(
-						(item, i) =>
-							item.value && (
-								<div key={i} className={s.row}>
-									<div className={s.rowText}>
-										<p className={s.label}>{item.label}</p>
-										<p
-											className={
-												item.type === 'primary'
-													? s.valuePrimary
-													: s.valueDefault
-											}
-										>
-											{item.value}
-										</p>
-									</div>
-									{item.type === 'primary' && (
-										<button className={s.copyIcon}>
-											<CopyMessage />
-										</button>
-									)}
-								</div>
-							)
-					)}
-				</div> */}
-
-				<ChatProfileAttachs
-					mediaItems={mockMediaItems}
-					fileItems={mockFileItems}
-					voiceItems={mockVoiceItems}
-					linkItems={mockLinkItems}
-				/>
+				<MenuIcon className={s.menuIcon} />
 			</div>
-		);
-	}
+
+			{/* Профиль пользователя */}
+			<div
+				className={s.profile}
+				style={{
+					backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 50%),
+						${data.avatar_url ? `url(${data.avatar_url})` : `url(/images/png/NoAvatarAvatar.png)`}`
+				}}
+			>
+				<p className={s.name}>
+					{data.first_name} {data.last_name}
+				</p>
+				<p className={s.status}>{status}</p>
+			</div>
+
+			{/* Переключатель уведомлений */}
+			<div className={s.notifications}>
+				<p>Уведомления</p>
+				<button
+					onClick={handleToggleNotifications}
+					className={s.toggleButton}
+					aria-label='Переключить уведомления'
+				>
+					<svg width='60' height='48' viewBox='0 0 60 48' fill='none'>
+						<rect
+							y='8'
+							width='52'
+							height='32'
+							rx='16'
+							fill={notificationsOn ? '#7769E1' : '#b3b3b3'}
+						/>
+						<rect
+							x={notificationsOn ? '24' : '4'}
+							y='12'
+							width='24'
+							height='24'
+							rx='12'
+							fill='white'
+						/>
+					</svg>
+				</button>
+			</div>
+
+			{/* Карточка с данными */}
+			<div className={s.card}>
+				{rows.map(
+					(item, i) =>
+						item.value && (
+							<div key={i} className={s.row}>
+								<div className={s.rowText}>
+									<p className={s.label}>{item.label}</p>
+									<p
+										className={
+											item.type === 'primary' ? s.valuePrimary : s.valueDefault
+										}
+									>
+										{item.value}
+									</p>
+								</div>
+								{item.type === 'primary' && (
+									<button className={s.copyIcon}>
+										<CopyMessage />
+									</button>
+								)}
+							</div>
+						)
+				)}
+			</div>
+
+			{/* Вложения (реальные данные) */}
+			<ChatProfileAttachs
+				mediaItems={mediaItems}
+				fileItems={fileItems}
+				voiceItems={voiceItems}
+				linkItems={linkItems}
+			/>
+		</div>
+	);
 };
