@@ -1,3 +1,4 @@
+export { default as ActionAdd } from './ActionAdd.svg';
 export { default as AddContact } from './AddContact.svg';
 export { default as Apple } from './Apple.svg';
 export { default as Back } from './Back.svg';

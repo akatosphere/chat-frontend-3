@@ -22,7 +22,7 @@ import {
 
 import { ChatProfileAttachs } from './ChatProfileAttachs';
 import { Text, TextColor } from '@/shared/ui/Text';
-import { Close, CopyMessage, MenuIcon } from '@icons/index';
+import { ActionAdd, Close, CopyMessage, MenuIcon } from '@icons/index';
 
 import s from './ChatProfileView.module.scss';
 
@@ -238,6 +238,18 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 						)
 				)}
 			</div>
+
+			{/* скрыть если уже в контактах */}
+			<button className={s.action} onClick={() => {}}>
+				<ActionAdd />
+				<span>Добавить в контакты</span>
+			</button>
+
+			{/* скрыть если юзер не заблокирован */}
+			<button className={s.action} onClick={() => {}}>
+				<ActionAdd />
+				<span>Разблокировать</span>
+			</button>
 
 			{/* Вложения (реальные данные) */}
 			<ChatProfileAttachs
