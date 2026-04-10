@@ -132,6 +132,10 @@
 	color: black;
 }
 
+.toggleButton rect {
+	transition: 200ms ease;
+}
+
 .action {
 	padding: 0.875rem 1rem;
 	display: flex;
