@@ -92,10 +92,9 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				last_name: data.last_name
 			}).unwrap();
 
-			console.log('✅ Пользователь успешно добавлен в контакты');
+			console.log('Пользователь успешно добавлен в контакты');
 		} catch (error) {
-			const message = error?.data?.detail || 'Не удалось добавить в контакты';
-			console.error('❌', message, error);
+			console.error('Не удалось добавить в контакты', error);
 		}
 	};
 
