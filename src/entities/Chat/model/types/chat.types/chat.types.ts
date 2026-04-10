@@ -604,3 +604,49 @@ export type SendMessageParams = {
 	forwardIds?: string[];
 	attachmentUids?: string[];
 };
+
+export interface FilesResponse {
+	results: {
+		uid: string;
+		download_name: string;
+		file_url: string;
+		file_type: string;
+		size: number;
+		created_at: string;
+		media_kind?: string;
+	}[];
+}
+
+export interface LinksResponse {
+	results: {
+		url: string;
+		title: string;
+		from_user: {
+			first_name: string;
+			last_name: string;
+		};
+		created_at: string;
+	}[];
+}
+
+export interface Contact {
+	uid: string;
+	is_deleted: boolean;
+	username: string;
+	nickname: string;
+	first_name: string;
+	last_name: string;
+	avatar: string;
+	avatar_url: string;
+	avatar_webp: string;
+	avatar_webp_url: string;
+	avatar_small_url: string;
+	avatar_master_url: string;
+	is_filled: boolean;
+	additional_information: string;
+	birthday: string;
+	is_online: boolean;
+	was_online_at: number;
+	is_blocked: boolean;
+	chat_id: number;
+}
