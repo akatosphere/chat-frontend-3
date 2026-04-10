@@ -76,15 +76,12 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			console.error('Не удалось обновить уведомления:', error);
 		}
 	};
-
 	/**
 	 * Добавить пользователя в контакты
 	 */
 	const handleAddToContacts = async () => {
 		if (!data?.username || !data?.first_name || !data?.last_name) {
-			console.warn(
-				'Недостаточно данных для добавления в контакты (нет телефона / имени)'
-			);
+			console.warn('Недостаточно данных для добавления в контакты');
 			return;
 		}
 
@@ -94,9 +91,11 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				first_name: data.first_name,
 				last_name: data.last_name
 			}).unwrap();
-			console.log('Пользователь успешно добавлен в контакты');
+
+			console.log('✅ Пользователь успешно добавлен в контакты');
 		} catch (error) {
-			console.error('Не удалось добавить в контакты:', error);
+			const message = error?.data?.detail || 'Не удалось добавить в контакты';
+			console.error('❌', message, error);
 		}
 	};
 
@@ -108,7 +107,9 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			await unblockUser(userUid).unwrap();
 			console.log('Пользователь успешно разблокирован');
 		} catch (error) {
-			console.error('Не удалось разблокировать пользователя:', error);
+			const message =
+				error?.data?.detail || 'Не удалось разблокировать пользователя';
+			console.error(message, error);
 		}
 	};
 

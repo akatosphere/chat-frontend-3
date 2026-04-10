@@ -128,7 +128,11 @@ export const chatApi = rtkApi.injectEndpoints({
 				url: `/contact/blacklist/delete/${userUid}/`,
 				method: 'DELETE'
 			}),
-			invalidatesTags: (_, __, userUid) => [{ type: 'Contact', id: userUid }]
+			invalidatesTags: (_, __, userUid) => [
+				{ type: 'Contact', id: userUid },
+				{ type: 'Chats' },
+				{ type: 'Chats', id: 'LIST' }
+			]
 		}),
 
 		// ─── Добавление в контакты ────────────────────────────────
