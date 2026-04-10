@@ -3,6 +3,7 @@
 import { FormAuthItem, useSetAuthStep } from '@/features/auth';
 import { formatPhone } from '@/shared/lib/formatPhone/formatPhone';
 import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
+import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery'; // ваш хук
 import {
 	Button,
 	ButtonColor,
@@ -18,11 +19,14 @@ import {
 	TextSize,
 	TextType
 } from '@/shared/ui/Text';
-import { useEffect, useRef, useState } from 'react';
-import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
-import { useSendPhoneMutation } from '../model/api/authApi';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import {
+	useCheckStatusMutation,
+	useSendPhoneMutation
+} from '../../../api/authApi';
 import { formItems } from '../model/const/formItems';
-import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery'; // ваш хук
 import styles from './EnterPhoneForm.module.scss';
 
 interface LoginPhoneForm {
@@ -34,12 +38,18 @@ export const EnterPhoneForm = ({
 }: {
 	containerRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
-	const { isDisabledCodeAttempts, phone_number: phone } = useAppSelector(
-		state => state.auth
-	);
+	const {
+		isDisabledCodeAttempts,
+		phone_number: phone,
+		phoneSession
+	} = useAppSelector(state => state.auth);
+
 	const [sendPhone] = useSendPhoneMutation();
+	const [checkStatus, { data: statusData, isLoading: isPolling }] =
+		useCheckStatusMutation();
+
+	const router = useRouter();
 	const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-	const [disabled, setDisabled] = useState(true);
 	const confirmBtnRef = useRef<HTMLButtonElement>(null);
 	const setStep = useSetAuthStep();
 	const formattedPhone = formatPhone(phone);
@@ -47,25 +57,24 @@ export const EnterPhoneForm = ({
 	const isMobile = useMediaQuery();
 	const overlayMode = isMobile ? 'full' : 'container';
 	const borderRadius = isMobile ? '8px' : '16px';
+
 	const methods = useForm<LoginPhoneForm>({
 		defaultValues: {
 			phone_number: formattedPhone || ''
 		}
 	});
 	const { setFocus } = methods;
+
 	const phone_number = useWatch({
 		control: methods.control,
 		name: 'phone_number'
 	});
 
-	useEffect(() => {
-		setFocus('phone_number');
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	const disabled = isDisabledCodeAttempts || phone_number.length !== 16;
 
 	useEffect(() => {
-		setDisabled(isDisabledCodeAttempts || phone_number.length !== 16);
-	}, [isDisabledCodeAttempts, phone_number.length]);
+		setFocus('phone_number');
+	}, [setFocus]);
 
 	useEffect(() => {
 		if (isModalOpen && confirmBtnRef.current) {
@@ -73,25 +82,104 @@ export const EnterPhoneForm = ({
 		}
 	}, [isModalOpen]);
 
+	useEffect(() => {
+		if (!phoneSession?.session_uid || !phoneSession.session_secret) {
+			return;
+		}
+
+		if (
+			statusData &&
+			(statusData.status === 'consumed' ||
+				statusData.status === 'verified' ||
+				!statusData.is_claim_available)
+		) {
+			return;
+		}
+
+		const intervalMs = phoneSession.poll_interval_seconds
+			? phoneSession.poll_interval_seconds * 1000
+			: 2000;
+
+		const interval = setInterval(async () => {
+			try {
+				await checkStatus({
+					session_uid: phoneSession.session_uid!,
+					session_secret: phoneSession.session_secret!
+				});
+			} catch (error) {
+				if (process.env.NODE_ENV === 'development') {
+					console.error('claimTokens error:', error);
+				}
+			}
+		}, intervalMs);
+
+		return () => clearInterval(interval);
+	}, [
+		phoneSession?.session_uid,
+		phoneSession?.session_secret,
+		checkStatus,
+		phoneSession?.poll_interval_seconds,
+		phoneSession?.blocked_until,
+		statusData
+	]);
+
+	const claimTokens = useCallback(async () => {
+		if (!phoneSession?.session_uid || !phoneSession.session_secret) {
+			return;
+		}
+
+		try {
+			const response = await fetch('/api/auth/setTokens', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					session_uid: phoneSession.session_uid,
+					session_secret: phoneSession.session_secret
+				})
+			});
+
+			if (!response.ok) {
+				const err = await response.json();
+				throw new Error(err.message);
+			}
+
+			const data = await response.json();
+			if (data.success) {
+				if (data.is_filled) {
+					router.push('/chats');
+				} else {
+					setStep('register');
+				}
+			}
+		} catch (_) {}
+	}, [
+		phoneSession?.session_uid,
+		phoneSession?.session_secret,
+		setStep,
+		router
+	]);
+
+	useEffect(() => {
+		if (statusData?.status === 'verified' && statusData.is_claim_available) {
+			claimTokens();
+		}
+	}, [statusData?.status, statusData?.is_claim_available, claimTokens]);
+
 	const onModalClose = () => {
 		setIsModalOpen(false);
 	};
+
 	const onConfirm = async () => {
 		const formattedPhone = phone_number.replace(/[^\d+]/g, '');
 		await sendPhone({ phone_number: formattedPhone });
-		setStep('code');
-		setIsModalOpen(false);
-	};
-
-	const onSubmit: SubmitHandler<LoginPhoneForm> = () => {
-		setIsModalOpen(true);
+		onModalClose();
 	};
 
 	return (
 		<>
 			<Form<LoginPhoneForm>
 				methods={methods}
-				onSubmit={onSubmit}
+				onSubmit={() => setIsModalOpen(true)}
 				className={styles.form}
 			>
 				{formItems.map(item => (

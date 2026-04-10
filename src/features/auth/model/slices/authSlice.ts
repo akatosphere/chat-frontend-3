@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AuthSchema } from '../types/AuthSchema';
+import { AuthSchema, PhoneSessionData } from '../types/AuthSchema';
 import { AuthStep } from '../types/authStep';
 
 const initialState: AuthSchema = {
@@ -12,7 +12,9 @@ const initialState: AuthSchema = {
 	isDisabledCodeAttempts: false,
 	blockingTime: 0,
 	attemptCounter: 0,
-	is_filled: false
+	is_filled: false,
+	accessToken: null,
+	currentUserId: null
 };
 
 const authSlice = createSlice({
@@ -21,7 +23,6 @@ const authSlice = createSlice({
 	reducers: {
 		// Флаг для предотвращения race condition при refresh
 		setRefreshing: (state, action: PayloadAction<boolean>) => {
-			state.isRefreshing = action.payload;
 			state.isRefreshing = action.payload;
 		},
 
@@ -51,8 +52,13 @@ const authSlice = createSlice({
 			state.phone_number = action.payload.phone_number;
 		},
 
+		setPhoneSession: (state, action: PayloadAction<PhoneSessionData>) => {
+			state.phoneSession = action.payload;
+		},
+
 		clearPhoneData: state => {
-			delete state.phone_number;
+			state.phone_number = undefined;
+			state.phoneSession = undefined;
 		},
 
 		setStep: (state, action: PayloadAction<AuthStep>) => {
@@ -62,6 +68,14 @@ const authSlice = createSlice({
 				state.stepHistory.push(nextStep);
 				state.step = nextStep;
 			}
+		},
+		setCurrentUserId: (state, action: PayloadAction<string>) => {
+			state.currentUserId = action.payload;
+		},
+
+		// Опционально: маркер авторизации
+		setAuthStatus: (state, action: PayloadAction<{ accessToken: string }>) => {
+			state.accessToken = action.payload.accessToken;
 		},
 
 		goBack: state => {

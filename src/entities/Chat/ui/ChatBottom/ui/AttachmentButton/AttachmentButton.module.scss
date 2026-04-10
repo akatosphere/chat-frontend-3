@@ -1,13 +1,58 @@
+.wrapper {
+	position: relative;
+	display: inline-block;
+	overflow: visible;
+}
+
 .button {
 	width: 36px;
+	min-width: 36px;
 	height: 36px;
 	background: none;
 	border: none;
 	outline: inherit;
+	cursor: pointer;
 }
 
 .icon {
-	width: 15px;
-	height: 27px;
-	transform: rotate(45deg);
+	width: 100%;
+	height: 100%;
+	color: var(--color-primary);
+	display: block;
+}
+
+.menu {
+	position: absolute;
+	bottom: 135%;
+	right: -225px;
+	margin-bottom: 8px;
+	z-index: 1000;
+	box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 20%);
+	width: 250px;
+}
+
+.menuCentered {
+	left: 50%;
+	right: auto;
+	transform: translateX(-50%);
+}
+
+.menuIcon {
+	width: 21px;
+	height: 21px;
+	color: var(--color-gray-500);
+	flex-shrink: 0;
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	border: 0;
+	padding: 0;
+	white-space: nowrap;
+	clip-path: inset(100%);
+	clip: rect(0 0 0 0);
+	overflow: hidden;
 }

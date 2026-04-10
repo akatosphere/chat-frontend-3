@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useDebounce } from '@/shared/lib/hooks/useDebounce/useDebounce';
+import { CONTACTS_SEARCH_DEFAULTS } from '@/shared/model';
 
 export interface SearchSectionData<T> {
 	title: string;
@@ -17,9 +18,9 @@ export function useHybridSearch<
 	localData: T[],
 	localFilterFn: (items: T[], searchTerm: string) => T[],
 	globalSearchFn?: (searchTerm: string, signal?: AbortSignal) => Promise<T[]>,
-	debounceDelay: number = 300,
-	globalPrefix: string = '@',
-	globalMinLength: number = 3
+	debounceDelay: number = CONTACTS_SEARCH_DEFAULTS.debounceMs,
+	globalPrefix: string = CONTACTS_SEARCH_DEFAULTS.prefix,
+	globalMinLength: number = CONTACTS_SEARCH_DEFAULTS.minLength
 ) {
 	const [searchTerm, setSearchTerm] = useState('');
 

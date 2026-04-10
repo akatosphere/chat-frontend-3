@@ -15,6 +15,12 @@ import type {
 	FilesResponse,
 	LinksResponse
 } from '../model/types/chat.types/chat.types';
+import {
+	CHATS_ORDERING,
+	CHATS_PAGE_SIZE,
+	MESSAGES_ORDERING,
+	MESSAGES_PAGE_SIZE
+} from '@/shared/model';
 
 // ─────────────────────────────────────────────────────────────
 //  RTK QUERY API
@@ -26,8 +32,8 @@ export const chatApi = rtkApi.injectEndpoints({
 		getChats: build.query<ChatListResponse, GetChatsRequest | void>({
 			query: query => {
 				const params: Record<string, string | number | boolean | undefined> = {
-					page_size: query?.pageSize ?? 30,
-					ordering: query?.ordering ?? '-last_activity_at',
+					page_size: query?.pageSize ?? CHATS_PAGE_SIZE,
+					ordering: query?.ordering ?? CHATS_ORDERING,
 					page: query?.page,
 					search: query?.search?.trim() || undefined,
 					is_active: query?.isActive,
@@ -67,15 +73,21 @@ export const chatApi = rtkApi.injectEndpoints({
 
 		// ─── Сообщения чата (НОВЫЙ эндпоинт) ────────────────────
 		getMessages: build.query<MessageListResponse, GetMessagesRequest>({
-			query: ({ user_uid, ...params }) => ({
-				url: `/chat/message/text/${user_uid}/`,
-				params: {
-					page_size: 30,
-					ordering: '-created_at',
-					...params
-				},
-				method: 'GET'
-			}),
+			query: args => {
+				//user_uid должен быть в пути, а не в params
+				return {
+					url: `/chat/message/text/${args.user_uid}/`,
+					params: {
+						// Остальные параметры — в query string
+						page_size: args.page_size ?? MESSAGES_PAGE_SIZE,
+						ordering: args.ordering ?? MESSAGES_ORDERING,
+						page: args.page,
+						search: args.search
+					},
+					method: 'GET'
+				};
+			},
+
 			providesTags: result =>
 				result
 					? [
@@ -180,17 +192,20 @@ export const {
 // ─────────────────────────────────────────────────────────────
 //  СЕЛЕКТОРЫ
 // ─────────────────────────────────────────────────────────────
-
 export const selectChatByUid = createSelector(
 	[(state: RootState) => state, (_: RootState, chatUid: string) => chatUid],
 	(state, chatUid) => {
 		const chatsData = chatApi.endpoints.getChats.select({
-			pageSize: 30,
-			ordering: '-last_activity_at'
+			pageSize: CHATS_PAGE_SIZE,
+			ordering: CHATS_ORDERING
 		})(state);
 
+		//  Ищем чат, где chat.uid === chatUid (UID собеседника)
+		// ИЛИ chat_key === chatUid (для групп)
 		return chatsData.data?.results?.find(
-			(chat: Chat) => chat.chat.uid === chatUid
+			(chat: Chat) =>
+				chat.chat?.uid === chatUid || // личный чат
+				chat.chat_key === chatUid // группа/канал
 		);
 	}
 );

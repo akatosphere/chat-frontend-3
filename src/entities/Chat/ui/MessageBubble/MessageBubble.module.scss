@@ -9,6 +9,10 @@
 	display: flex;
 	align-items: flex-end;
 	gap: 4px;
+
+	&:focus-visible {
+		outline: none;
+	}
 }
 
 .messageAvatarSlot {
@@ -32,13 +36,14 @@
 	width: fit-content;
 	max-width: 70%;
 	display: flex;
-	flex-direction: column; // теперь колонка
+	flex-direction: column;
 	padding: 10px 12px;
 	border-radius: 16px;
 	gap: 4px;
 
 	&_sent {
 		align-self: flex-end;
+		margin-left: auto;
 		background: #d8f5f0;
 		border-bottom-right-radius: 4px;
 	}
@@ -87,5 +92,23 @@
 		path {
 			fill: #7769e1;
 		}
+	}
+}
+
+//  Подсветка текста поиска внутри сообщения
+.searchHighlight {
+	background-color: var(--color-yellow);
+	padding: 0 2px;
+	border-radius: 2px;
+	box-decoration-break: clone;
+}
+
+//  Активное вхождение (как в браузере)
+.searchHighlight_active {
+	background-color: var(--color-violet-100);
+	box-shadow: 0 0 0 2px var(--color-gray-100);
+
+	&:focus-visible {
+		outline: none;
 	}
 }

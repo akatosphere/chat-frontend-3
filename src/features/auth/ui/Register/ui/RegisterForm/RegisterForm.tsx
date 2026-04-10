@@ -2,6 +2,8 @@
 
 import { useEditProfileMutation } from '@/entities/Profile/api/editProfile.api';
 import { FormAuthItem, useSetAuthStep } from '@/features/auth';
+import { useSendNicknameMutation } from '@/features/auth/api/authApi';
+import { IRegister } from '@/features/auth/model/types/auth.types';
 import { useDebounce } from '@/shared/lib/hooks/useDebounce/useDebounce';
 import {
 	Button,
@@ -23,10 +25,8 @@ import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
-import { useSendNicknameMutation } from '../../api/registerApi';
 import { registerFormItems } from '../../model/const/registerFormItems';
 import { getServerErrorMessage } from '../../model/lib/getServerErrorMessage';
-import { IRegister } from '../../model/types/types';
 import styles from './RegisterForm.module.scss';
 
 export function RegisterForm() {
@@ -34,7 +34,9 @@ export function RegisterForm() {
 	const methods = useForm<IRegister>({
 		mode: 'onBlur'
 	});
+
 	const { control, setError, clearErrors } = methods;
+
 	const name = useWatch({ control, name: 'name' });
 	const nickname = useWatch({ control, name: 'nickname' });
 	const [

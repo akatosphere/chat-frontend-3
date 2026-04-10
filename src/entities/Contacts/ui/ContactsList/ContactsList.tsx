@@ -30,16 +30,13 @@ import { SearchSection } from '@/shared/ui/SearchSection';
 import { mapGlobalSearchToContactsSchema } from '../../model/mapper/contactsMapper/contactsMapper';
 
 import cls from './ContactsList.module.scss';
-
-// ─────────────────────────────────────────────────────────────
-//  КОНСТАНТЫ
-// ─────────────────────────────────────────────────────────────
-const CONFIG = {
-	LOCAL_CACHE_SIZE: 30,
-	GLOBAL_SEARCH_MIN_LENGTH: 3,
-	SEARCH_DEBOUNCE_MS: 300,
-	GLOBAL_SEARCH_PREFIX: '@'
-} as const;
+import {
+	CONTACTS_PAGE_SIZE,
+	CONTACTS_ORDERING,
+	CONTACTS_GLOBAL_SEARCH_MIN_LENGTH,
+	CONTACTS_GLOBAL_SEARCH_PREFIX,
+	CONTACTS_SEARCH_DEBOUNCE_MS
+} from '@/shared/model';
 
 export interface ContactsListProps {
 	selectedContactUid?: string | null;
@@ -84,8 +81,8 @@ export const ContactsList = memo(
 		// ─────────────────────────────────────────────────────────────
 		const { data: contactsResponse, isLoading: isCacheLoading } =
 			useGetContactsQuery({
-				pageSize: CONFIG.LOCAL_CACHE_SIZE,
-				ordering: '-created_at'
+				pageSize: CONTACTS_PAGE_SIZE,
+				ordering: CONTACTS_ORDERING
 			} as GetContactsRequest);
 
 		const [searchGlobal] = useLazySearchGlobalContactsQuery();
@@ -197,10 +194,10 @@ export const ContactsList = memo(
 		const fetchGlobalContacts = useCallback(
 			async (searchTerm: string): Promise<ContactsSchema[]> => {
 				const query = searchTerm
-					.replace(CONFIG.GLOBAL_SEARCH_PREFIX, '')
+					.replace(CONTACTS_GLOBAL_SEARCH_PREFIX, '')
 					.trim();
 
-				if (query.length < CONFIG.GLOBAL_SEARCH_MIN_LENGTH) {
+				if (query.length < CONTACTS_GLOBAL_SEARCH_MIN_LENGTH) {
 					return [];
 				}
 
@@ -238,9 +235,9 @@ export const ContactsList = memo(
 			localContacts,
 			filterContactsWrapper,
 			fetchGlobalContacts,
-			CONFIG.SEARCH_DEBOUNCE_MS,
-			CONFIG.GLOBAL_SEARCH_PREFIX,
-			CONFIG.GLOBAL_SEARCH_MIN_LENGTH
+			CONTACTS_SEARCH_DEBOUNCE_MS,
+			CONTACTS_GLOBAL_SEARCH_PREFIX,
+			CONTACTS_GLOBAL_SEARCH_MIN_LENGTH
 		);
 		// ─────────────────────────────────────────────────────────────
 		//  DERIVED STATE
@@ -250,7 +247,7 @@ export const ContactsList = memo(
 			[searchTerm]
 		);
 
-		const hasMinLength = searchLength >= CONFIG.GLOBAL_SEARCH_MIN_LENGTH;
+		const hasMinLength = searchLength >= CONTACTS_GLOBAL_SEARCH_MIN_LENGTH;
 		const selectedCount = selectedContacts.size;
 
 		const statusFlags = useMemo(() => {

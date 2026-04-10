@@ -2,6 +2,7 @@ export { ChatListItem } from './ui/ChatListItem/ChatListItem';
 export { ChatList } from './ui/ChatList/ChatList';
 export { MessagesList } from './ui/MessagesList/MessagesList';
 export { ChatHeader } from './ui/ChatHeader/ChatHeader';
+export { MessageFormComponent } from './ui/ChatBottom/ui/MessageFormComponent/MessageFormComponent';
 export { ChatView } from './ui/ChatView/ChatView';
 
 export type { ChatListProps } from './ui/ChatList/ChatList';

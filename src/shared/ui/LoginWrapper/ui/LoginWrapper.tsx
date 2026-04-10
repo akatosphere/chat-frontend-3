@@ -1,3 +1,4 @@
+import { useAuthStep } from '@/features/auth';
 import { useAuthGoBack } from '@/features/auth/model/lib/hooks/useAuthGoBack';
 import { classNames } from '@/shared/lib/classNames/classNames';
 import { Button, ButtonTheme } from '@/shared/ui/Button';
@@ -11,7 +12,6 @@ import {
 import { Back, Logo } from '@icons/index';
 import { ReactNode } from 'react';
 import styles from './LoginWrapper.module.scss';
-import { useAuthStep } from '@/features/auth';
 
 interface LoginWrapperProps {
 	children: ReactNode;
@@ -40,16 +40,9 @@ export function LoginWrapper({ children }: LoginWrapperProps) {
 			break;
 	}
 
-	console.log(step);
-
 	return (
 		<div className={styles.loginWrapper}>
-			<Logo
-				className={classNames(styles.logo, {
-					// [styles.support]: step === 'support'
-				})}
-			/>
-
+			<Logo className={classNames(styles.logo)} />
 			<Button
 				theme={ButtonTheme.CLEAR}
 				className={styles.btnBack}
@@ -58,7 +51,6 @@ export function LoginWrapper({ children }: LoginWrapperProps) {
 				<Back className={styles.iconBack} />
 			</Button>
 
-			{/* {step !== 'support' && ( */}
 			<Text
 				type={TextType.TITLE}
 				tag={TitleTag.H1}
@@ -68,7 +60,6 @@ export function LoginWrapper({ children }: LoginWrapperProps) {
 			>
 				А-Чат
 			</Text>
-			{/* )} */}
 
 			<Text
 				type={TextType.TITLE}

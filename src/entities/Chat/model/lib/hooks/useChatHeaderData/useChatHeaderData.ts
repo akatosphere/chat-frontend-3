@@ -3,14 +3,12 @@ import type { Chat } from '@/entities/Chat/model/types/chat.types/chat.types';
 
 export const useChatHeaderData = (chatData: Chat | null | undefined) => {
 	return useMemo(() => {
-		// Ранний возврат
 		if (!chatData) {
 			return { headerData: null, hasMessages: false };
 		}
 
 		const { last_message, new_message_count, chat: userInfo } = chatData;
 
-		//  Безопасное извлечение с дефолтами
 		const {
 			first_name = '',
 			last_name = '',
@@ -21,7 +19,6 @@ export const useChatHeaderData = (chatData: Chat | null | undefined) => {
 			is_in_contacts = false
 		} = userInfo ?? {};
 
-		// Гарантированно строка
 		const userName =
 			`${first_name} ${last_name}`.trim() || 'Неизвестный пользователь';
 
@@ -36,7 +33,6 @@ export const useChatHeaderData = (chatData: Chat | null | undefined) => {
 
 		const userAvatar = avatar_webp_url || avatar_url || undefined;
 
-		//  Проверка сообщений
 		const hasMessages = checkHasMessages(last_message, new_message_count);
 
 		return {
@@ -52,7 +48,6 @@ export const useChatHeaderData = (chatData: Chat | null | undefined) => {
 	}, [chatData]);
 };
 
-//  Вспомогательная функция (остается приватной в файле)
 const checkHasMessages = (
 	lastMessage: Chat['last_message'],
 	newMessageCount: Chat['new_message_count']

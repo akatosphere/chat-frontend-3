@@ -1,7 +1,7 @@
+import { IRegister } from '@/features/auth/model/types/auth.types';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { UseFormSetError } from 'react-hook-form';
-import { IRegister } from '../types/types';
 
 export const getServerErrorMessage = (
 	err: FetchBaseQueryError | SerializedError,

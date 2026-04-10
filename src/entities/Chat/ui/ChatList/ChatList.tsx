@@ -31,8 +31,6 @@ export interface ChatListProps {
 
 export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 	// ─────────────────────────────────────────────────────────────
-	// 1. DATA FETCHING (RTK Query)
-	// ─────────────────────────────────────────────────────────────
 
 	const {
 		data: cacheResponse,
@@ -58,14 +56,11 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 	const [triggerGlobalSearch] = useLazyGetChatsQuery();
 
 	// ─────────────────────────────────────────────────────────────
-	// 2. DATA SOURCES & TRANSFORMATIONS
-	// ─────────────────────────────────────────────────────────────
+
 	const localChats = useMemo(() => {
 		return sortChatsByLastMessage(cacheResponse?.results ?? []);
 	}, [cacheResponse]);
 
-	// ─────────────────────────────────────────────────────────────
-	// 3. GLOBAL SEARCH HANDLER
 	// ─────────────────────────────────────────────────────────────
 
 	const fetchGlobalChats = useCallback(
@@ -86,8 +81,7 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 	);
 
 	// ─────────────────────────────────────────────────────────────
-	// 4. HYBRID SEARCH HOOK
-	// ─────────────────────────────────────────────────────────────
+
 	const {
 		searchTerm,
 		results: displayChats,
@@ -119,8 +113,7 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 	}, [isCacheError, refetch]);
 
 	// ─────────────────────────────────────────────────────────────
-	// 5. DERIVED STATE (мемоизированные флаги)
-	// ─────────────────────────────────────────────────────────────
+
 	const searchLength = useMemo(
 		() => searchTerm.trim().replace(/^@/, '').length,
 		[searchTerm]
@@ -157,15 +150,13 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 	]);
 
 	// ─────────────────────────────────────────────────────────────
-	// 6. UI DERIVED VALUES
-	// ─────────────────────────────────────────────────────────────
+
 	const searchPlaceholder = useMemo(() => {
 		return isGlobal ? 'Глобальный поиск (@username)...' : 'Поиск чатов...';
 	}, [isGlobal]);
 
 	// ─────────────────────────────────────────────────────────────
-	// 7. RENDER: LOADING & ERROR STATES
-	// ─────────────────────────────────────────────────────────────
+
 	if (statusFlags.shouldShowSkeleton) {
 		return (
 			<div className={cls.chatList}>
@@ -204,8 +195,7 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 	}
 
 	// ─────────────────────────────────────────────────────────────
-	// 8. RENDER: MAIN CONTENT
-	// ─────────────────────────────────────────────────────────────
+
 	return (
 		<div className={cls.chatList} aria-label='Список чатов'>
 			<div className={cls.search}>
@@ -223,7 +213,9 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 						color={ButtonColor.TRANSPARENT}
 						btnType={ButtonType.BUTTON}
 						className={cls.addMenuBtn}
-						onClick={() => console.log('Добавить меню с нужными функциями')}
+						onClick={() =>
+							console.log('Временный  лог. Добавить меню с нужными функциями')
+						}
 					>
 						<CreateNew className={cls.addMenuBtnIcon} />
 					</Button>

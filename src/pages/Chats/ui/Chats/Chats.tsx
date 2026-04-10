@@ -13,7 +13,10 @@ import { ChatProfileView } from '@/entities/Chat/ui/ChatProfileView/ChatProfileV
 const ChatsPageComponent = () => {
 	const params = useParams();
 	const router = useRouter();
+
+	// Получаем uid из динамического сегмента [uid]
 	const chatUid = params?.uid as string | undefined;
+
 	const isMobile = useMediaQuery();
 
 	const [profileShown, setProfileShown] = useState(true);
@@ -25,7 +28,10 @@ const ChatsPageComponent = () => {
 				{chatUid ? (
 					// Если чат выбран → показываем сообщения (CONTENT)
 					<Container type={ContainerType.CONTENT}>
-						<ChatView chatUid={chatUid} onBack={() => router.push('/chats')} />
+						<ChatView
+							chatUid={chatUid} //Передаём uid из роута
+							onBack={() => router.push('/chats')}
+						/>
 					</Container>
 				) : (
 					// Если чат не выбран → показываем список чатов (SIDEBAR)

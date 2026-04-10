@@ -1,3 +1,5 @@
+export { selectCurrentUserId } from './model/selectors/selectCurrentUserId';
+
 export { useDeleteProfileMutation } from './api/editProfile.api';
 export { profileActions, profileReducer } from './model/slice/profileSlice';
 export type {

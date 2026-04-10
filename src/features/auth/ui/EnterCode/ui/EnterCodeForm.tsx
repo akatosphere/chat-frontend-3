@@ -1,5 +1,6 @@
 'use client';
 
+import { authActions, FormAuthItem, useSetAuthStep } from '@/features/auth';
 import { useAppDispatch } from '@/shared/lib/hooks/useAppDispatch/useAppDispatch';
 import { Form } from '@/shared/ui/FormComponent/Form/ui/Form';
 import { useRouter } from 'next/navigation';
@@ -8,7 +9,6 @@ import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { LoginCodeForm } from '..';
 import { formItems } from '../model/const/formItems';
 import styles from './EnterCodeForm.module.scss';
-import { authActions, FormAuthItem, useSetAuthStep } from '@/features/auth';
 
 interface EnterCodeFormProps {
 	setTime: (time: number) => void;
@@ -22,7 +22,6 @@ export const EnterCodeForm = ({
 	setTime,
 	phone_number,
 	code_len,
-	// is_filled,
 	disabled
 }: EnterCodeFormProps) => {
 	const [attemptsNumber, setAttemptsNumber] = useState(5);
@@ -36,7 +35,6 @@ export const EnterCodeForm = ({
 		name: 'code'
 	});
 	const submittedRef = useRef(false);
-	// console.log('is_filled', is_filled);
 
 	const onSubmit = useCallback<SubmitHandler<LoginCodeForm>>(
 		async ({ code }) => {
@@ -48,7 +46,7 @@ export const EnterCodeForm = ({
 				body: JSON.stringify({ phone_number, code })
 			});
 			const res = await response.json();
-			console.log('res in LoginCode', res);
+
 			if (res.success) {
 				if (res.is_filled) {
 					setStep('greeting');

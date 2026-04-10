@@ -1,311 +1,125 @@
 'use client';
 
-import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { MessageBubble } from '@/entities/Chat/ui/MessageBubble/MessageBubble';
+import { memo, useEffect } from 'react';
 import { Down } from '@icons/index';
-import { useGetMessagesQuery } from '@/entities/Chat/api/chatApi';
-import { shouldShowDateSeparator } from '@/entities/Chat/model/lib/service/dateFormating/dateFormater';
-import SmartDateSeparator from '../SystemMessages/ui/SmartDateSeparator/SmartDateSeparator';
+import { SmartDateSeparator } from '../SystemMessages/ui/SmartDateSeparator/SmartDateSeparator';
 import { StickyDateProvider } from '../SystemMessages/ui/StickyDateContext/StickyDateContext';
 import SystemMessage from '../SystemMessages/ui/SystemMessages/SystemMessages';
+import { useMessagesData } from '../../model/lib/hooks/useMessagesData/useMessagesData';
+import { useInfiniteScroll } from '../../model/lib/hooks/useInfiniteScroll/useInfiniteScroll';
 import {
-	SystemMessageData,
-	ChatMessage
-} from '../../model/types/chat.types/chat.types';
-import {
-	isSystemMessageType,
-	mapChatMessageToSystemMessageData
-} from '../../model/mapper/mapChatType/chatMapper';
-import styles from './MessagesList.module.scss';
+	SCROLL_BOTTOM_THRESHOLD,
+	MESSAGES_QUERY_DEFAULTS
+} from '@/shared/model';
+import { useMessagePagination } from '../../model/lib/hooks/useMessagePagination/useMessagePagination';
+import { MessageListItem } from './MessageListItem';
 
-// ===== ТИПЫ =====
+import cls from './MessagesList.module.scss';
 
-interface TextMessage {
-	id: string;
-	text: string;
-	time: number;
-	status: 'received' | 'sending' | 'unread' | 'read';
-}
-
-type MessageListItem =
-	| { type: 'text'; data: TextMessage }
-	| { type: 'system'; data: SystemMessageData }
-	| { type: 'separator'; date: Date; id: string };
-
-// Пропсы компонента
 interface MessagesProps {
 	userUid: string;
+	currentUserId?: string;
 	className?: string;
+	activeResultId?: string;
+	searchQuery?: string;
+	onContainerReady?: (container: HTMLDivElement | null) => void;
+	onScrollContainerReady?: (container: HTMLDivElement | null) => void;
+	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
 }
 
-const toLocalTextMessage = (msg: ChatMessage): TextMessage => ({
-	id: String(msg.id),
-	text: msg.content,
-	time: msg.created_at,
-	status: msg.new ? 'unread' : 'read'
-});
+const MessagesListComponent = ({
+	userUid,
+	currentUserId,
+	className,
+	activeResultId,
+	searchQuery,
+	onContainerReady,
+	getActiveOccurrencesForMessage,
+	onScrollContainerReady
+}: MessagesProps) => {
+	const {
+		messages,
+		messagesWithSeparators,
+		nextUrl,
+		isLoading,
+		isError,
+		refetch,
+		isEmpty
+	} = useMessagesData({
+		userUid,
+		currentUserId,
+		pageSize: MESSAGES_QUERY_DEFAULTS.page_size,
+		ordering: MESSAGES_QUERY_DEFAULTS.ordering
+	});
 
-//  Прокси для URL
-const toProxyPath = (url: string | null): string | null => {
-	if (!url) {
-		return null;
-	}
-	if (url.startsWith('/api/proxy')) {
-		return url;
-	}
+	const { loadMore, containerRef } = useMessagePagination(nextUrl);
 
-	try {
-		const pathname = url.startsWith('http') ? new URL(url).pathname : url;
-		const apiPath = pathname.replace(/^\/api\/v1/, '');
-		return `/api/proxy${apiPath}`;
-	} catch {
-		return null;
-	}
-};
-
-const MessagesListComponent = ({ userUid, className }: MessagesProps) => {
-	// ===== API =====
-	const { data, error, isLoading, refetch } = useGetMessagesQuery(
-		{ user_uid: userUid },
-		{ skip: !userUid }
-	);
-
-	// ===== REFS =====
-	const containerRef = useRef<HTMLDivElement>(null);
-	const bottomRef = useRef<HTMLDivElement>(null);
-	const isAtBottomRef = useRef(true);
-	const isLoadingHistoryRef = useRef(false);
-	const abortControllerRef = useRef<AbortController | null>(null);
-
-	// ===== STATE =====
-	const [messages, setMessages] = useState<TextMessage[]>([]);
-	const [nextUrl, setNextUrl] = useState<string | null>(null);
-	const [isFetchingMore, setIsFetchingMore] = useState(false);
-	const [isAtBottom, setIsAtBottom] = useState(true);
-	const [newCount, setNewCount] = useState(0);
-
-	// ===== ОБРАБОТКА ДАННЫХ С БЭКА =====
+	const {
+		scrollRef,
+		anchorRef,
+		isAtBottom,
+		newCount,
+		scrollToBottom,
+		incrementNewCount
+	} = useInfiniteScroll({
+		loadMore,
+		threshold: SCROLL_BOTTOM_THRESHOLD,
+		loadThreshold: SCROLL_BOTTOM_THRESHOLD
+	});
 
 	useEffect(() => {
-		if (!data) {
-			return;
-		}
-
-		const textMessages = data.results.filter(
-			(msg): msg is ChatMessage => !isSystemMessageType(msg)
-		);
-
-		const mapped = textMessages.map(toLocalTextMessage);
-
-		setNextUrl(data.next);
-
-		setMessages(prev => {
-			if (!prev.length) {
-				return mapped;
+		if (!isAtBottom && messages.length > 0) {
+			const lastMessage = messages[messages.length - 1];
+			if (lastMessage?.status === 'unread') {
+				incrementNewCount();
 			}
-			const prevIds = new Set(prev.map(p => p.id));
-			const incoming = mapped.filter(m => !prevIds.has(m.id));
-			if (incoming.length) {
-				if (!isLoadingHistoryRef.current && !isAtBottomRef.current) {
-					setNewCount(c => c + incoming.length);
-				}
-				return [...prev, ...incoming];
-			}
-			return prev;
-		});
-	}, [data]);
-
-	// ===== СКРОЛЛ =====
-	const handleScroll = useCallback(() => {
-		const el = containerRef.current;
-		if (!el) {
-			return;
 		}
+	}, [messages, isAtBottom, incrementNewCount]);
 
-		const threshold = 50;
-		const isBottom =
-			el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-
-		isAtBottomRef.current = isBottom;
-		setIsAtBottom(isBottom);
-
-		if (isBottom) {
-			setNewCount(0);
-		}
-		if (el.scrollTop < 50 && !isFetchingMore && !isLoadingHistoryRef.current) {
-			loadMore();
-		}
-	}, [isFetchingMore]);
-
-	// ===== АВТОСКРОЛЛ ВНИЗ =====
 	useEffect(() => {
-		if (
-			!isLoadingHistoryRef.current &&
-			isAtBottomRef.current &&
-			messages.length > 0
-		) {
-			bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-		}
-	}, [messages, isAtBottom]);
+		const timer = setTimeout(() => {
+			const scrollContainer = scrollRef.current?.closest(
+				'[data-scroll-container]'
+			) as HTMLDivElement | null;
+			onScrollContainerReady?.(scrollContainer);
+			onContainerReady?.(scrollContainer);
+		}, 100);
+		return () => clearTimeout(timer);
+	}, [onContainerReady, onScrollContainerReady, scrollRef]);
 
-	// ===== ПОДГРУЗКА =====
-	const loadMore = async () => {
-		if (!nextUrl || isFetchingMore) {
-			return;
-		}
-
-		isLoadingHistoryRef.current = true;
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort();
-		}
-		abortControllerRef.current = new AbortController();
-		setIsFetchingMore(true);
-
-		const el = containerRef.current;
-
-		const saveScrollPosition = () => {
-			if (!el) {
-				return null;
-			}
-			return { scrollHeight: el.scrollHeight, scrollTop: el.scrollTop };
-		};
-
-		try {
-			const fetchUrl = toProxyPath(nextUrl);
-			if (!fetchUrl) {
-				throw new Error('Invalid nextUrl');
-			}
-
-			const res = await fetch(fetchUrl, {
-				signal: abortControllerRef.current.signal,
-				redirect: 'follow',
-				credentials: 'include'
-			});
-
-			if (!res.ok) {
-				throw new Error(`HTTP error! status: ${res.status}`);
-			}
-
-			const responseData: { results: ChatMessage[]; next: string | null } =
-				await res.json();
-
-			const older: TextMessage[] = responseData.results
-				.filter(msg => !isSystemMessageType(msg))
-				.map(toLocalTextMessage);
-
-			setNextUrl(responseData.next);
-			const scrollPos = saveScrollPosition();
-
-			setMessages(prev => {
-				const prevIds = new Set(prev.map(p => p.id));
-				const uniqueOlder = older.filter(m => !prevIds.has(m.id));
-
-				if (uniqueOlder.length > 0 && el && scrollPos) {
-					requestAnimationFrame(() => {
-						const newScrollHeight = el.scrollHeight;
-						const heightDiff = newScrollHeight - scrollPos.scrollHeight;
-						el.scrollTop = scrollPos.scrollTop + heightDiff;
-					});
-				}
-				return [...uniqueOlder, ...prev];
-			});
-		} catch (err) {
-			if (err instanceof DOMException && err.name === 'AbortError') {
-				return;
-			}
-			console.error('Failed to load older messages:', err);
-		} finally {
-			setIsFetchingMore(false);
-			isLoadingHistoryRef.current = false;
-			abortControllerRef.current = null;
-		}
-	};
-
-	// ===== CLEANUP =====
 	useEffect(() => {
-		return () => {
-			if (abortControllerRef.current) {
-				abortControllerRef.current.abort();
-			}
-		};
-	}, []);
-
-	// ===== СКРОЛЛ ВНИЗ ВРУЧНУЮ =====
-	const scrollToBottom = () => {
-		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-		setNewCount(0);
-	};
-
-	// ===== ФОРМИРОВАНИЕ СПИСКА С РАЗДЕЛИТЕЛЯМИ И СИСТЕМНЫМИ СООБЩЕНИЯМИ =====
-
-	const messagesWithSeparators = useMemo((): MessageListItem[] => {
-		if (!data?.results?.length) {
-			return [];
-		}
-
-		const result: MessageListItem[] = [];
-
-		data.results.forEach((message, index) => {
-			const prevMessage = index > 0 ? data.results[index - 1] : undefined;
-
-			if (isSystemMessageType(message)) {
-				result.push({
-					type: 'system',
-					data: mapChatMessageToSystemMessageData(message)
-				});
-				return;
-			}
-
-			const createdAt = message.created_at;
-			const prevCreatedAt =
-				prevMessage && !isSystemMessageType(prevMessage)
-					? prevMessage.created_at
-					: undefined;
-
-			if (shouldShowDateSeparator(createdAt, prevCreatedAt)) {
-				result.push({
-					type: 'separator',
-					date: new Date(createdAt),
-					id: `separator-${createdAt}-${index}`
-				});
-			}
-
-			result.push({
-				type: 'text',
-				data: toLocalTextMessage(message)
+		if (messages.length > 0 && isAtBottom) {
+			requestAnimationFrame(() => {
+				scrollToBottom();
 			});
-		});
+		}
+	}, [messages.length, isAtBottom, scrollToBottom]);
 
-		return result;
-	}, [data]);
-	// ===== UI СОСТОЯНИЯ =====
-	if (isLoading && messages.length === 0) {
-		return <div className={styles.emptyState}>Загрузка сообщений...</div>;
-	}
-
-	if (error) {
+	if (isLoading && isEmpty) {
 		return (
-			<div className={styles.emptyState}>
-				<p>Ошибка загрузки сообщений</p>
-				<button onClick={() => refetch()}>Попробовать снова</button>
+			<div className={cls.emptyState} role='status' aria-live='polite'>
+				Загрузка сообщений...
 			</div>
 		);
 	}
 
-	// ===== РЕНДЕР =====
+	if (isError) {
+		return (
+			<div className={cls.emptyState} role='alert'>
+				<p>Ошибка загрузки сообщений</p>
+				<button onClick={refetch}>Попробовать снова</button>
+			</div>
+		);
+	}
 
 	return (
 		<StickyDateProvider
 			containerRef={containerRef as React.RefObject<HTMLDivElement>}
+			onScrollContainerReady={onScrollContainerReady}
 		>
-			<div className={`${styles.wrapper} ${className}`}>
-				<div
-					ref={containerRef}
-					onScroll={handleScroll}
-					className={styles.messages}
-				>
+			<div className={`${cls.wrapper} ${className}`}>
+				<div className={cls.messages} ref={scrollRef}>
 					{messagesWithSeparators.map(item => {
-						// 🔹 Разделитель даты
 						if (item.type === 'separator') {
 							return (
 								<SmartDateSeparator
@@ -321,27 +135,26 @@ const MessagesListComponent = ({ userUid, className }: MessagesProps) => {
 						}
 
 						return (
-							<MessageBubble
-								key={item.data.id}
-								id={item.data.id}
-								text={item.data.text}
-								time={item.data.time}
-								status={item.data.status}
-								onClick={() => {}}
+							<MessageListItem
+								key={item.data.uid}
+								item={item}
+								activeResultId={activeResultId}
+								searchQuery={searchQuery}
+								getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
 							/>
 						);
 					})}
-					<div ref={bottomRef} />
+					<div ref={anchorRef} className={cls.scrollAnchor} />
 				</div>
 
 				{!isAtBottom && (
 					<button
-						className={styles.scrollButton}
+						className={cls.scrollButton}
 						onClick={scrollToBottom}
-						aria-label='Прокрутить к новым сообщениям'
+						aria-label={`Прокрутить к новым сообщениям${newCount > 0 ? `, ${newCount} новых` : ''}`}
 					>
 						<Down />
-						{newCount > 0 && <span>({newCount})</span>}
+						{newCount > 0 && <span aria-hidden='true'>({newCount})</span>}
 					</button>
 				)}
 			</div>

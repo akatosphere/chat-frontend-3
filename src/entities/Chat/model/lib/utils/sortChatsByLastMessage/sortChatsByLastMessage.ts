@@ -2,28 +2,9 @@ import { Chat } from '@/entities/Chat';
 
 export const sortChatsByLastMessage = (chats: Chat[]): Chat[] => {
 	return [...chats].sort((a, b) => {
-		const aUnread = (a.new_message_count ?? 0) > 0;
-		const bUnread = (b.new_message_count ?? 0) > 0;
-
-		if (aUnread && !bUnread) {
-			return -1;
-		}
-		if (!aUnread && bUnread) {
-			return 1;
-		}
-
-		const hasMessage = (chat: Chat): boolean => !!chat.last_message?.content;
-		const aHasMsg = hasMessage(a);
-		const bHasMsg = hasMessage(b);
-
-		if (aHasMsg && !bHasMsg) {
-			return -1;
-		}
-		if (!aHasMsg && bHasMsg) {
-			return 1;
-		}
-
+		// ─── Получаем время активности для каждого чата ───
 		const getTime = (chat: Chat): number => {
+			// Приоритет: updated_at → created_at → last_activity_at
 			if (chat.last_message?.updated_at) {
 				return chat.last_message.updated_at;
 			}
@@ -36,6 +17,8 @@ export const sortChatsByLastMessage = (chats: Chat[]): Chat[] => {
 		const timeA = getTime(a);
 		const timeB = getTime(b);
 
+		//  Сортируем СТРОГО по времени: новые сверху
+		// Непрочитанные (new_message_count) НЕ влияют на позицию!
 		return timeB - timeA;
 	});
 };

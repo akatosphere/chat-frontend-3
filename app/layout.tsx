@@ -30,7 +30,11 @@ interface IChildren {
 
 export default function RootLayout({ children }: IChildren) {
 	return (
-		<html lang='ru' className={`${roboto.variable} ${sfPro.variable}`}>
+		<html
+			lang='ru'
+			className={`${roboto.variable} ${sfPro.variable}`}
+			suppressHydrationWarning
+		>
 			<head>
 				{/* ОСНОВНАЯ ФАВИКОНКА для Яндекс Браузера */}
 				<link rel='icon' href='/favicon.ico' type='image/x-icon' />

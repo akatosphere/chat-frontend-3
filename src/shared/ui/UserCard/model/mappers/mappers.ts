@@ -23,7 +23,28 @@ export const mapChatToUserCard = (user: ChatItemSchema): IUserCard => ({
 	new_message_count: user.new_message_count,
 	chat_type: user.chat_type,
 	chat_key: user.chat_key,
+
 	last_message: user.last_message
+		? {
+				id: user.last_message.id,
+				uid: user.last_message.uid,
+
+				from_user:
+					typeof user.last_message.from_user === 'string'
+						? user.last_message.from_user
+						: user.last_message.from_user?.uid || '',
+				content: user.last_message.content,
+				files_summary: user.last_message.files_summary || {
+					types: [],
+					count: 0
+				},
+				has_replied_message: user.last_message.has_replied_message || false,
+				has_forwarded_message: user.last_message.has_forwarded_message || false,
+				new: user.last_message.new,
+				created_at: user.last_message.created_at,
+				updated_at: user.last_message.updated_at
+			}
+		: undefined
 });
 
 export const mapContactToUserCard = (user: ContactsSchema): IUserCard => ({

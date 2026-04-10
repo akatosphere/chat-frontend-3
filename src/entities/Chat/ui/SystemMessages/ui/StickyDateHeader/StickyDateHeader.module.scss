@@ -28,8 +28,13 @@
 		pointer-events: auto;
 		justify-content: center;
 		align-items: center;
+		display: inline-flex;
 		background-color: var(--color-violet-800);
 		border-radius: 8px;
 		padding: 2px 8px;
 	}
+}
+
+.text {
+	display: inline-flex;
 }

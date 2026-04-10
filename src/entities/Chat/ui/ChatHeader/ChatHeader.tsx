@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
 import {
 	Button,
 	ButtonColor,
@@ -9,7 +8,6 @@ import {
 } from '@/shared/ui/Button';
 import { SearchIcon, Phone, Back, Success, MobilePhone } from '@icons/index';
 import { Search } from '@/shared/ui/Search';
-import { useClickOutside } from '@/shared/lib/hooks/useClickOutSide/useClickOutside';
 import { Avatar } from '@/shared/ui/Avatar';
 import {
 	Text,
@@ -19,107 +17,41 @@ import {
 	TitleTag,
 	TextColor
 } from '@/shared/ui/Text';
-import { ChatActionBar } from '../ChatActionBar/ChatActionBar';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import { Modal } from '@/shared/ui/Modal';
+import { ChatActionBar } from '../ChatActionBar/ChatActionBar';
+import { ChatHeaderProps } from '../../model/types/chat.types/chat.types';
+import { useChatHeader } from '../../model/lib/hooks/useChatHeader/useChatHeader';
 
 import cls from './ChatHeader.module.scss';
 
-interface ChatHeaderProps {
-	userName?: string;
-	userStatus?: string;
-	userAvatar?: string;
-	isOnline?: boolean;
-	isInContacts?: boolean;
-	onCall: () => void;
-	onAddToContacts?: () => void;
-	onBlock?: () => void;
-	onBack?: () => void;
-	onActionBarVisibilityChange?: (isVisible: boolean) => void;
-	contactPhone?: string;
-	contactFirstName?: string;
-	contactLastName?: string;
-}
-
-export const ChatHeader = ({
-	userName = 'Неизвестный пользователь',
-	userStatus = 'Статус неизвестен',
-	userAvatar,
-	isInContacts = false,
-	onCall,
-	onAddToContacts,
-	onBlock,
-	onBack,
-	onActionBarVisibilityChange
-}: ChatHeaderProps) => {
-	const [isSearchVisible, setIsSearchVisible] = useState(false);
-	const [searchQuery, setSearchQuery] = useState('');
-
+export const ChatHeader = (props: ChatHeaderProps) => {
 	const isMobile = useMediaQuery();
 
-	const [manuallyClosedActionBar, setManuallyClosedActionBar] = useState(false);
-	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+	const {
+		searchRef,
+		isActionBarVisible,
+		isSuccessModalOpen,
+		handleAddToContacts,
+		handleBlock,
+		handleActionBarClose,
+		handleSearchToggle,
+		handleSearchClear
+	} = useChatHeader(props);
 
-	const searchRef = useRef<HTMLDivElement>(null);
+	const {
+		userName = 'Неизвестный пользователь',
+		userStatus = 'Статус неизвестен',
+		userAvatar,
+		isSearchVisible = false,
+		searchQuery = '',
+		searchResultsCount = 0,
+		activeResultIndex = 0,
+		onBack
+	} = props;
 
-	const isActionBarVisible = !isInContacts && !manuallyClosedActionBar;
-
-	const isAddingContact = false;
-
-	useClickOutside(searchRef, () => {
-		if (isSearchVisible) {
-			setIsSearchVisible(false);
-			setSearchQuery('');
-		}
-	});
-
-	useEffect(() => {
-		if (isSearchVisible && searchRef.current) {
-			const input = searchRef.current.querySelector('input');
-			input?.focus();
-		}
-	}, [isSearchVisible]);
-
-	useEffect(() => {
-		if (isSuccessModalOpen) {
-			const timer = setTimeout(() => {
-				setIsSuccessModalOpen(false);
-			}, 2000);
-			return () => clearTimeout(timer);
-		}
-	}, [isSuccessModalOpen]);
-
-	useEffect(() => {
-		onActionBarVisibilityChange?.(isActionBarVisible);
-	}, [isActionBarVisible, onActionBarVisibilityChange]);
-
-	const handleSearchToggle = () => {
-		if (isSearchVisible) {
-			setSearchQuery('');
-		}
-		setIsSearchVisible(!isSearchVisible);
-	};
-
-	const handleSearchClear = useCallback((currentValue: string) => {
-		if (!currentValue) {
-			setIsSearchVisible(false);
-		}
-	}, []);
-
-	const handleAddToContacts = useCallback(async () => {
-		onAddToContacts?.();
-		setManuallyClosedActionBar(true);
-		setIsSuccessModalOpen(true);
-	}, [onAddToContacts]);
-
-	const handleBlock = useCallback(() => {
-		onBlock?.();
-		setManuallyClosedActionBar(true);
-	}, [onBlock]);
-
-	const handleActionBarClose = useCallback(() => {
-		setManuallyClosedActionBar(true);
-	}, []);
+	const canGoPrev = (activeResultIndex ?? 0) > 0;
+	const canGoNext = (activeResultIndex ?? 0) < (searchResultsCount ?? 0) - 1;
 
 	return (
 		<>
@@ -137,6 +69,7 @@ export const ChatHeader = ({
 							<Back />
 						</Button>
 					)}
+
 					<div className={cls.userInfo}>
 						<div className={cls.userAvatar}>
 							<Avatar
@@ -178,12 +111,20 @@ export const ChatHeader = ({
 						>
 							<Search
 								value={searchQuery}
-								onChange={setSearchQuery}
+								onChange={props.onSearchQueryChange || (() => {})}
 								onClear={handleSearchClear}
 								placeholder='Поиск в чате...'
-								alwaysShowClear={true}
-								showIcon={true}
-								autoFocus={true}
+								alwaysShowClear
+								showIcon
+								autoFocus
+								className={cls.searchInput}
+								showNavigation
+								onNavigatePrev={props.navigateToPrev}
+								onNavigateNext={props.navigateToNext}
+								searchResultsCount={searchResultsCount}
+								activeResultIndex={activeResultIndex}
+								canGoPrev={canGoPrev}
+								canGoNext={canGoNext}
 							/>
 						</div>
 					)}
@@ -201,7 +142,7 @@ export const ChatHeader = ({
 								aria-expanded={isSearchVisible}
 								className={cls.btn}
 							>
-								<SearchIcon className={cls.icon} aria-hidden='true' />
+								<SearchIcon className={cls.icon} aria-hidden />
 							</Button>
 						)}
 
@@ -209,19 +150,31 @@ export const ChatHeader = ({
 							btnType={ButtonType.BUTTON}
 							color={ButtonColor.TRANSPARENT}
 							theme={ButtonTheme.CIRCLE}
-							onClick={onCall}
+							onClick={props.onCall}
 							aria-label='Начать звонок'
 							className={cls.btn}
 						>
 							{isMobile ? (
-								<MobilePhone aria-hidden='true' className={cls.icon} />
+								<MobilePhone aria-hidden className={cls.icon} />
 							) : (
-								<Phone aria-hidden='true' className={cls.icon} />
+								<Phone aria-hidden className={cls.icon} />
 							)}
 						</Button>
 					</div>
 				)}
 			</header>
+
+			{isSearchVisible && searchQuery.trim() && searchResultsCount > 0 && (
+				<div
+					className={cls.searchResultsPanel}
+					role='status'
+					aria-live='polite'
+				>
+					<Text type={TextType.TEXT} tag={TextTag.SPAN} fontSize={TextSize.S}>
+						Результаты: {activeResultIndex + 1} из {searchResultsCount}
+					</Text>
+				</div>
+			)}
 
 			{isActionBarVisible && (
 				<div className={cls.actionBarContainer}>
@@ -229,20 +182,20 @@ export const ChatHeader = ({
 						onAddToContacts={handleAddToContacts}
 						onBlock={handleBlock}
 						onClose={handleActionBarClose}
-						isLoading={isAddingContact}
+						isLoading={false}
 					/>
 				</div>
 			)}
 
 			<Modal
 				isOpen={isSuccessModalOpen}
-				onClose={() => setIsSuccessModalOpen(false)}
+				onClose={() => {}}
 				closeButton={false}
 				size='compact'
 				className={cls.successModal}
 			>
 				<div className={cls.successModalContent}>
-					<Success className={cls.successIcon} aria-hidden='true' />
+					<Success className={cls.successIcon} aria-hidden />
 					<div className={cls.modalInfo}>
 						<Text
 							type={TextType.TITLE}

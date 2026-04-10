@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-	const { phone_number, code } = await request.json();
+	const { session_uid, session_secret } = await request.json();
 
 	const res = await fetch(
-		`${process.env.NEXT_PUBLIC_BASE_API}/${process.env.NEXT_PUBLIC_TOKEN}`,
+		`${process.env.NEXT_PUBLIC_BASE_API}/auth/providers/plusofon/flash-call/claim/${session_uid}/`,
 		{
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ phone_number, code })
+			body: JSON.stringify({ session_secret })
 		}
 	);
 

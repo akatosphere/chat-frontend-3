@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, memo, useCallback, useMemo } from 'react';
-import { SearchIcon, Close } from '@icons/index';
+import { SearchIcon, Close, ShevronUp, ShevronDown } from '@icons/index';
 import {
 	Button,
 	ButtonColor,
@@ -11,6 +11,8 @@ import {
 import { classNames } from '@/shared/lib/classNames/classNames';
 
 import cls from './Search.module.scss';
+
+// '@/shared/ui/Search/Search.tsx'
 
 export interface SearchProps extends Omit<
 	React.InputHTMLAttributes<HTMLInputElement>,
@@ -26,6 +28,15 @@ export interface SearchProps extends Omit<
 	showIcon?: boolean;
 	alwaysShowClear?: boolean;
 	onClear?: (currentValue: string) => void;
+
+	//  Новые пропсы для навигации по результатам поиска
+	showNavigation?: boolean;
+	onNavigatePrev?: () => void;
+	onNavigateNext?: () => void;
+	searchResultsCount?: number;
+	activeResultIndex?: number;
+	canGoPrev?: boolean;
+	canGoNext?: boolean;
 }
 
 export const Search = memo(
@@ -43,6 +54,13 @@ export const Search = memo(
 				alwaysShowClear = false,
 				onClear,
 				onKeyDown,
+				showNavigation = false,
+				onNavigatePrev,
+				onNavigateNext,
+				searchResultsCount = 0,
+				activeResultIndex = 0,
+				canGoPrev = true,
+				canGoNext = true,
 				...inputProps
 			},
 			ref
@@ -58,6 +76,8 @@ export const Search = memo(
 				}
 				return hasValue;
 			}, [disableClear, alwaysShowClear, hasValue]);
+
+			const showNavButtons = showNavigation && searchResultsCount > 0;
 
 			const handleClear = useCallback(() => {
 				onClear?.(value);
@@ -94,7 +114,10 @@ export const Search = memo(
 				<div
 					className={classNames(
 						cls.container,
-						{ [cls.alwaysShowClear]: alwaysShowClear },
+						{
+							[cls.alwaysShowClear]: alwaysShowClear,
+							[cls.withNavigation]: showNavButtons
+						},
 						[className]
 					)}
 					role='search'
@@ -119,18 +142,58 @@ export const Search = memo(
 						{...inputProps}
 					/>
 
-					{showClearButton && (
-						<Button
-							btnType={ButtonType.BUTTON}
-							color={ButtonColor.TRANSPARENT}
-							theme={ButtonTheme.CLEAR}
-							onClick={handleClear}
-							className={cls.clearButton}
-							aria-label={hasValue ? 'Очистить поиск' : 'Закрыть поиск'}
-						>
-							<Close className={cls.closeIcon} aria-hidden='true' />
-						</Button>
-					)}
+					<div className={cls.rightButtons}>
+						{showNavButtons && (
+							<div className={cls.navButtons}>
+								<button
+									type='button'
+									onClick={onNavigatePrev}
+									aria-label={`Предыдущий результат (${activeResultIndex + 1} из ${searchResultsCount})`}
+									title={`↑ Предыдущий (${activeResultIndex + 1}/${searchResultsCount})`}
+									disabled={!canGoPrev}
+									className={classNames(cls.navButton, {
+										[cls.navButtonDisabled]: !canGoPrev
+									})}
+								>
+									<ShevronUp
+										className={classNames(cls.icon, {
+											[cls.iconDisabled]: !canGoPrev
+										})}
+									/>
+								</button>
+
+								<button
+									type='button'
+									onClick={onNavigateNext}
+									aria-label={`Следующий результат (${activeResultIndex + 1} из ${searchResultsCount})`}
+									title={`↓ Следующий (${activeResultIndex + 1}/${searchResultsCount})`}
+									className={classNames(cls.navButton, {
+										[cls.navButtonDisabled]: !canGoNext
+									})}
+									disabled={!canGoNext}
+								>
+									<ShevronDown
+										className={classNames(cls.icon, {
+											[cls.iconDisabled]: !canGoNext
+										})}
+									/>
+								</button>
+							</div>
+						)}
+
+						{showClearButton && (
+							<Button
+								btnType={ButtonType.BUTTON}
+								color={ButtonColor.TRANSPARENT}
+								theme={ButtonTheme.CLEAR}
+								onClick={handleClear}
+								className={cls.clearButton}
+								aria-label={hasValue ? 'Очистить поиск' : 'Закрыть поиск'}
+							>
+								<Close className={cls.closeIcon} aria-hidden='true' />
+							</Button>
+						)}
+					</div>
 				</div>
 			);
 		}

@@ -11,6 +11,7 @@ import type {
 	BulkDeleteRequest,
 	GlobalSearchContact
 } from '../model/types/contacts.types/contacts.types';
+import { CONTACTS_PAGE_SIZE, CONTACTS_ORDERING } from '@/shared/model';
 
 export const contactApi = rtkApi.injectEndpoints({
 	endpoints: build => ({
@@ -22,8 +23,8 @@ export const contactApi = rtkApi.injectEndpoints({
 				url: '/contact/messenger-list/',
 				method: 'GET',
 				params: {
-					page_size: params.pageSize ?? 30,
-					ordering: params.ordering ?? '-created_at',
+					page_size: params.pageSize ?? CONTACTS_PAGE_SIZE,
+					ordering: params.ordering ?? CONTACTS_ORDERING,
 					search: params.search
 				}
 			}),

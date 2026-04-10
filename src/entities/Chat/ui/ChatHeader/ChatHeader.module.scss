@@ -5,6 +5,7 @@
 	background-color: var(--color-violet-40);
 	border-bottom: 1px solid var(--color-gray-100);
 	gap: 12px;
+	position: relative;
 
 	@media (max-width: 768px) {
 		background-color: var(--color-violet-100);
@@ -60,42 +61,6 @@
 		}
 	}
 
-	.searchContainer {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		min-width: 0;
-		padding-right: 16px;
-
-		@media (max-width: 768px) {
-			height: 36px;
-			font-size: 16px;
-		}
-
-		:global(.container) {
-			width: 100%;
-		}
-
-		:global(.input) {
-			height: 40px;
-			padding: 8px 12px;
-			border-radius: 8px;
-			background-color: var(--color-white);
-			border: 1px solid var(--color-gray-100);
-			font-size: 16px;
-
-			&:focus {
-				border-color: var(--color-violet-500);
-				box-shadow: 0 0 0 2px rgba(139, 92, 246, 10%);
-			}
-		}
-
-		:global(.searchIcon) {
-			left: 12px;
-			color: var(--color-gray-500);
-		}
-	}
-
 	.actions {
 		padding: 10px 16px 10px 0;
 		display: flex;
@@ -148,7 +113,64 @@
 	}
 }
 
-// Стили для модалки успеха
+.searchResultsPanel {
+	width: 100%;
+	padding: 8px 16px;
+	background-color: rgba(245, 244, 255, 100%);
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+
+	@media (max-width: 768px) {
+		padding: 6px 12px;
+		border-radius: 0;
+	}
+}
+
+.searchResultsText {
+	color: var(--color-gray-500);
+	font-weight: 400;
+	font-size: 16px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.searchContainer {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding-right: 16px;
+
+	@media (max-width: 768px) {
+		height: 36px;
+		font-size: 16px;
+	}
+
+	:global(.container) {
+		width: 100%;
+	}
+
+	:global(.input) {
+		height: 40px;
+		padding: 8px 12px;
+		border-radius: 8px;
+		background-color: var(--color-white);
+		border: 1px solid var(--color-gray-100);
+		font-size: 16px;
+
+		&:focus {
+			border-color: var(--color-violet-500);
+			box-shadow: 0 0 0 2px rgba(139, 92, 246, 10%);
+		}
+	}
+
+	:global(.searchIcon) {
+		left: 12px;
+		color: var(--color-gray-500);
+	}
+}
 
 .successModal {
 	padding: 24px 24px 32px;

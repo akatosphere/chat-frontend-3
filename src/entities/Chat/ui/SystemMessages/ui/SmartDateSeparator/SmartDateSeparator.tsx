@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { useStickyDateContext } from '../StickyDateContext/StickyDateContext';
 import DateSeparator from '../DateSeparator/DateSeparator';
-import { useStickyDate } from '../StickyDateContext/StickyDateContext';
 
 interface SmartDateSeparatorProps {
 	date: Date;
@@ -15,9 +15,9 @@ export const SmartDateSeparator: React.FC<SmartDateSeparatorProps> = ({
 	id,
 	className = ''
 }) => {
-	const { registerSeparator, unregisterSeparator, isActive, isHidden } =
-		useStickyDate();
 	const elementRef = useRef<HTMLDivElement>(null);
+	const { registerSeparator, unregisterSeparator, isActive, isHidden } =
+		useStickyDateContext();
 
 	useEffect(() => {
 		const element = elementRef.current;

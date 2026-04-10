@@ -1,3 +1,4 @@
+export { AuthSyncProvider } from './ui/AuthSyncProvider/AuthSyncProvider';
 export { useAuthGoBack } from './model/lib/hooks/useAuthGoBack';
 export { useAuthStep } from './model/lib/hooks/useAuthStep';
 export { useSetAuthStep } from './model/lib/hooks/useSetAuthStep';

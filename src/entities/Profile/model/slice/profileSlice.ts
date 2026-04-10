@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ProfileSchema } from '../..';
 
 const initialState: ProfileSchema = {
+	uid: undefined,
 	username: '',
 	nickname: '',
 	first_name: '',
