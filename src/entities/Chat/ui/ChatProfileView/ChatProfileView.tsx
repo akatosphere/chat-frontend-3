@@ -380,7 +380,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				)}
 			</div>
 
-			{!chat && !data.is_blocked && (
+			{!data.is_in_contacts && (
 				<button className={s.action} onClick={handleAddToContacts}>
 					<ActionAdd />
 					<span>Добавить в контакты</span>

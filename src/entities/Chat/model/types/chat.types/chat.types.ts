@@ -649,4 +649,5 @@ export interface Contact {
 	was_online_at: number;
 	is_blocked: boolean;
 	chat_id: number;
+	is_in_contacts: boolean;
 }
