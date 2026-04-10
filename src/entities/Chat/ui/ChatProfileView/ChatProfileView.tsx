@@ -34,8 +34,11 @@ interface ChatProfileViewProps {
 
 export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const { data, isLoading } = useGetContactByUidQuery(userUid);
-	const chat = useSelector((state: RootState) =>
-		selectChatByUid(state, userUid)
+	const chat = useSelector(
+		(state: RootState) => selectChatByUid(state, userUid)
+
+		// kebab menu
+		// modal
 	);
 
 	const { data: messages } = useGetMessagesQuery({ user_uid: userUid });

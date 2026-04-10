@@ -168,7 +168,7 @@ export const contactApi = rtkApi.injectEndpoints({
 			invalidatesTags: [{ type: 'Contacts', id: 'LIST' }]
 		})
 	}),
-	overrideExisting: false
+	overrideExisting: true
 });
 
 export const {
