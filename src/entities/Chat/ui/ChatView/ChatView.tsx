@@ -153,6 +153,7 @@ export const ChatView = ({
 			<ModalChats
 				isOpen={chatsModalOpen}
 				onClose={() => setChatsModalOpen(false)}
+				onClick={() => console.log('haha')}
 			></ModalChats>
 
 			<ChatHeader {...headerProps} />
