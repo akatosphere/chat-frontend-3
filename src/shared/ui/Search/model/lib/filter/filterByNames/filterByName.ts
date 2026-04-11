@@ -1,3 +1,5 @@
+import { Chat } from '@/entities/Chat';
+
 export function filterByName<T extends Record<string, unknown>>(
 	items: T[],
 	searchTerm: string,
@@ -32,6 +34,25 @@ export function filterByNameExtended<T extends Record<string, unknown>>(
 	return items.filter(item =>
 		fields.some(field => {
 			const value = item[field];
+			return typeof value === 'string' && value.toLowerCase().includes(term);
+		})
+	);
+}
+
+export function filterChatsByNameExtended(
+	items: Chat[],
+	searchTerm: string
+): Chat[] {
+	const term = searchTerm.toLowerCase().trim();
+	if (!term) {
+		return items;
+	}
+
+	const fields = ['nickname', 'first_name', 'last_name', 'username'] as const;
+
+	return items.filter(item =>
+		fields.some(field => {
+			const value = item.chat[field]; // chat.username, chat.first_name и т.д.
 			return typeof value === 'string' && value.toLowerCase().includes(term);
 		})
 	);
