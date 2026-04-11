@@ -9,7 +9,8 @@ import {
 	useUpdateChatPropertiesMutation,
 	useAddContactByPhoneMutation,
 	useUnblockUserMutation,
-	useBlockUserMutation
+	useBlockUserMutation,
+	useClearChatMutation
 } from '../../api/chatApi';
 import { formatDateRu } from './lib/formatDateRu';
 
@@ -58,10 +59,11 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	// для обновления свойств чата (уведомления)
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
 
-	// Новые мутации
+	// мутации
 	const [addContactByPhone] = useAddContactByPhoneMutation();
 	const [unblockUser] = useUnblockUserMutation();
 	const [blockUser] = useBlockUserMutation();
+	const [clearChat] = useClearChatMutation();
 
 	const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
 
@@ -80,7 +82,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			icon: <Clear />,
 			onClick: () => {
 				console.log('Очистить чат');
-				// TODO: добавить мутацию очистки чата при необходимости
+				handleClearChat();
 				setIsKebabMenuOpen(false);
 			}
 		},
@@ -189,6 +191,23 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			console.log('Пользователь успешно заблокирован');
 		} catch (error) {
 			console.error('Ошибка при блокировке:', error);
+		}
+	};
+
+	/**
+	 * Очистить чат (удалить все сообщения)
+	 */
+	const handleClearChat = async () => {
+		if (!chat?.id) {
+			console.error('ID чата не найден');
+			return;
+		}
+
+		try {
+			await clearChat(chat.id).unwrap();
+			console.log('Чат успешно очищен');
+		} catch (error) {
+			console.error('Не удалось очистить чат:', error);
 		}
 	};
 

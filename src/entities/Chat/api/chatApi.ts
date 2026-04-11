@@ -180,6 +180,21 @@ export const chatApi = rtkApi.injectEndpoints({
 			invalidatesTags: (result, error, { id }) => [{ type: 'Chats', id }]
 		}),
 
+		clearChat: build.mutation<void, number>({
+			query: (chatId: number) => ({
+				url: `/chat/list/clear/${chatId}/`,
+				method: 'POST',
+				body: {}
+			}),
+			invalidatesTags: (_, __, chatId) => [
+				{ type: 'Chats', id: chatId },
+				{ type: 'Chats', id: 'LIST' },
+				{ type: 'Messages', id: 'LIST' },
+				{ type: 'Files', id: 'LIST' },
+				{ type: 'Links', id: 'LIST' }
+			]
+		}),
+
 		// ─── Файлы ─────────────────────────────────────────
 		getFiles: build.query<FilesResponse, { user_uid: string; page?: number }>({
 			query: ({ user_uid, ...params }) => ({
@@ -227,7 +242,8 @@ export const {
 	useGetFilesQuery,
 	useGetLinksQuery,
 	useUnblockUserMutation,
-	useBlockUserMutation, // ← добавлено
+	useBlockUserMutation,
+	useClearChatMutation,
 	useAddContactByPhoneMutation,
 	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
