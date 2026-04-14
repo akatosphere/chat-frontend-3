@@ -91,7 +91,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			icon: <Block />,
 			danger: true,
 			onClick: () => {
-				handleBlock(); // ← Вот это было не так!
+				handleBlock();
 				setIsKebabMenuOpen(false);
 			}
 		}

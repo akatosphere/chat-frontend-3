@@ -61,7 +61,7 @@ const ChatsPageComponent = () => {
 			</Container>
 
 			{profileShown && chatUid && (
-				<Container type={ContainerType.SIDEBAR}>
+				<Container type={ContainerType.CONTENT}>
 					<ChatProfileView userUid={chatUid} />
 				</Container>
 			)}

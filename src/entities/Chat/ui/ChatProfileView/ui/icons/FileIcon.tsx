@@ -1,4 +1,4 @@
-export const FileIcon = ({ loading }: { loading?: boolean }) => {
+export const FileIcon = ({ loading }: { loading: boolean }) => {
 	return loading ? (
 		<svg
 			width='37'

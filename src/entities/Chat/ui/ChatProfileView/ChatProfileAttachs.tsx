@@ -9,6 +9,7 @@ import {
 
 import s from './ChatProfileView.module.scss';
 import { FileMedia } from './FileMedia';
+import { VoiceMedia } from './VoiceMedia';
 
 const mockMediaItems: ChatMediaItem[] = [
 	{
@@ -226,7 +227,15 @@ export const ChatProfileAttachs = ({
 
 				{activeTab === 'voice' && (
 					<div className={s.voice}>
-						<pre>{JSON.stringify(activeData, null, 2)}</pre>
+						{(activeData as ChatVoiceItem[]).map(voice => (
+							<VoiceMedia
+								key={voice.uid}
+								uid={voice.uid}
+								url={voice.url}
+								name='Алексей Смирнов'
+								createdAt={formatDate(voice.createdAt)}
+							/>
+						))}
 					</div>
 				)}
 

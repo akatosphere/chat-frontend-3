@@ -6,19 +6,21 @@ interface FileMediaProps {
 	size: string;
 	date: string;
 	className?: string;
+	loading?: boolean;
 }
 
 export const FileMedia = ({
 	filename,
 	size,
 	date,
-	className = ''
+	className = '',
+	loading = false
 }: FileMediaProps) => {
 	return (
 		<div className={`${s.fileMedia} ${className}`}>
 			<div className={s.content}>
 				<div className={s.iconWrapper}>
-					<FileIcon />
+					<FileIcon loading={loading} />
 				</div>
 
 				<div className={s.info}>
