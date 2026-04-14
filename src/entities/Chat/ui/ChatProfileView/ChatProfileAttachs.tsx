@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 
 import {
 	ChatFileItem,
@@ -192,12 +193,12 @@ export const ChatProfileAttachs = ({
 					<div className={s.media}>
 						{(activeData as ChatMediaItem[]).map(item =>
 							item.type === 'image' ? (
-								<img
+								<Image
 									key={item.id}
 									src={item.url}
-									className={s.mediaItem}
-									loading='lazy'
 									alt=''
+									fill
+									className={s.mediaItem}
 								/>
 							) : (
 								<video
@@ -227,15 +228,18 @@ export const ChatProfileAttachs = ({
 
 				{activeTab === 'voice' && (
 					<div className={s.voice}>
-						{(activeData as ChatVoiceItem[]).map(voice => (
-							<VoiceMedia
-								key={voice.uid}
-								uid={voice.uid}
-								url={voice.url}
-								name='Алексей Смирнов'
-								createdAt={formatDate(voice.createdAt)}
-							/>
-						))}
+						{(activeData as ChatVoiceItem[]).map(voice => {
+							const isMine = true; // временно
+							return (
+								<VoiceMedia
+									key={voice.uid}
+									uid={voice.uid}
+									url={voice.url}
+									createdAt={formatDate(voice.createdAt)}
+									name={isMine ? 'Вы' : 'Неизвестный'}
+								/>
+							);
+						})}
 					</div>
 				)}
 

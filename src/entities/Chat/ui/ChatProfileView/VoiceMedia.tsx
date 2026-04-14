@@ -7,24 +7,26 @@ interface VoiceMediaProps {
 	url: string;
 	name: string;
 	createdAt: string;
+	duration?: number;
 	className?: string;
 }
 
 export const VoiceMedia = ({
-	uid, // на будущее
+	// uid,
 	url,
 	name,
 	createdAt,
+	duration: propsDuration,
 	className = ''
 }: VoiceMediaProps) => {
 	const audioRef = useRef<HTMLAudioElement>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
-	const [currentDuration, setCurrentDuration] = useState(0);
+	const [duration, setDuration] = useState(propsDuration || 0);
 
-	const formatDuration = (seconds: number): string => {
-		const min = Math.floor(seconds / 60);
-		const sec = Math.floor(seconds % 60);
-		return `${min}:${sec.toString().padStart(2, '0')}`;
+	const formatDuration = (sec: number): string => {
+		const min = Math.floor(sec / 60);
+		const secStr = Math.floor(sec % 60);
+		return `${min}:${secStr.toString().padStart(2, '0')}`;
 	};
 
 	const togglePlay = () => {
@@ -36,7 +38,9 @@ export const VoiceMedia = ({
 		if (isPlaying) {
 			audio.pause();
 		} else {
-			audio.play();
+			audio.play().catch(err => {
+				console.error('Failed to play audio:', err);
+			});
 		}
 	};
 
@@ -51,8 +55,8 @@ export const VoiceMedia = ({
 		const handleEnded = () => setIsPlaying(false);
 
 		const handleLoadedMetadata = () => {
-			if (audio.duration && isFinite(audio.duration)) {
-				setCurrentDuration(Math.floor(audio.duration));
+			if (!propsDuration && audio.duration && isFinite(audio.duration)) {
+				setDuration(Math.floor(audio.duration));
 			}
 		};
 
@@ -67,7 +71,7 @@ export const VoiceMedia = ({
 			audio.removeEventListener('ended', handleEnded);
 			audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
 		};
-	}, []);
+	}, [propsDuration]);
 
 	return (
 		<div className={`${s.voiceMedia} ${className}`}>
@@ -83,7 +87,7 @@ export const VoiceMedia = ({
 				<div className={s.info}>
 					<p className={s.name}>{name}</p>
 					<p className={s.meta}>
-						{formatDuration(currentDuration)} • {createdAt}
+						{formatDuration(duration)} • {createdAt}
 					</p>
 				</div>
 			</div>
