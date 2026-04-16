@@ -55,44 +55,36 @@ export const ModalChats = ({
 			</div>
 
 			<div className={cls.chatsWrapper}>
-				{isLoading && <>Загрузка...</>}
-				{!isLoading && !filteredData.length && !searchTerm && (
-					<>Список чатов пуст</>
-				)}
-
-				{searchTerm && !isLoading && filteredData.length === 0 && (
-					<div className={cls.searchClearWrapper}>
-						<SearchClear className={cls.icon} />
-
-						<Text
-							color={TextColor.GRAY}
-							fontSize={TextSize.L}
-							className={cls.searchTitle}
-						>
-							Поиск не дал результатов
-						</Text>
-
-						<Text
-							color={TextColor.GRAY}
-							fontSize={TextSize.L}
-							className={cls.searchText}
-						>
-							По вашему запросу ничего не найдено.
-						</Text>
-
-						<Text
-							color={TextColor.GRAY}
-							fontSize={TextSize.L}
-							className={cls.searchTitle}
-						>
-							Измените запрос и попробуйте снова
-						</Text>
-					</div>
-				)}
-
-				{filteredData && (
-					<>
-						{filteredData.map(chat => (
+				{isLoading ? (
+					<>Загрузка...</>
+				) : searchTerm ? (
+					filteredData.length === 0 ? (
+						<div className={cls.searchClearWrapper}>
+							<SearchClear className={cls.icon} />
+							<Text
+								color={TextColor.GRAY}
+								fontSize={TextSize.L}
+								className={cls.searchTitle}
+							>
+								Поиск не дал результатов
+							</Text>
+							<Text
+								color={TextColor.GRAY}
+								fontSize={TextSize.L}
+								className={cls.searchText}
+							>
+								По вашему запросу ничего не найдено.
+							</Text>
+							<Text
+								color={TextColor.GRAY}
+								fontSize={TextSize.L}
+								className={cls.searchTitle}
+							>
+								Измените запрос и попробуйте снова
+							</Text>
+						</div>
+					) : (
+						filteredData.map(chat => (
 							<UserCard
 								className={cls.userCard}
 								userData={mapChatToUserCard(chat)}
@@ -100,8 +92,20 @@ export const ModalChats = ({
 								key={chat.chat.uid}
 								onClick={() => onClick(chat.chat.uid)}
 							/>
-						))}
-					</>
+						))
+					)
+				) : !chats?.results?.length && filteredData.length === 0 ? (
+					<>Список чатов пуст</>
+				) : (
+					filteredData.map(chat => (
+						<UserCard
+							className={cls.userCard}
+							userData={mapChatToUserCard(chat)}
+							type={UserCardType.CONTACT}
+							key={chat.chat.uid}
+							onClick={() => onClick(chat.chat.uid)}
+						/>
+					))
 				)}
 			</div>
 		</Modal>
