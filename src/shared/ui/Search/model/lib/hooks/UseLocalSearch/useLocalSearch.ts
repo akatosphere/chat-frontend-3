@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDebounce } from '@/shared/lib/hooks/useDebounce/useDebounce';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function useLocalSearch<T>(
 	data: T[],
@@ -22,7 +22,7 @@ export function useLocalSearch<T>(
 
 	useEffect(() => {
 		debouncedFilter(searchTerm.trim());
-	}, [searchTerm, debouncedFilter]);
+	}, [searchTerm, debouncedFilter, data]);
 
 	const handleSearchChange = useCallback((value: string) => {
 		setSearchTerm(value);
