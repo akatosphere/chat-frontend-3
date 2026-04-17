@@ -37,7 +37,7 @@ export const ChatView = ({
 }: ChatViewProps) => {
 	// ─────────────────────────────────────────────────────────────
 
-	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(true);
+	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(false);
 
 	const isMobile = useMediaQuery();
 	const [isActionBarVisible, setIsActionBarVisible] = useState(true);
