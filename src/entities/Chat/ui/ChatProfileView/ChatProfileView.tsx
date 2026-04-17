@@ -245,8 +245,21 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		linksResponse?.results.map(l => ({
 			url: l.url,
 			title: l.title,
-			from: `${l.from_user.first_name} ${l.from_user.last_name}`,
-			createdAt: l.created_at
+			from_user: {
+				first_name: l.from_user.first_name,
+				last_name: l.from_user.last_name
+			},
+			message_id: l.message_id,
+			forwarded_in: l.forwarded_in.map(f => ({
+				id: f.id,
+				uid: f.uid,
+				from_user: {
+					first_name: f.from_user.first_name,
+					last_name: f.from_user.last_name
+				}
+			})),
+			created_at: l.created_at,
+			updated_at: l.updated_at
 		})) ?? [];
 
 	/**

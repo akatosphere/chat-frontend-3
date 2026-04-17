@@ -27,12 +27,6 @@ export interface ChatFileItem {
 	createdAt: string;
 }
 
-export interface ChatLinkItemForwardedIn {
-	id: number;
-	uid: string;
-	from_user: string;
-}
-
 export interface ChatLinkItem {
 	url: string;
 	title: string;
@@ -41,7 +35,14 @@ export interface ChatLinkItem {
 		last_name: string;
 	};
 	message_id: number;
-	forwarded_in: ChatLinkItemForwardedIn[];
+	forwarded_in: {
+		id: number;
+		uid: string;
+		from_user: {
+			first_name: string;
+			last_name: string;
+		};
+	}[];
 	created_at: string;
 	updated_at: string;
 }

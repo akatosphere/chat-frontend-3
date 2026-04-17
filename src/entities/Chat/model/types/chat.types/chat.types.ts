@@ -627,7 +627,17 @@ export interface LinksResponse {
 			first_name: string;
 			last_name: string;
 		};
+		message_id: number;
+		forwarded_in: {
+			id: number;
+			uid: string;
+			from_user: {
+				first_name: string;
+				last_name: string;
+			};
+		}[];
 		created_at: string;
+		updated_at: string;
 	}[];
 }
 
