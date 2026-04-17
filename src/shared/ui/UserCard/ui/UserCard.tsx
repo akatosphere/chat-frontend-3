@@ -34,6 +34,7 @@ interface UserCardProps {
 	isActive?: boolean; // Новый проп для инверсии цветов
 	sendingMessage?: boolean;
 	onDelete?: () => void;
+	onClick?: () => void;
 }
 
 const formatUnreadCount = (count: number | undefined): string => {
@@ -82,13 +83,12 @@ export const UserCard = ({
 	type,
 	isActive = false,
 	sendingMessage,
-	onDelete
+	onDelete,
+	onClick
 }: UserCardProps) => {
 	if (!userData) {
 		return null;
 	}
-
-	console.log(userData.is_favorite);
 
 	//  Определяем цвета в зависимости от режима
 	const nameColor = isActive ? undefined : TextColor.BLACK;
@@ -104,6 +104,7 @@ export const UserCard = ({
 				{ [cls.isActive]: isActive, [cls.isFavorite]: userData.is_favorite },
 				[className, cls[type]]
 			)}
+			onClick={onClick}
 		>
 			<Avatar
 				className={cls.avatar}

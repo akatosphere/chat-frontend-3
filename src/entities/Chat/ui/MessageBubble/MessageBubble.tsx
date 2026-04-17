@@ -1,10 +1,10 @@
-import Image from 'next/image';
+import { classNames } from '@/shared/lib/classNames/classNames';
 import { formatUnixToLocalTime } from '@/shared/lib/formatUnixToLocalTime/formatUnixToLocalTime';
 import { FontWeight, Text, TextColor, TextSize } from '@/shared/ui/Text';
-import { MessageStatusNode } from './MessageStatusNode';
-import { classNames } from '@/shared/lib/classNames/classNames';
+import Image from 'next/image';
 import { highlightText } from '../../model/lib/service/highlightText/highlightText';
 import { MessageStatus } from '../../model/types/chat.types/chat.types';
+import { MessageStatusNode } from './MessageStatusNode';
 
 import styles from './MessageBubble.module.scss';
 interface MessageBubbleProps {
@@ -24,6 +24,7 @@ interface MessageBubbleProps {
 	'data-message-id'?: string;
 	searchQuery?: string;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
+	onContextMenu: (e: React.MouseEvent) => void;
 }
 
 export const MessageBubble = ({
@@ -41,7 +42,8 @@ export const MessageBubble = ({
 	className,
 	'data-message-id': dataMessageId,
 	searchQuery = '',
-	getActiveOccurrencesForMessage
+	getActiveOccurrencesForMessage,
+	onContextMenu
 }: MessageBubbleProps) => {
 	const isGroupReceived = isGroupChat && status === 'received';
 	const showName = isGroupReceived && senderName && isFirstInGroup;
@@ -68,6 +70,7 @@ export const MessageBubble = ({
 				[className].filter(Boolean)
 			)}
 			data-message-id={dataMessageId || id}
+			onContextMenu={onContextMenu}
 		>
 			<div className={styles.messageRow}>
 				{isGroupReceived && (
