@@ -13,10 +13,13 @@ import { UserCardSkeleton } from '@/shared/ui/Skeleton';
 import { UserCardType } from '@/shared/ui/UserCard';
 import { CreateNew } from '@icons/index';
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import { useGetChatsQuery, useLazyGetChatsQuery } from '../../api/chatApi';
 import { sortChatsByLastMessage } from '../../model/lib/utils/sortChatsByLastMessage/sortChatsByLastMessage';
 import { Chat, GetChatsRequest } from '../../model/types/chat.types/chat.types';
 import { ChatListContent } from '../ChatListContent/ChatListContent';
+import {
+	useGetChatsQuery,
+	useLazyGetChatsQuery
+} from '../../api/chatApi/chatApi';
 
 import cls from './ChatList.module.scss';
 

@@ -1,4 +1,3 @@
-import { chatApi } from '@/entities/Chat';
 import { selectCurrentUserId } from '@/entities/Profile';
 import { useAppDispatch } from '@/shared/lib/hooks/useAppDispatch/useAppDispatch';
 import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
@@ -11,6 +10,7 @@ import {
 	MessageType
 } from '../../../types/chat.types/chat.types';
 import { sendMessage } from '../../service/sendMessage/sendMessage';
+import { chatApi } from '@/entities/Chat/api';
 
 export const useChatSender = (
 	chatUid: string,
@@ -18,6 +18,7 @@ export const useChatSender = (
 	chatKey?: string
 ) => {
 	const currentUserId = useAppSelector(selectCurrentUserId);
+
 	const dispatch = useAppDispatch();
 
 	const send = useCallback(

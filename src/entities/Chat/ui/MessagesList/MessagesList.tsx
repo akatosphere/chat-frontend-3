@@ -13,12 +13,14 @@ import {
 } from '@/shared/model';
 import { useMessagePagination } from '../../model/lib/hooks/useMessagePagination/useMessagePagination';
 import { MessageListItem } from './MessageListItem';
+import { useMessageReadTracker } from '../../model/lib/hooks/useMessageReadTracker/useMessageReadTracker';
 
 import cls from './MessagesList.module.scss';
 
 interface MessagesProps {
 	userUid: string;
 	currentUserId?: string;
+	chatKey: string;
 	className?: string;
 	activeResultId?: string;
 	searchQuery?: string;
@@ -30,6 +32,7 @@ interface MessagesProps {
 const MessagesListComponent = ({
 	userUid,
 	currentUserId,
+	chatKey,
 	className,
 	activeResultId,
 	searchQuery,
@@ -52,7 +55,7 @@ const MessagesListComponent = ({
 		ordering: MESSAGES_QUERY_DEFAULTS.ordering
 	});
 
-	const { loadMore, containerRef } = useMessagePagination(nextUrl);
+	const { loadMore, containerRef } = useMessagePagination(nextUrl, undefined);
 
 	const {
 		scrollRef,
@@ -65,6 +68,16 @@ const MessagesListComponent = ({
 		loadMore,
 		threshold: SCROLL_BOTTOM_THRESHOLD,
 		loadThreshold: SCROLL_BOTTOM_THRESHOLD
+	});
+
+	useMessageReadTracker({
+		containerRef: scrollRef,
+		queryArgs: {
+			user_uid: userUid,
+			page_size: MESSAGES_QUERY_DEFAULTS.page_size,
+			ordering: MESSAGES_QUERY_DEFAULTS.ordering
+		},
+		chatKey
 	});
 
 	useEffect(() => {

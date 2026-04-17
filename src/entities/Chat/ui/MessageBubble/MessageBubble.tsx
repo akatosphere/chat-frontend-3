@@ -7,19 +7,26 @@ import { highlightText } from '../../model/lib/service/highlightText/highlightTe
 import { MessageStatus } from '../../model/types/chat.types/chat.types';
 
 import styles from './MessageBubble.module.scss';
+
 interface MessageBubbleProps {
 	id: string;
 	time: number;
 	text: string;
-	status: MessageStatus | 'received' | 'sending' | 'unread' | 'read';
+	status: MessageStatus;
 	onClick: (id: string) => void;
 
+	// Новые пропсы для авто-прочтения
+	isFromCurrentUser: boolean; // ← Сообщение от меня?
+	isNew: boolean; // ← Сообщение непрочитанное?
+
+	// Групповые чаты
 	isGroupChat?: boolean;
 	senderName?: string;
 	senderAvatar?: string;
-
 	isFirstInGroup?: boolean;
 	isLastInGroup?: boolean;
+
+	// UI
 	className?: string;
 	'data-message-id'?: string;
 	searchQuery?: string;
@@ -33,11 +40,18 @@ export const MessageBubble = ({
 	status,
 	onClick,
 
+	// Новые пропсы
+	isFromCurrentUser,
+	isNew,
+
+	// Групповые чаты
 	isGroupChat = false,
 	senderName,
 	senderAvatar,
 	isFirstInGroup = false,
 	isLastInGroup = false,
+
+	// UI
 	className,
 	'data-message-id': dataMessageId,
 	searchQuery = '',
@@ -67,7 +81,10 @@ export const MessageBubble = ({
 				{},
 				[className].filter(Boolean)
 			)}
+			// Data-атрибуты для IntersectionObserver в useMessageReadTracker
 			data-message-id={dataMessageId || id}
+			data-is-from-current-user={isFromCurrentUser}
+			data-is-new={isNew}
 		>
 			<div className={styles.messageRow}>
 				{isGroupReceived && (
@@ -134,7 +151,9 @@ export const MessageBubble = ({
 								{formatUnixToLocalTime(time)}
 							</Text>
 
-							{status !== 'received' && <MessageStatusNode status={status} />}
+							{status !== 'received' && (
+								<MessageStatusNode status={status} isOwn={true} />
+							)}
 						</div>
 					</div>
 				</div>

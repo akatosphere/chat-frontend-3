@@ -4,8 +4,10 @@ import { SmartDateSeparator } from '../SystemMessages/ui/SmartDateSeparator/Smar
 import SystemMessage from '../SystemMessages/ui/SystemMessages/SystemMessages';
 import { classNames } from '@/shared/lib/classNames/classNames';
 import { MessageListItem as MessageListItemType } from '../../model/lib/hooks/useMessagesData/useMessagesData';
-import cls from './MessagesList.module.scss';
+import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
+import { selectCurrentUserId } from '@/entities/Profile';
 
+import cls from './MessagesList.module.scss';
 interface Props {
 	item: MessageListItemType;
 	activeResultId?: string;
@@ -20,6 +22,8 @@ export const MessageListItem = memo(
 		searchQuery,
 		getActiveOccurrencesForMessage
 	}: Props) => {
+		const currentUserId = useAppSelector(selectCurrentUserId);
+
 		if (item.type === 'separator') {
 			return <SmartDateSeparator key={item.id} id={item.id} date={item.date} />;
 		}
@@ -36,18 +40,24 @@ export const MessageListItem = memo(
 			[cls.messageBubble_hasQuery]: hasQuery && !isActive
 		});
 
+		const isFromCurrentUser =
+			!!currentUserId && item.data.senderId === currentUserId;
+		const isNew = !!item.data.new;
+
 		return (
 			<MessageBubble
-				key={item.data.id}
-				id={item.data.id}
+				key={item.data.uid}
+				id={item.data.uid}
 				text={item.data.text}
 				time={item.data.createdAt}
 				status={item.data.status}
 				onClick={() => {}}
 				className={className}
-				data-message-id={item.data.id}
+				data-message-id={item.data.uid}
 				searchQuery={searchQuery}
 				getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
+				isFromCurrentUser={isFromCurrentUser}
+				isNew={isNew}
 			/>
 		);
 	}

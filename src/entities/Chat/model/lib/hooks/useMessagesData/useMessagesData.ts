@@ -1,4 +1,4 @@
-import { useMemo } from 'react'; // ✅ useState и useEffect больше не нужны для messages
+import { useMemo } from 'react';
 import {
 	ChatMessage,
 	MessageStatus,
@@ -11,9 +11,9 @@ import {
 	mapChatMessageToSystemMessageData
 } from '../../../mapper/mapChatType/chatMapper';
 import { shouldShowDateSeparator } from '../../service/dateFormating/dateFormater';
-import { useGetMessagesQuery } from '@/entities/Chat/api/chatApi';
 import { MESSAGES_QUERY_DEFAULTS } from '@/shared/model';
 import { MessageOrdering } from '../../../../../../shared/model/constants/chat.constants';
+import { useGetMessagesQuery } from '@/entities/Chat/api';
 
 export type MessageListItem =
 	| { type: 'text'; data: TextMessage }
@@ -46,19 +46,20 @@ const toLocalTextMessage = (
 ): TextMessage => {
 	const fromUserUid =
 		typeof msg.from_user === 'string' ? msg.from_user : msg.from_user?.uid;
+
 	const isSentByMe = currentUserId ? fromUserUid === currentUserId : false;
 
 	return {
 		id: String(msg.id),
-		uid: msg.uid || '',
-
+		uid: msg.uid && msg.uid.trim() ? msg.uid : String(msg.id),
 		type: MessageType.TEXT,
 		createdAt: msg.created_at,
-
 		content: msg.content,
 		text: msg.content,
+		new: msg.new,
 		senderId: fromUserUid || '',
 		senderName: '',
+
 		status: isSentByMe
 			? msg.new
 				? MessageStatus.UNREAD

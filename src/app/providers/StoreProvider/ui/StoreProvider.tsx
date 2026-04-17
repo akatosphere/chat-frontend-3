@@ -1,12 +1,16 @@
 'use client';
-
 import { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { AuthSyncProvider } from '@/features/auth';
 import { selectCurrentUserId } from '@/entities/Profile/model/selectors/selectCurrentUserId';
 import { persistor, store } from '..';
-import { initWSHandlers, setWSCurrentUserId } from '@/shared/api';
+import { initWSHandlers, setupSocket, setWSCurrentUserId } from '@/shared/api';
+import {
+	initChatWS,
+	registerChatWSHandlers,
+	setChatWSCurrentUserId
+} from '@/entities/Chat/api/ws/chatHandler/chatHandler';
 
 interface StoreProviderProps {
 	children: React.ReactNode;
@@ -14,21 +18,31 @@ interface StoreProviderProps {
 
 export function StoreProvider({ children }: StoreProviderProps) {
 	const isWsInitialized = useRef(false);
+	const unregisterChatHandlers = useRef<(() => void) | null>(null);
 
 	useEffect(() => {
+		initWSHandlers(store.dispatch);
+
+		initChatWS(store.dispatch);
+
+		unregisterChatHandlers.current = registerChatWSHandlers();
+
 		const unsubscribe = store.subscribe(() => {
 			const userId = selectCurrentUserId(store.getState());
-			if (userId) {
-				setWSCurrentUserId(userId);
-			}
+			setWSCurrentUserId(userId);
+			setChatWSCurrentUserId(userId);
 		});
 
 		if (!isWsInitialized.current) {
-			initWSHandlers(store.dispatch);
+			setupSocket();
 			isWsInitialized.current = true;
 		}
 
-		return unsubscribe;
+		return () => {
+			unsubscribe();
+			unregisterChatHandlers.current?.();
+			// disconnectWS(); // опционально
+		};
 	}, []);
 
 	return (

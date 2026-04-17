@@ -13,7 +13,8 @@ export enum TitleTag {
 export enum TextTag {
 	P = 'p',
 	SPAN = 'span',
-	DIV = 'div'
+	DIV = 'div',
+	H3 = 'H3'
 }
 
 export enum TextSize {

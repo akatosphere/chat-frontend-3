@@ -26,7 +26,6 @@ export const useChatSearch = (messages: ChatMessage[]): UseChatSearchReturn => {
 
 	const searchMessages = useMemo((): Message[] => {
 		return messages.map(msg => {
-			// 🔹 Извлекаем senderId корректно
 			const senderId =
 				typeof msg.from_user === 'string'
 					? msg.from_user

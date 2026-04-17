@@ -64,6 +64,7 @@ export interface ChatMessage {
 	created_at: number; // timestamp
 	updated_at: number;
 	type?: MessageType;
+	status?: MessageStatus;
 }
 
 // ─── Вложения ──────────────────────────────────────────────────────────────
@@ -261,6 +262,7 @@ export interface ChatHeaderProps {
 	navigateToNext?: () => void;
 	navigateToPrev?: () => void;
 	onNavigateToMessage?: (messageId: string) => void;
+	isSuccessModalOpen?: boolean;
 }
 
 // ─── MessageBubble / MessagesList ──────────────────────────────────────────

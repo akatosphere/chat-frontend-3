@@ -11,6 +11,7 @@ import {
 import { UserCardSkeleton } from '@/shared/ui/Skeleton';
 import { UserCardType } from '@/shared/ui/UserCard';
 import {
+	BulkDeleteValidationError,
 	CheckContactRequest,
 	ContactsSchema,
 	GetContactsRequest
@@ -28,8 +29,6 @@ import { NotSearch } from '@/shared/ui/NotSearch/NotSearch';
 import { ContactsHeader } from '../ContactsHeader/ContactsHeader';
 import { SearchSection } from '@/shared/ui/SearchSection';
 import { mapGlobalSearchToContactsSchema } from '../../model/mapper/contactsMapper/contactsMapper';
-
-import cls from './ContactsList.module.scss';
 import {
 	CONTACTS_PAGE_SIZE,
 	CONTACTS_ORDERING,
@@ -37,6 +36,10 @@ import {
 	CONTACTS_GLOBAL_SEARCH_PREFIX,
 	CONTACTS_SEARCH_DEBOUNCE_MS
 } from '@/shared/model';
+import { logger } from '@/shared/lib/logger/logger';
+
+import cls from './ContactsList.module.scss';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 export interface ContactsListProps {
 	selectedContactUid?: string | null;
@@ -117,16 +120,22 @@ export const ContactsList = memo(
 		}, []);
 
 		const handleDeleteSingleContact = useCallback(
-			async (contactUid: string) => {
+			async (contactRecordUid: string) => {
+				const contact = localContacts.find(c => c.uid === contactRecordUid);
+
+				const userUid = contact?.system_contact?.uid;
+
+				if (!userUid) {
+					return;
+				}
+
 				try {
-					await deleteContact(contactUid).unwrap();
+					await deleteContact(userUid).unwrap();
 				} catch (error: unknown) {
-					if (process.env.NODE_ENV === 'development') {
-						console.error('Failed to delete contact:', error);
-					}
+					logger.error('Failed to delete contact:', error);
 				}
 			},
-			[deleteContact]
+			[deleteContact, localContacts]
 		);
 
 		const handleEnterSelectionMode = useCallback(() => {
@@ -156,23 +165,55 @@ export const ContactsList = memo(
 			setIsDeleteModalOpen(false);
 		}, []);
 
+		//
+
 		const handleConfirmDelete = useCallback(async () => {
 			try {
-				const uids = Array.from(selectedContacts);
+				const contactsToDelete = Array.from(selectedContacts)
+					.map(selectedUserUid => {
+						return localContacts.find(
+							c => c.system_contact?.uid === selectedUserUid
+						);
+					})
+					.filter((c): c is ContactsSchema => !!c);
 
-				if (uids.length === 1) {
-					await deleteContact(uids[0]).unwrap();
+				if (contactsToDelete.length === 0) {
+					handleClearSelection();
+					setIsDeleteModalOpen(false);
+					return;
+				}
+
+				if (contactsToDelete.length === 1) {
+					const userUid = contactsToDelete[0].system_contact.uid;
+					await deleteContact(userUid).unwrap();
 				} else {
-					await bulkDeleteContacts({ contact_uids: uids }).unwrap();
+					const recordUids = contactsToDelete.map(c => c.uid);
+					await bulkDeleteContacts({ contact_uids: recordUids }).unwrap();
 				}
 
 				handleClearSelection();
 				setIsDeleteModalOpen(false);
 			} catch (error: unknown) {
-				console.error('Failed to delete contacts:', error);
+				const fetchError = error as FetchBaseQueryError;
+				const errorData = fetchError?.data as
+					| BulkDeleteValidationError
+					| undefined;
+
+				const isValidationError =
+					fetchError?.status === 400 && Array.isArray(errorData?.contact_uids);
+
+				if (isValidationError && errorData?.contact_uids) {
+					logger.warn('Partial delete error:', errorData.contact_uids);
+					handleClearSelection();
+					setIsDeleteModalOpen(false);
+					return;
+				}
+
+				logger.error('Failed to delete contacts:', fetchError);
 			}
 		}, [
 			selectedContacts,
+			localContacts,
 			deleteContact,
 			bulkDeleteContacts,
 			handleClearSelection
@@ -212,7 +253,7 @@ export const ContactsList = memo(
 					const mapped = resultsArray.map(mapGlobalSearchToContactsSchema);
 					return sortContactsByStatus(mapped);
 				} catch (error) {
-					console.error('❌ Global search error:', error);
+					logger.error('❌ Global search error:', error);
 					return [];
 				}
 			},
