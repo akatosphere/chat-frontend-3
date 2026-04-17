@@ -11,6 +11,7 @@ import {
 import s from './ChatProfileView.module.scss';
 import { FileMedia } from './FileMedia';
 import { VoiceMedia } from './VoiceMedia';
+import { LinkMedia } from './LinkMedia';
 
 const mockMediaItems: ChatMediaItem[] = [
 	{
@@ -94,16 +95,46 @@ const mockVoiceItems: ChatVoiceItem[] = [
 
 const mockLinkItems: ChatLinkItem[] = [
 	{
-		url: 'https://skolkovo.ru',
-		title: 'Сайт Сколково',
-		from: 'skolkovo.ru',
-		createdAt: '1739188800'
+		url: 'https://example.com/article1',
+		title: 'First Article Title',
+		from_user: {
+			first_name: 'John',
+			last_name: 'Doe'
+		},
+		message_id: 123,
+		forwarded_in: [
+			{
+				id: 456,
+				uid: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+				from_user: 'Alice Smith'
+			}
+		],
+		created_at: '1744915200', // '2026-04-17T18:00:00Z'
+		updated_at: '1744915200'
 	},
 	{
-		url: 'https://example.com/research-report-2024',
-		title: 'Отчёт по исследованию 2024',
-		from: 'example.com',
-		createdAt: '1738929600'
+		url: 'https://example.com/news2',
+		title: 'Latest News Update',
+		from_user: {
+			first_name: 'Jane',
+			last_name: 'Smith'
+		},
+		message_id: 124,
+		forwarded_in: [],
+		created_at: '1744909200', // '2026-04-17T17:00:00Z'
+		updated_at: '1744909200'
+	},
+	{
+		url: 'https://github.com/project/repo',
+		title: 'GitHub Repository Link',
+		from_user: {
+			first_name: 'Bob',
+			last_name: 'Johnson'
+		},
+		message_id: 125,
+		forwarded_in: [],
+		created_at: '1744905600', // '2026-04-17T16:00:00Z'
+		updated_at: '1744905600'
 	}
 ];
 
@@ -214,7 +245,7 @@ export const ChatProfileAttachs = ({
 				)}
 
 				{activeTab === 'files' && (
-					<div className={s.files}>
+					<div className={`${s.files} ${s.list}`}>
 						{(activeData as ChatFileItem[]).map(file => (
 							<FileMedia
 								key={file.uid}
@@ -227,7 +258,7 @@ export const ChatProfileAttachs = ({
 				)}
 
 				{activeTab === 'voice' && (
-					<div className={s.voice}>
+					<div className={`${s.voice} ${s.list}`}>
 						{(activeData as ChatVoiceItem[]).map(voice => {
 							const isMine = true; // временно
 							return (
@@ -244,8 +275,17 @@ export const ChatProfileAttachs = ({
 				)}
 
 				{activeTab === 'links' && (
-					<div className={s.links}>
-						<pre>{JSON.stringify(activeData, null, 2)}</pre>
+					<div className={`${s.links} ${s.list}`}>
+						{(activeData as ChatLinkItem[]).map(link => {
+							return (
+								<LinkMedia
+									key={link.url}
+									url={link.url}
+									name={`${link.from_user.first_name} ${link.from_user.last_name}`}
+									createdAt={formatDate(link.created_at)}
+								/>
+							);
+						})}
 					</div>
 				)}
 			</div>

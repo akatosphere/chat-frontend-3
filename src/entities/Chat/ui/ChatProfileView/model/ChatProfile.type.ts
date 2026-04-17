@@ -27,11 +27,23 @@ export interface ChatFileItem {
 	createdAt: string;
 }
 
+export interface ChatLinkItemForwardedIn {
+	id: number;
+	uid: string;
+	from_user: string;
+}
+
 export interface ChatLinkItem {
 	url: string;
 	title: string;
-	from: string;
-	createdAt: string;
+	from_user: {
+		first_name: string;
+		last_name: string;
+	};
+	message_id: number;
+	forwarded_in: ChatLinkItemForwardedIn[];
+	created_at: string;
+	updated_at: string;
 }
 
 export interface ChatVoiceItem {
