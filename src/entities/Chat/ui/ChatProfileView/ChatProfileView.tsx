@@ -163,7 +163,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 
 			console.log('Пользователь успешно добавлен в контакты');
 		} catch (error) {
-			console.error('Не удалось добавить в контакты', error);
+			console.error(`Не удалось добавить в контакты (${data.username})`, error);
 		}
 	};
 

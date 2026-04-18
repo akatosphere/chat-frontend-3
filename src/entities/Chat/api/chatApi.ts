@@ -160,6 +160,7 @@ export const chatApi = rtkApi.injectEndpoints({
 			invalidatesTags: ['Contact', 'Chats']
 		}),
 
+		// ─── Удаление чата ────────────────────────────────
 		deleteChat: build.mutation({
 			query: (id: number) => ({
 				url: `/chat/list/${id}/`,
@@ -180,6 +181,7 @@ export const chatApi = rtkApi.injectEndpoints({
 			invalidatesTags: (result, error, { id }) => [{ type: 'Chats', id }]
 		}),
 
+		// ─── Очистка чата ────────────────────────────────
 		clearChat: build.mutation<void, number>({
 			query: (chatId: number) => ({
 				url: `/chat/list/clear/${chatId}/`,
