@@ -56,10 +56,8 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const { data: filesResponse } = useGetFilesQuery({ user_uid: userUid });
 	const { data: linksResponse } = useGetLinksQuery({ user_uid: userUid });
 
-	// для обновления свойств чата (уведомления)
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
 
-	// мутации
 	const [addContactByPhone] = useAddContactByPhoneMutation();
 	const [unblockUser] = useUnblockUserMutation();
 	const [blockUser] = useBlockUserMutation();
@@ -290,7 +288,6 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		);
 	}
 
-	// Данные для отображения профиля
 	const was_online_at = data.was_online_at;
 	const status = data.is_online
 		? 'в сети'
@@ -426,7 +423,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				</button>
 			)}
 
-			{/* Вложения (реальные данные) */}
+			{/* Вложения */}
 			<ChatProfileAttachs
 				mediaItems={mediaItems}
 				fileItems={fileItems}
