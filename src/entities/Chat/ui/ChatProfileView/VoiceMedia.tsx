@@ -3,18 +3,14 @@ import s from './ChatProfileView.module.scss';
 import { VoiceIcon } from './ui/icons/VoiceIcon';
 
 interface VoiceMediaProps {
-	uid: string;
 	url: string;
-	name: string;
 	createdAt: string;
 	duration?: number;
 	className?: string;
 }
 
 export const VoiceMedia = ({
-	// uid,
 	url,
-	name,
 	createdAt,
 	duration: propsDuration,
 	className = ''
@@ -85,7 +81,7 @@ export const VoiceMedia = ({
 				</button>
 
 				<div className={s.info}>
-					<p className={s.name}>{name}</p>
+					<p className={s.name}>Голосовое сообщение</p>
 					<p className={s.meta}>
 						{formatDuration(duration)} • {createdAt}
 					</p>
