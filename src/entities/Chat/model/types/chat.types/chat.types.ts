@@ -263,6 +263,7 @@ export interface ChatHeaderProps {
 	navigateToNext?: () => void;
 	navigateToPrev?: () => void;
 	onNavigateToMessage?: (messageId: string) => void;
+	onUserClick?: () => void;
 }
 
 // ─── MessageBubble / MessagesList ──────────────────────────────────────────

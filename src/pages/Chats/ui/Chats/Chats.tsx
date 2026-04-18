@@ -19,7 +19,11 @@ const ChatsPageComponent = () => {
 
 	const isMobile = useMediaQuery();
 
-	const [profileShown, setProfileShown] = useState(true);
+	const [profileShown, setProfileShown] = useState(false);
+
+	const toggleProfile = () => {
+		setProfileShown(prev => !prev);
+	};
 
 	// МОБИЛЬНАЯ ЛОГИКА: показываем только один экран
 	if (isMobile) {
@@ -29,8 +33,9 @@ const ChatsPageComponent = () => {
 					// Если чат выбран → показываем сообщения (CONTENT)
 					<Container type={ContainerType.CONTENT}>
 						<ChatView
-							chatUid={chatUid} //Передаём uid из роута
+							chatUid={chatUid}
 							onBack={() => router.push('/chats')}
+							onOpenProfile={toggleProfile}
 						/>
 					</Container>
 				) : (
@@ -52,7 +57,7 @@ const ChatsPageComponent = () => {
 
 			<Container type={ContainerType.CONTENT}>
 				{chatUid ? (
-					<ChatView chatUid={chatUid} />
+					<ChatView chatUid={chatUid} onOpenProfile={toggleProfile} />
 				) : (
 					<div className={cls.emptyState}>
 						<Text>Выберите чат для начала общения</Text>

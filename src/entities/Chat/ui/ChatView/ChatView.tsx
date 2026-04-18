@@ -28,12 +28,14 @@ interface ChatViewProps {
 		avatar?: string;
 		isOnline?: boolean;
 	};
+	onOpenProfile?: () => void;
 }
 
 export const ChatView = ({
 	chatUid,
 	userDataFromSearch,
-	onBack
+	onBack,
+	onOpenProfile
 }: ChatViewProps) => {
 	// ─────────────────────────────────────────────────────────────
 
@@ -156,7 +158,7 @@ export const ChatView = ({
 				onClick={() => console.log('haha')}
 			></ModalChats>
 
-			<ChatHeader {...headerProps} />
+			<ChatHeader {...headerProps} onUserClick={onOpenProfile} />
 
 			{hasMessages ? (
 				<>

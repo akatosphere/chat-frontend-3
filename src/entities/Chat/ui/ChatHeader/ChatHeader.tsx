@@ -47,7 +47,8 @@ export const ChatHeader = (props: ChatHeaderProps) => {
 		searchQuery = '',
 		searchResultsCount = 0,
 		activeResultIndex = 0,
-		onBack
+		onBack,
+		onUserClick
 	} = props;
 
 	const canGoPrev = (activeResultIndex ?? 0) > 0;
@@ -70,7 +71,17 @@ export const ChatHeader = (props: ChatHeaderProps) => {
 						</Button>
 					)}
 
-					<div className={cls.userInfo}>
+					<div
+						className={cls.userInfo}
+						onClick={onUserClick}
+						role='button'
+						tabIndex={0}
+						onKeyDown={e => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								onUserClick?.();
+							}
+						}}
+					>
 						<div className={cls.userAvatar}>
 							<Avatar
 								src={userAvatar}
