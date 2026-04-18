@@ -12,11 +12,10 @@ interface MessageBubbleProps {
 	id: string;
 	time: number;
 	text: string;
-	// Объединяем тип: базовый MessageStatus + явные значения из dev (если нужно для страховки)
 	status: MessageStatus | 'received' | 'sending' | 'unread' | 'read';
 	onClick: (id: string) => void;
 
-	// ✅ Ваши пропсы для авто-прочтения
+	// пропсы для авто-прочтения
 	isFromCurrentUser: boolean;
 	isNew: boolean;
 
@@ -33,7 +32,6 @@ interface MessageBubbleProps {
 	searchQuery?: string;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
 
-	// ✅ Проп из dev для контекстного меню
 	onContextMenu?: (e: React.MouseEvent) => void;
 }
 
@@ -88,11 +86,9 @@ export const MessageBubble = ({
 				{},
 				[className].filter(Boolean)
 			)}
-			// ✅ Data-атрибуты для IntersectionObserver + из dev
 			data-message-id={dataMessageId || id}
 			data-is-from-current-user={isFromCurrentUser}
 			data-is-new={isNew}
-			// ✅ Контекстное меню из dev (безопасно, т.к. опционально)
 			onContextMenu={onContextMenu}
 		>
 			<div className={styles.messageRow}>

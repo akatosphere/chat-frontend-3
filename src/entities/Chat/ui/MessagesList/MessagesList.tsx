@@ -29,7 +29,7 @@ import cls from './MessagesList.module.scss';
 interface MessagesProps {
 	userUid: string;
 	currentUserId?: string;
-	// ✅ Ваш проп для авто-прочтения
+
 	chatKey: string;
 	className?: string;
 	activeResultId?: string;
@@ -42,7 +42,7 @@ interface MessagesProps {
 const MessagesListComponent = ({
 	userUid,
 	currentUserId,
-	chatKey, // ✅ Ваш проп
+	chatKey,
 	className,
 	activeResultId,
 	searchQuery,
@@ -80,7 +80,6 @@ const MessagesListComponent = ({
 		loadThreshold: SCROLL_BOTTOM_THRESHOLD
 	});
 
-	// ✅ Ваш хук для авто-прочтения
 	useMessageReadTracker({
 		containerRef: scrollRef,
 		queryArgs: {
@@ -119,7 +118,6 @@ const MessagesListComponent = ({
 		}
 	}, [messages.length, isAtBottom, scrollToBottom]);
 
-	// ✅ Контекстное меню из dev
 	const [activeContextMessageId, setActiveContextMessageId] =
 		useState<string>('');
 
@@ -239,7 +237,6 @@ const MessagesListComponent = ({
 								activeResultId={activeResultId}
 								searchQuery={searchQuery}
 								getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
-								// ✅ Пропсы для контекстного меню
 								activeContextMessageId={activeContextMessageId}
 								onContextMenu={e =>
 									handleMessageContextMenu(
@@ -252,7 +249,7 @@ const MessagesListComponent = ({
 						);
 					})}
 					<div ref={anchorRef} className={cls.scrollAnchor} />
-					{/* ✅ Контекстное меню рендерится здесь */}
+
 					<ContextMenu visible={isVisible} position={position} items={items} />
 				</div>
 

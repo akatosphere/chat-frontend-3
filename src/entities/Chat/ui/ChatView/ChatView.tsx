@@ -30,7 +30,6 @@ import { CHATS_PAGE_SIZE, CHATS_ORDERING } from '@/shared/model';
 import { useRouter } from 'next/navigation';
 import { chatApi } from '../../api/chatApi/chatApi';
 import { connectChat } from '../../api/ws/chatActions/chatActions';
-
 import { ModalChats } from '../ModalChats/ModalChats';
 import cls from './ChatView.module.scss';
 
