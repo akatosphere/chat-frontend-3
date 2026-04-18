@@ -15,7 +15,8 @@ import type {
 	FilesResponse,
 	LinksResponse,
 	AddContactByPhoneRequest,
-	AddContactResponse
+	AddContactResponse,
+	MessengerListResponse
 } from '../model/types/chat.types/chat.types';
 import {
 	CHATS_ORDERING,
@@ -147,6 +148,16 @@ export const chatApi = rtkApi.injectEndpoints({
 				{ type: 'Chats', id: 'LIST' }
 			]
 		}),
+
+		// ─── Список контактов ─────────────────────────
+		getMessengerList: build.query<MessengerListResponse, void>({
+			query: () => ({
+				url: '/contact/messenger-list/',
+				method: 'GET'
+			}),
+			providesTags: [{ type: 'Contact', id: 'LIST' }]
+		}),
+
 		// ─── Добавление в контакты ────────────────────────────────
 		addContactByPhone: build.mutation<
 			AddContactResponse,
@@ -247,6 +258,7 @@ export const {
 	useBlockUserMutation,
 	useClearChatMutation,
 	useAddContactByPhoneMutation,
+	useGetMessengerListQuery,
 	endpoints: { getChats, getChatById, getMessages, getContactByUid }
 } = chatApi;
 

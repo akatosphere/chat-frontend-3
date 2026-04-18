@@ -10,7 +10,8 @@ import {
 	useAddContactByPhoneMutation,
 	useUnblockUserMutation,
 	useBlockUserMutation,
-	useClearChatMutation
+	useClearChatMutation,
+	useGetMessengerListQuery
 } from '../../api/chatApi';
 import { formatDateRu } from './lib/formatDateRu';
 
@@ -55,6 +56,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 	const { data: messages } = useGetMessagesQuery({ user_uid: userUid });
 	const { data: filesResponse } = useGetFilesQuery({ user_uid: userUid });
 	const { data: linksResponse } = useGetLinksQuery({ user_uid: userUid });
+	const { data: contacts } = useGetMessengerListQuery();
 
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
 
@@ -94,6 +96,10 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			}
 		}
 	];
+
+	const isInContacts = contacts?.results?.some(
+		c => c.system_contact?.uid === userUid
+	);
 
 	/**
 	 * notificationsState
@@ -409,7 +415,7 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 				)}
 			</div>
 
-			{!data.is_in_contacts && (
+			{!isInContacts && (
 				<button className={s.action} onClick={handleAddToContacts}>
 					<ActionAdd />
 					<span>Добавить в контакты</span>

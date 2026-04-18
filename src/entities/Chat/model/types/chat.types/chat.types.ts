@@ -661,5 +661,15 @@ export interface Contact {
 	was_online_at: number;
 	is_blocked: boolean;
 	chat_id: number;
-	is_in_contacts: boolean;
 }
+
+export type MessengerListResponse = {
+	count: number;
+	next: string | null;
+	previous: string | null;
+	results: Array<{
+		system_contact: {
+			uid: string;
+		};
+	}>;
+};
