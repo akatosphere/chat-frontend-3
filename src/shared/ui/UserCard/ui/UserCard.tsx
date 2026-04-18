@@ -35,6 +35,7 @@ interface UserCardProps {
 	isActive?: boolean;
 	sendingMessage?: boolean;
 	onDelete?: () => void;
+	onClick?: () => void;
 }
 
 const formatUnreadCount = (count: number | undefined): string => {
@@ -106,7 +107,8 @@ export const UserCard = ({
 	type,
 	isActive = false,
 	sendingMessage,
-	onDelete
+	onDelete,
+	onClick
 }: UserCardProps) => {
 	if (!userData) {
 		return null;
@@ -126,6 +128,7 @@ export const UserCard = ({
 				{ [cls.isActive]: isActive, [cls.isFavorite]: userData.is_favorite },
 				[className, cls[type]]
 			)}
+			onClick={onClick}
 		>
 			<Avatar
 				className={cls.avatar}

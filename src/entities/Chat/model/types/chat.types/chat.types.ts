@@ -5,15 +5,17 @@
 // ─── Пользователь ──────────────────────────────────────────────────────────
 export interface BaseUser {
 	uid: string;
-	username?: string;
+	username: string;
 	nickname?: string;
 	first_name: string;
 	last_name: string;
 	patronymic?: string;
-	avatar_url: string | null;
-	avatar_webp_url: string | null;
-	avatar_small_url?: string | null;
-	avatar_master_url?: string | null;
+	avatar: string;
+	avatar_url: string;
+	avatar_webp: string;
+	avatar_webp_url: string;
+	avatar_small_url?: string;
+	avatar_master_url?: string;
 	is_deleted?: boolean;
 }
 
@@ -46,9 +48,9 @@ export interface Chat {
 	chat_type: ChatType;
 	chat_key: string;
 	last_activity_at: number;
-	last_seen_message: ChatMessage | null;
-	last_message: ChatMessage | null;
-	first_new_message: ChatMessage | null;
+	last_seen_message: { id: number; uid: string };
+	last_message: ChatMessage;
+	first_new_message: ChatMessage;
 }
 
 // ─── Сообщения: ФРОНТЕНД-формат (после маппинга) ───────────────────────────
@@ -289,7 +291,7 @@ export interface ChatPreviewData {
 export interface ChatItemInfo {
 	uid: string;
 	username: string;
-	nickname: string;
+	nickname?: string;
 	first_name: string;
 	last_name: string;
 	avatar: string;
@@ -308,7 +310,7 @@ export interface ChatItemSchema {
 	is_favorite: boolean;
 	notifications: boolean;
 	new_message_count: number;
-	new_file_count: number;
+	new_file_count?: number;
 	name: string;
 	chat_type: ChatType;
 	chat_key: string;

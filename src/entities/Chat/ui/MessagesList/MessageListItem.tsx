@@ -8,10 +8,14 @@ import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector
 import { selectCurrentUserId } from '@/entities/Profile';
 
 import cls from './MessagesList.module.scss';
+
 interface Props {
 	item: MessageListItemType;
 	activeResultId?: string;
 	searchQuery?: string;
+	// ✅ Из dev: для контекстного меню
+	activeContextMessageId?: string;
+	onContextMenu?: (e: React.MouseEvent, messageId: string) => void;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
 }
 
@@ -20,8 +24,11 @@ export const MessageListItem = memo(
 		item,
 		activeResultId,
 		searchQuery,
+		activeContextMessageId,
+		onContextMenu,
 		getActiveOccurrencesForMessage
 	}: Props) => {
+		// ✅ Ваш селектор для авто-прочтения
 		const currentUserId = useAppSelector(selectCurrentUserId);
 
 		if (item.type === 'separator') {
@@ -33,16 +40,24 @@ export const MessageListItem = memo(
 		}
 
 		const isActive = activeResultId === item.data.uid;
+		const isContextActive = activeContextMessageId === item.data.uid; // ✅ Из dev
 		const hasQuery = !!searchQuery?.trim();
 
 		const className = classNames('', {
 			[cls.messageBubble_active]: isActive,
+			[cls.messageBubble_selected]: isContextActive, // ✅ Из dev
 			[cls.messageBubble_hasQuery]: hasQuery && !isActive
 		});
 
+		// ✅ Ваша логика для авто-прочтения
 		const isFromCurrentUser =
 			!!currentUserId && item.data.senderId === currentUserId;
 		const isNew = !!item.data.new;
+
+		// ✅ Обёртка для onContextMenu — передаёт ID сообщения
+		const handleContextMenu = onContextMenu
+			? (e: React.MouseEvent) => onContextMenu(e, item.data.uid)
+			: undefined;
 
 		return (
 			<MessageBubble
@@ -56,8 +71,11 @@ export const MessageListItem = memo(
 				data-message-id={item.data.uid}
 				searchQuery={searchQuery}
 				getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
+				// ✅ Ваши пропсы для авто-прочтения
 				isFromCurrentUser={isFromCurrentUser}
 				isNew={isNew}
+				// ✅ Проп из dev для контекстного меню
+				onContextMenu={handleContextMenu}
 			/>
 		);
 	}

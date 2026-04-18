@@ -1,23 +1,23 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	ChatHeader,
 	MessageFormComponent,
 	MessagesList
 } from '@/entities/Chat';
-import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
+import { selectCurrentUserId } from '@/entities/Profile/model/selectors/selectCurrentUserId';
 import { classNames } from '@/shared/lib/classNames/classNames';
+import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
+import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
+import { NotMessage } from '@/shared/ui/NotMessage/NotMessage';
 import { UserCardSkeleton } from '@/shared/ui/Skeleton';
 import { UserCardType } from '@/shared/ui/UserCard';
-import { NotMessage } from '@/shared/ui/NotMessage/NotMessage';
-import { useChatViewData } from '../../model/lib/hooks/useChatViewData/useChatViewData';
-import { useChatSearch } from '../../model/lib/hooks/useChatSearch/useChatSearch';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChatHeaderProps } from '../../model/lib/hooks/useChatHeaderProps/useChatHeaderProps';
+import { useChatSearch } from '../../model/lib/hooks/useChatSearch/useChatSearch';
+import { useChatViewData } from '../../model/lib/hooks/useChatViewData/useChatViewData';
 import { useMessageNavigation } from '../../model/lib/hooks/useMessageNavigation/useMessageNavigation';
 import { useAppDispatch } from '@/shared/lib/hooks/useAppDispatch/useAppDispatch';
-import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
-import { selectCurrentUserId } from '@/entities/Profile/model/selectors/selectCurrentUserId';
 import {
 	useAddContactByPhoneMutation,
 	useLazySearchGlobalContactsQuery,
@@ -31,6 +31,7 @@ import { useRouter } from 'next/navigation';
 import { chatApi } from '../../api/chatApi/chatApi';
 import { connectChat } from '../../api/ws/chatActions/chatActions';
 
+import { ModalChats } from '../ModalChats/ModalChats';
 import cls from './ChatView.module.scss';
 
 interface ChatViewProps {
@@ -51,7 +52,7 @@ export const ChatView = ({
 	// ─────────────────────────────────────────────────────────────
 
 	const router = useRouter();
-
+	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(true);
 	const [isActionBarVisible, setIsActionBarVisible] = useState(true);
 	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 	const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -327,6 +328,12 @@ export const ChatView = ({
 	// ─────────────────────────────────────────────────────────────
 	return (
 		<section className={cls.chatView}>
+			<ModalChats
+				isOpen={chatsModalOpen}
+				onClose={() => setChatsModalOpen(false)}
+				onClick={() => console.log('haha')}
+			></ModalChats>
+
 			<ChatHeader {...headerProps} />
 
 			{hasMessages ? (

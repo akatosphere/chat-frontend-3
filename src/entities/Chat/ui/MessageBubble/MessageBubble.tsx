@@ -12,12 +12,13 @@ interface MessageBubbleProps {
 	id: string;
 	time: number;
 	text: string;
-	status: MessageStatus;
+	// Объединяем тип: базовый MessageStatus + явные значения из dev (если нужно для страховки)
+	status: MessageStatus | 'received' | 'sending' | 'unread' | 'read';
 	onClick: (id: string) => void;
 
-	// Новые пропсы для авто-прочтения
-	isFromCurrentUser: boolean; // ← Сообщение от меня?
-	isNew: boolean; // ← Сообщение непрочитанное?
+	// ✅ Ваши пропсы для авто-прочтения
+	isFromCurrentUser: boolean;
+	isNew: boolean;
 
 	// Групповые чаты
 	isGroupChat?: boolean;
@@ -31,6 +32,9 @@ interface MessageBubbleProps {
 	'data-message-id'?: string;
 	searchQuery?: string;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
+
+	// ✅ Проп из dev для контекстного меню
+	onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 export const MessageBubble = ({
@@ -40,7 +44,7 @@ export const MessageBubble = ({
 	status,
 	onClick,
 
-	// Новые пропсы
+	// Авто-прочтение
 	isFromCurrentUser,
 	isNew,
 
@@ -55,7 +59,10 @@ export const MessageBubble = ({
 	className,
 	'data-message-id': dataMessageId,
 	searchQuery = '',
-	getActiveOccurrencesForMessage
+	getActiveOccurrencesForMessage,
+
+	// Контекстное меню
+	onContextMenu
 }: MessageBubbleProps) => {
 	const isGroupReceived = isGroupChat && status === 'received';
 	const showName = isGroupReceived && senderName && isFirstInGroup;
@@ -81,10 +88,12 @@ export const MessageBubble = ({
 				{},
 				[className].filter(Boolean)
 			)}
-			// Data-атрибуты для IntersectionObserver в useMessageReadTracker
+			// ✅ Data-атрибуты для IntersectionObserver + из dev
 			data-message-id={dataMessageId || id}
 			data-is-from-current-user={isFromCurrentUser}
 			data-is-new={isNew}
+			// ✅ Контекстное меню из dev (безопасно, т.к. опционально)
+			onContextMenu={onContextMenu}
 		>
 			<div className={styles.messageRow}>
 				{isGroupReceived && (
@@ -152,7 +161,10 @@ export const MessageBubble = ({
 							</Text>
 
 							{status !== 'received' && (
-								<MessageStatusNode status={status} isOwn={true} />
+								<MessageStatusNode
+									status={status as MessageStatus}
+									isOwn={isFromCurrentUser}
+								/>
 							)}
 						</div>
 					</div>

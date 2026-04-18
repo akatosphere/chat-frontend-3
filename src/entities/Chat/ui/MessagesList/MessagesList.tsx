@@ -1,7 +1,14 @@
 'use client';
 
-import { memo, useEffect } from 'react';
-import { Down } from '@icons/index';
+import { memo, useCallback, useEffect, useState } from 'react';
+import {
+	CheckCircle,
+	CopyMessage,
+	Down,
+	Reply,
+	Send,
+	Trash
+} from '@icons/index';
 import { SmartDateSeparator } from '../SystemMessages/ui/SmartDateSeparator/SmartDateSeparator';
 import { StickyDateProvider } from '../SystemMessages/ui/StickyDateContext/StickyDateContext';
 import SystemMessage from '../SystemMessages/ui/SystemMessages/SystemMessages';
@@ -15,11 +22,14 @@ import { useMessagePagination } from '../../model/lib/hooks/useMessagePagination
 import { MessageListItem } from './MessageListItem';
 import { useMessageReadTracker } from '../../model/lib/hooks/useMessageReadTracker/useMessageReadTracker';
 
+import { ContextMenu, useContextMenu } from '@/features/contextMenu';
+import { KebabMenuItem } from '@/shared/ui/KebabMenu';
 import cls from './MessagesList.module.scss';
 
 interface MessagesProps {
 	userUid: string;
 	currentUserId?: string;
+	// ✅ Ваш проп для авто-прочтения
 	chatKey: string;
 	className?: string;
 	activeResultId?: string;
@@ -32,7 +42,7 @@ interface MessagesProps {
 const MessagesListComponent = ({
 	userUid,
 	currentUserId,
-	chatKey,
+	chatKey, // ✅ Ваш проп
 	className,
 	activeResultId,
 	searchQuery,
@@ -70,6 +80,7 @@ const MessagesListComponent = ({
 		loadThreshold: SCROLL_BOTTOM_THRESHOLD
 	});
 
+	// ✅ Ваш хук для авто-прочтения
 	useMessageReadTracker({
 		containerRef: scrollRef,
 		queryArgs: {
@@ -107,6 +118,80 @@ const MessagesListComponent = ({
 			});
 		}
 	}, [messages.length, isAtBottom, scrollToBottom]);
+
+	// ✅ Контекстное меню из dev
+	const [activeContextMessageId, setActiveContextMessageId] =
+		useState<string>('');
+
+	const getContextItems = useCallback(
+		(messageId: string): KebabMenuItem[] => {
+			return [
+				{
+					text: 'Ответить',
+					icon: <Reply />,
+					onClick: async () => {
+						console.log(`Reply ${messageId}`);
+						// TODO: реализовать логику ответа
+					}
+				},
+				{
+					text: 'Переслать',
+					icon: <Send />,
+					onClick: async () => {
+						console.log(`Forward ${messageId}`);
+						// TODO: реализовать логику пересылки
+					}
+				},
+				{
+					text: 'Скопировать',
+					icon: <CopyMessage />,
+					onClick: async () => {
+						try {
+							const msg = messages.find(m => m.uid === messageId);
+							if (msg?.text) {
+								await navigator.clipboard.writeText(msg.text);
+							}
+						} catch (err) {
+							console.error('Failed to copy:', err);
+						}
+					}
+				},
+				{
+					text: 'Выбрать',
+					icon: <CheckCircle />,
+					onClick: async () => {
+						console.log(`Select ${messageId}`);
+						// TODO: реализовать выбор сообщения
+					}
+				},
+				{
+					text: 'Удалить',
+					icon: <Trash />,
+					onClick: async () => {
+						console.log(`Delete ${messageId}`);
+						// TODO: реализовать удаление с подтверждением
+					},
+					danger: true
+				}
+			];
+		},
+		[messages]
+	);
+
+	const hideContext = useCallback(() => {
+		setActiveContextMessageId('');
+	}, []);
+
+	const { handleContextMenu, isVisible, position, items } =
+		useContextMenu(hideContext);
+
+	const handleMessageContextMenu = useCallback(
+		(e: React.MouseEvent, messageId: string, items: KebabMenuItem[]) => {
+			setActiveContextMessageId(messageId);
+			handleContextMenu(e, items);
+		},
+		[handleContextMenu]
+	);
 
 	if (isLoading && isEmpty) {
 		return (
@@ -154,10 +239,21 @@ const MessagesListComponent = ({
 								activeResultId={activeResultId}
 								searchQuery={searchQuery}
 								getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
+								// ✅ Пропсы для контекстного меню
+								activeContextMessageId={activeContextMessageId}
+								onContextMenu={e =>
+									handleMessageContextMenu(
+										e,
+										item.data.uid,
+										getContextItems(item.data.uid)
+									)
+								}
 							/>
 						);
 					})}
 					<div ref={anchorRef} className={cls.scrollAnchor} />
+					{/* ✅ Контекстное меню рендерится здесь */}
+					<ContextMenu visible={isVisible} position={position} items={items} />
 				</div>
 
 				{!isAtBottom && (
