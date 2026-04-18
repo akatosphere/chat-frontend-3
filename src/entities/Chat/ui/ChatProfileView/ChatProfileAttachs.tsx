@@ -30,29 +30,31 @@ export const ChatProfileAttachs = ({
 }: ChatProfileAttachsProps) => {
 	const [activeTab, setActiveTab] = useState<TabKey>('media');
 
-	const memoMedia = useMemo(
-		() => (mediaItems.length ? mediaItems : []),
-		[mediaItems]
-	);
-	const memoFiles = useMemo(
-		() => (fileItems.length ? fileItems : []),
-		[fileItems]
-	);
-	const memoVoice = useMemo(
-		() => (voiceItems.length ? voiceItems : []),
-		[voiceItems]
-	);
-	const memoLinks = useMemo(
-		() => (linkItems.length ? linkItems : []),
-		[linkItems]
-	);
+	const tabs = useMemo(() => {
+		const result: { key: TabKey; label: string }[] = [];
 
-	const tabs: { key: TabKey; label: string }[] = [
-		{ key: 'media', label: 'Медиа' },
-		{ key: 'files', label: 'Файлы' },
-		{ key: 'voice', label: 'Голосовые' },
-		{ key: 'links', label: 'Ссылки' }
-	];
+		if (mediaItems.length) {
+			result.push({ key: 'media', label: 'Медиа' });
+		}
+		if (fileItems.length) {
+			result.push({ key: 'files', label: 'Файлы' });
+		}
+		if (voiceItems.length) {
+			result.push({ key: 'voice', label: 'Голосовые' });
+		}
+		if (linkItems.length) {
+			result.push({ key: 'links', label: 'Ссылки' });
+		}
+
+		return result;
+	}, [mediaItems, fileItems, voiceItems, linkItems]);
+
+	const currentTab: TabKey | null =
+		tabs.find(t => t.key === activeTab)?.key ?? tabs[0]?.key ?? null;
+
+	if (!tabs.length || !currentTab) {
+		return null;
+	}
 
 	const formatDate = (timestamp: string): string => {
 		const date = new Date(Number(timestamp) * 1000);
@@ -63,20 +65,20 @@ export const ChatProfileAttachs = ({
 		});
 	};
 
-	const activeData = useMemo(() => {
-		switch (activeTab) {
+	const getActiveData = () => {
+		switch (currentTab) {
 			case 'media':
-				return memoMedia;
+				return mediaItems;
 			case 'files':
-				return memoFiles;
+				return fileItems;
 			case 'voice':
-				return memoVoice;
+				return voiceItems;
 			case 'links':
-				return memoLinks;
-			default:
-				return [];
+				return linkItems;
 		}
-	}, [activeTab, memoMedia, memoFiles, memoVoice, memoLinks]);
+	};
+
+	const activeData = getActiveData();
 
 	return (
 		<div>
@@ -85,7 +87,7 @@ export const ChatProfileAttachs = ({
 					{tabs.map(tab => (
 						<li
 							key={tab.key}
-							className={`${s.tab} ${activeTab === tab.key ? s.activeTab : ''}`}
+							className={`${s.tab} ${currentTab === tab.key ? s.activeTab : ''}`}
 						>
 							<button onClick={() => setActiveTab(tab.key)}>{tab.label}</button>
 							<div className={s.tabIndicator} />
@@ -95,7 +97,7 @@ export const ChatProfileAttachs = ({
 			</nav>
 
 			<div className={s.tabContent}>
-				{activeTab === 'media' && (
+				{currentTab === 'media' && (
 					<div className={s.media}>
 						{(activeData as ChatMediaItem[]).map(item =>
 							item.type === 'image' ? (
@@ -119,7 +121,7 @@ export const ChatProfileAttachs = ({
 					</div>
 				)}
 
-				{activeTab === 'files' && (
+				{currentTab === 'files' && (
 					<div className={`${s.files} ${s.list}`}>
 						{(activeData as ChatFileItem[]).map(file => (
 							<FileMedia
@@ -132,32 +134,28 @@ export const ChatProfileAttachs = ({
 					</div>
 				)}
 
-				{activeTab === 'voice' && (
+				{currentTab === 'voice' && (
 					<div className={`${s.voice} ${s.list}`}>
-						{(activeData as ChatVoiceItem[]).map(voice => {
-							return (
-								<VoiceMedia
-									key={voice.uid}
-									url={voice.url}
-									createdAt={formatDate(voice.createdAt)}
-								/>
-							);
-						})}
+						{(activeData as ChatVoiceItem[]).map(voice => (
+							<VoiceMedia
+								key={voice.uid}
+								url={voice.url}
+								createdAt={formatDate(voice.createdAt)}
+							/>
+						))}
 					</div>
 				)}
 
-				{activeTab === 'links' && (
+				{currentTab === 'links' && (
 					<div className={`${s.links} ${s.list}`}>
-						{(activeData as ChatLinkItem[]).map(link => {
-							return (
-								<LinkMedia
-									key={link.url}
-									url={link.url}
-									name={`${link.from_user.first_name} ${link.from_user.last_name}`}
-									createdAt={formatDate(link.created_at)}
-								/>
-							);
-						})}
+						{(activeData as ChatLinkItem[]).map(link => (
+							<LinkMedia
+								key={link.url}
+								url={link.url}
+								name={`${link.from_user.first_name} ${link.from_user.last_name}`}
+								createdAt={formatDate(link.created_at)}
+							/>
+						))}
 					</div>
 				)}
 			</div>
