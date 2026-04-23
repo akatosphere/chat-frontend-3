@@ -10,7 +10,7 @@ import {
 	MessageType
 } from '../../../types/chat.types/chat.types';
 import { sendMessage } from '../../service/sendMessage/sendMessage';
-import { chatApi } from '@/entities/Chat/api';
+import { chatApi } from '../../../../api/chatApi/chatApi';
 
 export const useChatSender = (
 	chatUid: string,

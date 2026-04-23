@@ -11,7 +11,8 @@ import {
 } from '../../../types/chat.types/chat.types';
 import { RootState } from '@/app/providers/StoreProvider';
 import { MESSAGES_PAGE_SIZE, MESSAGES_ORDERING } from '@/shared/model';
-import { selectChatByUid, useGetMessagesQuery } from '@/entities/Chat/api';
+import { useGetMessagesQuery } from '../../../../api/chatApi/chatApi';
+import { selectChatByUid } from '../../../selectors/selectors';
 
 export const useChatViewData = ({
 	chatUid,

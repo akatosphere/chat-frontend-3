@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useRef, useState } from 'react';
 import {
 	ChatHeader,
 	MessageFormComponent,
@@ -12,7 +13,6 @@ import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import { NotMessage } from '@/shared/ui/NotMessage/NotMessage';
 import { UserCardSkeleton } from '@/shared/ui/Skeleton';
 import { UserCardType } from '@/shared/ui/UserCard';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChatHeaderProps } from '../../model/lib/hooks/useChatHeaderProps/useChatHeaderProps';
 import { useChatSearch } from '../../model/lib/hooks/useChatSearch/useChatSearch';
 import { useChatViewData } from '../../model/lib/hooks/useChatViewData/useChatViewData';
@@ -29,8 +29,8 @@ import { BlockUserModal } from '../BlockUserModal/BlockUserModal';
 import { CHATS_PAGE_SIZE, CHATS_ORDERING } from '@/shared/model';
 import { useRouter } from 'next/navigation';
 import { chatApi } from '../../api/chatApi/chatApi';
-import { connectChat } from '../../api/ws/chatActions/chatActions';
 import { ModalChats } from '../ModalChats/ModalChats';
+
 import cls from './ChatView.module.scss';
 
 interface ChatViewProps {
@@ -79,16 +79,6 @@ export const ChatView = ({
 		isForbidden,
 		chatData
 	} = useChatViewData({ chatUid, userDataFromSearch });
-
-	useEffect(() => {
-		if (!chatUid || !chatData?.chat_key) {
-			return;
-		}
-
-		connectChat(chatData.chat_key).catch(err => {
-			logger.warn('⚠️ connectChat failed:', err);
-		});
-	}, [chatUid, chatData?.chat_key]);
 
 	// ─────────────────────────────────────────────────────────────
 

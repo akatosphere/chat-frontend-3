@@ -10,7 +10,7 @@ import {
 	initChatWS,
 	registerChatWSHandlers,
 	setChatWSCurrentUserId
-} from '@/entities/Chat/api/ws/chatHandler/chatHandler';
+} from '@/entities/Chat/api/ws/chatWS/chatWS';
 
 interface StoreProviderProps {
 	children: React.ReactNode;
@@ -41,7 +41,7 @@ export function StoreProvider({ children }: StoreProviderProps) {
 		return () => {
 			unsubscribe();
 			unregisterChatHandlers.current?.();
-			// disconnectWS(); // опционально
+			// disconnectWS(); // опционально, если нужно явно рвать соединение
 		};
 	}, []);
 

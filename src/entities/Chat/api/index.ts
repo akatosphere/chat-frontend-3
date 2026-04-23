@@ -12,15 +12,10 @@ export { getChats, getChatById, getMessages } from './chatApi/chatApi';
 
 export { chatApi } from './chatApi/chatApi';
 
-export { selectChatByUid } from './selectors/selectors';
-
 export {
 	markMessagesAsRead,
-	connectChat,
 	addMembersToChat
 } from './ws/chatActions/chatActions';
-
-export type { ChangeStatusReadResponse } from '@/shared/api/WS/types/wsTypes';
 
 export type {
 	Chat,

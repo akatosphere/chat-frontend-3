@@ -15,7 +15,7 @@ export const markMessagesAsRead = (
 	validUids.forEach(uid => {
 		const payload: WSRequest = {
 			action: 'change_status_read_message',
-			request_uid: crypto.randomUUID(),
+			// request_uid убран — sendWS сгенерирует его сам
 			object: {
 				uid,
 				reader_uid: readerUid,
@@ -29,8 +29,6 @@ export const markMessagesAsRead = (
 	});
 };
 
-export const connectChat = (chatKey: string) =>
-	sendWS({ action: '_connect', object: { chat_key: chatKey } });
 export const addMembersToChat = (chatKey: string, uids: string[]) =>
 	sendWS({
 		action: 'add_members_to_chat',

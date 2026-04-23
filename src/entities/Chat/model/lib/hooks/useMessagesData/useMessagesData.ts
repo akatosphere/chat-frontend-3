@@ -13,7 +13,7 @@ import {
 import { shouldShowDateSeparator } from '../../service/dateFormating/dateFormater';
 import { MESSAGES_QUERY_DEFAULTS } from '@/shared/model';
 import { MessageOrdering } from '../../../../../../shared/model/constants/chat.constants';
-import { useGetMessagesQuery } from '@/entities/Chat/api';
+import { useGetMessagesQuery } from '../../../../api/chatApi/chatApi';
 
 export type MessageListItem =
 	| { type: 'text'; data: TextMessage }
