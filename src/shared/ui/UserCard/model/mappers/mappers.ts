@@ -1,8 +1,8 @@
-import { BlackListSchema } from '@/entities/BlackList';
 import { ChatItemSchema } from '@/entities/Chat';
 import { ContactsSchema } from '@/entities/Contacts';
 import { ProfileSchema } from '@/entities/Profile';
 import { IUserCard } from '../types/IUserCard';
+import { BlackListUser } from '@/entities/BlackList/model/types/BlackListSchema';
 
 export const mapChatToUserCard = (user: ChatItemSchema): IUserCard => ({
 	user: {
@@ -62,7 +62,7 @@ export const mapContactToUserCard = (user: ContactsSchema): IUserCard => ({
 	}
 });
 
-export const mapBlackListToUserCard = (user: BlackListSchema): IUserCard => ({
+export const mapBlackListToUserCard = (user: BlackListUser): IUserCard => ({
 	user: {
 		uid: user.uid,
 		username: user.username,

@@ -2,7 +2,8 @@ export enum ButtonColor {
 	PRIMARY = 'primary',
 	DANGER = 'danger',
 	GREEN = 'green',
-	TRANSPARENT = 'transparent'
+	TRANSPARENT = 'transparent',
+	ERROR = 'ERROR'
 }
 
 export enum ButtonTheme {

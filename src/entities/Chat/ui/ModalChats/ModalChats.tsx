@@ -12,7 +12,8 @@ import {
 	UserCardType
 } from '@/shared/ui/UserCard';
 import { SearchClear } from '@icons/index';
-import { useGetChatsQuery } from '../../api/chatApi';
+import { useGetChatsQuery } from '../../api/chatApi/chatApi';
+
 import cls from './ModalChats.module.scss';
 
 interface ModalChatsProps {

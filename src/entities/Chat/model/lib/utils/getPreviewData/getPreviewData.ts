@@ -1,3 +1,4 @@
+import { logger } from '@/shared/lib/logger/logger';
 import { ChatPreviewData } from '../../../types/chat.types/chat.types';
 
 export const getPreviewData = (uid: string | undefined): ChatPreviewData => {
@@ -22,9 +23,7 @@ export const getPreviewData = (uid: string | undefined): ChatPreviewData => {
 			return JSON.parse(localRaw) as ChatPreviewData;
 		}
 	} catch (error) {
-		if (process.env.NODE_ENV === 'development') {
-			console.error('Preview parse error:', error);
-		}
+		logger.error('Preview parse error:', error);
 	}
 
 	return {};

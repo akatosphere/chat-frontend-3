@@ -1,5 +1,5 @@
 'use client';
-import { ChatType } from '@/entities/Chat';
+import { ChatType, MessageStatus } from '@/entities/Chat';
 import { classNames } from '@/shared/lib/classNames/classNames';
 import { Avatar } from '@/shared/ui/Avatar/';
 import {
@@ -16,6 +16,7 @@ import {
 import {
 	Pin,
 	SentRead,
+	SentUnread,
 	SentTime,
 	Trash,
 	VolumeOff,
@@ -31,24 +32,24 @@ interface UserCardProps {
 	className?: string;
 	userData?: IUserCard;
 	type: UserCardType;
-	isActive?: boolean; // Новый проп для инверсии цветов
+	isActive?: boolean;
 	sendingMessage?: boolean;
 	onDelete?: () => void;
 	onClick?: () => void;
 }
 
 const formatUnreadCount = (count: number | undefined): string => {
-	if (count) {
-		if (count < 1000) {
-			return count.toString();
-		}
-
-		const thousands = count / 1000;
-		return thousands % 1 === 0
-			? `${Math.floor(thousands)}К`
-			: `${thousands.toFixed(1).replace('.', ',')}К`;
+	if (!count) {
+		return '';
 	}
-	return '';
+	if (count < 1000) {
+		return count.toString();
+	}
+
+	const thousands = count / 1000;
+	return thousands % 1 === 0
+		? `${Math.floor(thousands)}К`
+		: `${thousands.toFixed(1).replace('.', ',')}К`;
 };
 
 const NOTIFICATION_OFF = (
@@ -71,10 +72,33 @@ const renderNotifications = (
 	if (type === UserCardType.CHAT) {
 		if (!notification) {
 			return NOTIFICATION_OFF;
-		} else if (chatType !== ChatType.CHAT) {
+		}
+		if (chatType !== ChatType.CHAT) {
 			return NOTIFICATION_ON;
 		}
 	}
+	return null;
+};
+
+// Выносим рендер галочек в отдельную функцию для чистоты кода
+const renderMessageStatus = (
+	sendingMessage: boolean | undefined,
+	lastMessage: IUserCard['last_message']
+) => {
+	if (sendingMessage) {
+		return <SentTime className={cls.checksSending} />;
+	}
+
+	const status = lastMessage?.status;
+
+	if (status === MessageStatus.READ) {
+		return <SentRead className={cls.checksRead} />;
+	}
+	if (status === MessageStatus.UNREAD) {
+		return <SentUnread className={cls.checksUnread} />;
+	}
+	// RECEIVED (чужие) и остальные — без галочек
+	return null;
 };
 
 export const UserCard = ({
@@ -119,7 +143,7 @@ export const UserCard = ({
 					<div className={cls.leftHeader}>
 						<Text
 							color={nameColor}
-							inheritColor={isActive} //  Наследуем цвет при инверсии
+							inheritColor={isActive}
 							fontSize={TextSize.L}
 							fontWeight={FontWeight.MEDIUM}
 							tag={TitleTag.H3}
@@ -140,7 +164,8 @@ export const UserCard = ({
 					{type === UserCardType.CHAT && (
 						<div className={cls.rightHeader}>
 							<div className={cls.status}>
-								{sendingMessage ? <SentTime /> : <SentRead />}
+								{/* Рендер галочек на основе статуса */}
+								{renderMessageStatus(sendingMessage, userData.last_message)}
 							</div>
 
 							<Text
@@ -151,7 +176,15 @@ export const UserCard = ({
 								tag={TextTag.SPAN}
 								className={cls.time}
 							>
-								21:49
+								{/*Берём время из last_message*/}
+								{userData.last_message?.updated_at
+									? new Date(
+											userData.last_message.updated_at
+										).toLocaleTimeString('ru-RU', {
+											hour: '2-digit',
+											minute: '2-digit'
+										})
+									: '--:--'}
 							</Text>
 						</div>
 					)}
@@ -186,7 +219,10 @@ export const UserCard = ({
 								{userData.last_message?.content}
 							</Text>
 
-							{userData.last_message?.new ? (
+							{/*Бейдж: показываем только если new: true И есть непрочитанные */}
+							{userData.last_message?.new &&
+							userData.new_message_count &&
+							userData.new_message_count > 0 ? (
 								<Text
 									className={cls.newMesCount}
 									fontSize={TextSize.M}
@@ -208,7 +244,7 @@ export const UserCard = ({
 							wasOnlineAt={userData.user?.was_online_at || null}
 							isOnline={userData.user?.is_online || null}
 							invertColors={isActive}
-						></LastSeen>
+						/>
 					)}
 
 					{/* для профиля */}

@@ -35,6 +35,8 @@ export const ContactsListContent = memo(
 							key={contact.uid}
 							contact={contact}
 							isActive={selectedContactUid === contactUid}
+							isSelectionMode={isSelectionMode}
+							isSelected={isSelected}
 							onClick={() => {
 								if (isSelectionMode) {
 									onToggleSelection?.(contactUid);
@@ -42,19 +44,25 @@ export const ContactsListContent = memo(
 									onSelectContact?.(contactUid);
 								}
 							}}
-							isSelectionMode={isSelectionMode}
-							isSelected={isSelected}
-							onDeleteContact={() => onDeleteContact?.(contactUid)}
+							// ✅ ИЗМЕНЕНИЕ ЗДЕСЬ:
+							onDeleteContact={() => {
+								console.log(
+									'🗑️ ContactsListContent: delete clicked for',
+									contact.uid
+								);
+								onDeleteContact?.(contact.uid);
+							}}
 						/>
 					);
 				}),
 			[
 				contacts,
-				selectedContactUid,
-				onSelectContact,
-				isSelectionMode,
 				selectedContacts,
-				onToggleSelection
+				selectedContactUid,
+				isSelectionMode,
+				onToggleSelection,
+				onSelectContact,
+				onDeleteContact
 			]
 		);
 
