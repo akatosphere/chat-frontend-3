@@ -72,7 +72,6 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			text: 'Поделиться профилем',
 			icon: <Send />,
 			onClick: () => {
-				console.log('Поделиться профилем');
 				// TODO: реализовать логику шаринга
 				setIsKebabMenuOpen(false);
 			}
@@ -81,7 +80,6 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 			text: 'Очистить чат',
 			icon: <Clear />,
 			onClick: () => {
-				console.log('Очистить чат');
 				handleClearChat();
 				setIsKebabMenuOpen(false);
 			}
