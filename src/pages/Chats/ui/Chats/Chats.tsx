@@ -38,21 +38,27 @@ const ChatsPageComponent = () => {
 					</Container>
 				)}
 
-				{currentView === 'chat' && chatUid && (
-					<Container type={ContainerType.CONTENT}>
-						<ChatView
-							key={`chat-${chatUid}`}
-							chatUid={chatUid}
-							onBack={() => router.push('/chats')}
-							onOpenProfile={openProfile}
-						/>
-					</Container>
-				)}
+				{chatUid && (
+					<>
+						<Container
+							type={ContainerType.CONTENT}
+							className={currentView !== 'chat' ? cls.hidden : ''}
+						>
+							<ChatView
+								key={`chat-${chatUid}`}
+								chatUid={chatUid}
+								onBack={() => router.push('/chats')}
+								onOpenProfile={openProfile}
+							/>
+						</Container>
 
-				{currentView === 'profile' && chatUid && (
-					<Container type={ContainerType.CONTENT}>
-						<ChatProfileView userUid={chatUid} onBack={closeProfile} />
-					</Container>
+						<Container
+							type={ContainerType.CONTENT}
+							className={currentView !== 'profile' ? cls.hidden : ''}
+						>
+							<ChatProfileView userUid={chatUid} onBack={closeProfile} />
+						</Container>
+					</>
 				)}
 			</Container>
 		);
