@@ -45,9 +45,10 @@ import s from './ChatProfileView.module.scss';
 
 interface ChatProfileViewProps {
 	userUid: string;
+	onBack: () => void;
 }
 
-export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
+export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 	const { data, isLoading } = useGetContactByUidQuery(userUid);
 	const chat = useSelector((state: RootState) =>
 		selectChatByUid(state, userUid)
@@ -319,7 +320,9 @@ export const ChatProfileView = ({ userUid }: ChatProfileViewProps) => {
 		<div className={s.container}>
 			<div className={s.header}>
 				<div className={s.headerLeft}>
-					<Close className={s.closeIcon} />
+					<button onClick={onBack}>
+						<Close className={s.closeIcon} />
+					</button>
 					<p className={s.title}>Информация</p>
 				</div>
 
