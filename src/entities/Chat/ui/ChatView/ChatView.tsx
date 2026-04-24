@@ -54,7 +54,7 @@ export const ChatView = ({
 
 	const isMobile = useMediaQuery();
 	const router = useRouter();
-	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(true);
+	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(false);
 	const [isActionBarVisible, setIsActionBarVisible] = useState(true);
 	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 	const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
