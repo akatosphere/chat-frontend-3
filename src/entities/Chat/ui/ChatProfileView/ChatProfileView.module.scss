@@ -352,3 +352,9 @@
 		border-bottom: none;
 	}
 }
+
+@media (max-width: 768px) {
+	.container {
+		background: #d6d2f6;
+	}
+}
