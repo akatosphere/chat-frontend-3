@@ -12,7 +12,7 @@ import {
 	useBlockUserMutation,
 	useClearChatMutation,
 	useGetMessengerListQuery
-} from '../../api/chatApi';
+} from '../../api/chatApi/chatApi';
 import { formatDateRu } from './lib/formatDateRu';
 
 import { useSelector } from 'react-redux';
