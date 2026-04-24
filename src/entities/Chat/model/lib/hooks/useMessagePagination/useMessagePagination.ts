@@ -44,7 +44,6 @@ export const useMessagePagination = (
 			const older: TextMessage[] = results
 				.filter((msg): msg is ChatMessage => !isSystemMessageType(msg))
 				.map(msg => {
-					// 🔹 Извлекаем senderId из from_user
 					const senderId =
 						typeof msg.from_user === 'string'
 							? msg.from_user

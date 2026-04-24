@@ -8,6 +8,7 @@ export const rtkApi = createApi({
 		'Support',
 		'sendPhone',
 		'EditProfile',
+		'BlackList',
 		'Profile',
 		'Chats',
 		'Messages',

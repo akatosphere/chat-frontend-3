@@ -1,12 +1,13 @@
-import { classNames } from '@/shared/lib/classNames/classNames';
+import Image from 'next/image';
 import { formatUnixToLocalTime } from '@/shared/lib/formatUnixToLocalTime/formatUnixToLocalTime';
 import { FontWeight, Text, TextColor, TextSize } from '@/shared/ui/Text';
-import Image from 'next/image';
+import { MessageStatusNode } from './MessageStatusNode';
+import { classNames } from '@/shared/lib/classNames/classNames';
 import { highlightText } from '../../model/lib/service/highlightText/highlightText';
 import { MessageStatus } from '../../model/types/chat.types/chat.types';
-import { MessageStatusNode } from './MessageStatusNode';
 
 import styles from './MessageBubble.module.scss';
+
 interface MessageBubbleProps {
 	id: string;
 	time: number;
@@ -14,17 +15,24 @@ interface MessageBubbleProps {
 	status: MessageStatus | 'received' | 'sending' | 'unread' | 'read';
 	onClick: (id: string) => void;
 
+	// пропсы для авто-прочтения
+	isFromCurrentUser: boolean;
+	isNew: boolean;
+
+	// Групповые чаты
 	isGroupChat?: boolean;
 	senderName?: string;
 	senderAvatar?: string;
-
 	isFirstInGroup?: boolean;
 	isLastInGroup?: boolean;
+
+	// UI
 	className?: string;
 	'data-message-id'?: string;
 	searchQuery?: string;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
-	onContextMenu: (e: React.MouseEvent) => void;
+
+	onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 export const MessageBubble = ({
@@ -34,15 +42,24 @@ export const MessageBubble = ({
 	status,
 	onClick,
 
+	// Авто-прочтение
+	isFromCurrentUser,
+	isNew,
+
+	// Групповые чаты
 	isGroupChat = false,
 	senderName,
 	senderAvatar,
 	isFirstInGroup = false,
 	isLastInGroup = false,
+
+	// UI
 	className,
 	'data-message-id': dataMessageId,
 	searchQuery = '',
 	getActiveOccurrencesForMessage,
+
+	// Контекстное меню
 	onContextMenu
 }: MessageBubbleProps) => {
 	const isGroupReceived = isGroupChat && status === 'received';
@@ -70,6 +87,8 @@ export const MessageBubble = ({
 				[className].filter(Boolean)
 			)}
 			data-message-id={dataMessageId || id}
+			data-is-from-current-user={isFromCurrentUser}
+			data-is-new={isNew}
 			onContextMenu={onContextMenu}
 		>
 			<div className={styles.messageRow}>
@@ -137,7 +156,12 @@ export const MessageBubble = ({
 								{formatUnixToLocalTime(time)}
 							</Text>
 
-							{status !== 'received' && <MessageStatusNode status={status} />}
+							{status !== 'received' && (
+								<MessageStatusNode
+									status={status as MessageStatus}
+									isOwn={isFromCurrentUser}
+								/>
+							)}
 						</div>
 					</div>
 				</div>

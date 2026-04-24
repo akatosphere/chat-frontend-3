@@ -2,27 +2,35 @@ import { SentRead, SentTime, SentUnread } from '@icons/index';
 import { MessageStatus } from '../../model/types/chat.types/chat.types';
 
 interface MessageStatusNodeProps {
-	status: MessageStatus | 'received' | 'sending' | 'unread' | 'read';
+	status: MessageStatus;
+	isOwn?: boolean;
 }
 
-export const MessageStatusNode = ({ status }: MessageStatusNodeProps) => {
-	const s = status as MessageStatus;
-
-	if (s === MessageStatus.RECEIVED) {
+export const MessageStatusNode = ({
+	status,
+	isOwn = true
+}: MessageStatusNodeProps) => {
+	// Не показываем статус для чужих сообщений (они всегда без галочек)
+	if (!isOwn) {
 		return null;
 	}
 
-	if (s === MessageStatus.SENDING) {
-		return <SentTime className='sentTimeIcon' />;
-	}
+	switch (status) {
+		case MessageStatus.SENDING:
+			return <SentTime className='sentTimeIcon' />;
 
-	if (s === MessageStatus.UNREAD) {
-		return <SentUnread className='sentUnreadIcon' />;
-	}
+		case MessageStatus.SENT:
+		case MessageStatus.DELIVERED:
+		case MessageStatus.UNREAD:
+			return <SentUnread className='sentUnreadIcon' />;
 
-	if (s === MessageStatus.READ) {
-		return <SentRead className='sentReadIcon' />;
-	}
+		case MessageStatus.READ:
+			return <SentRead className='sentReadIcon' />;
 
-	return null;
+		case MessageStatus.ERROR:
+			return null;
+
+		default:
+			return null;
+	}
 };

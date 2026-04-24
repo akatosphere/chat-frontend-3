@@ -1,9 +1,6 @@
 'use client';
 
-import {
-	MESSAGES_QUERY_DEFAULTS,
-	SCROLL_BOTTOM_THRESHOLD
-} from '@/shared/model';
+import { memo, useCallback, useEffect, useState } from 'react';
 import {
 	CheckCircle,
 	CopyMessage,
@@ -12,14 +9,18 @@ import {
 	Send,
 	Trash
 } from '@icons/index';
-import { memo, useCallback, useEffect, useState } from 'react';
-import { useInfiniteScroll } from '../../model/lib/hooks/useInfiniteScroll/useInfiniteScroll';
-import { useMessagePagination } from '../../model/lib/hooks/useMessagePagination/useMessagePagination';
-import { useMessagesData } from '../../model/lib/hooks/useMessagesData/useMessagesData';
 import { SmartDateSeparator } from '../SystemMessages/ui/SmartDateSeparator/SmartDateSeparator';
 import { StickyDateProvider } from '../SystemMessages/ui/StickyDateContext/StickyDateContext';
 import SystemMessage from '../SystemMessages/ui/SystemMessages/SystemMessages';
+import { useMessagesData } from '../../model/lib/hooks/useMessagesData/useMessagesData';
+import { useInfiniteScroll } from '../../model/lib/hooks/useInfiniteScroll/useInfiniteScroll';
+import {
+	SCROLL_BOTTOM_THRESHOLD,
+	MESSAGES_QUERY_DEFAULTS
+} from '@/shared/model';
+import { useMessagePagination } from '../../model/lib/hooks/useMessagePagination/useMessagePagination';
 import { MessageListItem } from './MessageListItem';
+import { useMessageReadTracker } from '../../model/lib/hooks/useMessageReadTracker/useMessageReadTracker';
 
 import { ContextMenu, useContextMenu } from '@/features/contextMenu';
 import { KebabMenuItem } from '@/shared/ui/KebabMenu';
@@ -28,6 +29,8 @@ import cls from './MessagesList.module.scss';
 interface MessagesProps {
 	userUid: string;
 	currentUserId?: string;
+
+	chatKey: string;
 	className?: string;
 	activeResultId?: string;
 	searchQuery?: string;
@@ -39,6 +42,7 @@ interface MessagesProps {
 const MessagesListComponent = ({
 	userUid,
 	currentUserId,
+	chatKey,
 	className,
 	activeResultId,
 	searchQuery,
@@ -61,10 +65,7 @@ const MessagesListComponent = ({
 		ordering: MESSAGES_QUERY_DEFAULTS.ordering
 	});
 
-	const [activeContextMessageId, setActiveContextMessageId] =
-		useState<string>('');
-
-	const { loadMore, containerRef } = useMessagePagination(nextUrl);
+	const { loadMore, containerRef } = useMessagePagination(nextUrl, undefined);
 
 	const {
 		scrollRef,
@@ -77,6 +78,16 @@ const MessagesListComponent = ({
 		loadMore,
 		threshold: SCROLL_BOTTOM_THRESHOLD,
 		loadThreshold: SCROLL_BOTTOM_THRESHOLD
+	});
+
+	useMessageReadTracker({
+		containerRef: scrollRef,
+		queryArgs: {
+			user_uid: userUid,
+			page_size: MESSAGES_QUERY_DEFAULTS.page_size,
+			ordering: MESSAGES_QUERY_DEFAULTS.ordering
+		},
+		chatKey
 	});
 
 	useEffect(() => {
@@ -107,46 +118,63 @@ const MessagesListComponent = ({
 		}
 	}, [messages.length, isAtBottom, scrollToBottom]);
 
-	const getContextItems = useCallback((messageId: string): KebabMenuItem[] => {
-		return [
-			{
-				text: 'Ответить',
-				icon: <Reply />,
-				onClick: async () => {
-					console.log(`Reply ${messageId}`);
-				}
-			},
-			{
-				text: 'Переслать',
-				icon: <Send />,
-				onClick: async () => {
-					console.log(`Forward ${messageId}`);
-				}
-			},
-			{
-				text: 'Скопировать',
-				icon: <CopyMessage />,
-				onClick: async () => {
-					console.log(`Copy ${messageId}`);
-				}
-			},
-			{
-				text: 'Выбрать',
-				icon: <CheckCircle />,
-				onClick: async () => {
-					console.log(`Select ${messageId}`);
-				}
-			},
-			{
-				text: 'Удалить',
-				icon: <Trash />,
-				onClick: async () => {
-					console.log(`Delete ${messageId}`);
+	const [activeContextMessageId, setActiveContextMessageId] =
+		useState<string>('');
+
+	const getContextItems = useCallback(
+		(messageId: string): KebabMenuItem[] => {
+			return [
+				{
+					text: 'Ответить',
+					icon: <Reply />,
+					onClick: async () => {
+						console.log(`Reply ${messageId}`);
+						// TODO: реализовать логику ответа
+					}
 				},
-				danger: true
-			}
-		];
-	}, []);
+				{
+					text: 'Переслать',
+					icon: <Send />,
+					onClick: async () => {
+						console.log(`Forward ${messageId}`);
+						// TODO: реализовать логику пересылки
+					}
+				},
+				{
+					text: 'Скопировать',
+					icon: <CopyMessage />,
+					onClick: async () => {
+						try {
+							const msg = messages.find(m => m.uid === messageId);
+							if (msg?.text) {
+								await navigator.clipboard.writeText(msg.text);
+							}
+						} catch (err) {
+							console.error('Failed to copy:', err);
+						}
+					}
+				},
+				{
+					text: 'Выбрать',
+					icon: <CheckCircle />,
+					onClick: async () => {
+						console.log(`Select ${messageId}`);
+						// TODO: реализовать выбор сообщения
+					}
+				},
+				{
+					text: 'Удалить',
+					icon: <Trash />,
+					onClick: async () => {
+						console.log(`Delete ${messageId}`);
+						// TODO: реализовать удаление с подтверждением
+					},
+					danger: true
+				}
+			];
+		},
+		[messages]
+	);
 
 	const hideContext = useCallback(() => {
 		setActiveContextMessageId('');
@@ -221,6 +249,7 @@ const MessagesListComponent = ({
 						);
 					})}
 					<div ref={anchorRef} className={cls.scrollAnchor} />
+
 					<ContextMenu visible={isVisible} position={position} items={items} />
 				</div>
 

@@ -1,7 +1,7 @@
 import { RootState } from '@/app/providers/StoreProvider';
 import { rtkApi } from '@/shared/api/rtkApi';
 import { createSelector } from '@reduxjs/toolkit';
-import { mapApiMessageToFrontend } from '../model/mapper/mapChatType/chatMapper';
+import { mapApiMessageToFrontend } from '../../model/mapper/mapChatType/chatMapper';
 import type {
 	Chat,
 	ChatListResponse,
@@ -17,7 +17,7 @@ import type {
 	AddContactByPhoneRequest,
 	AddContactResponse,
 	MessengerListResponse
-} from '../model/types/chat.types/chat.types';
+} from '../../model/types/chat.types/chat.types';
 import {
 	CHATS_ORDERING,
 	CHATS_PAGE_SIZE,
@@ -77,15 +77,17 @@ export const chatApi = rtkApi.injectEndpoints({
 		// ─── Сообщения чата (НОВЫЙ эндпоинт) ────────────────────
 		getMessages: build.query<MessageListResponse, GetMessagesRequest>({
 			query: args => {
-				//user_uid должен быть в пути, а не в params
+				const pageSize = args.page_size ?? MESSAGES_PAGE_SIZE ?? 50;
+
 				return {
+					// user_uid должен быть в пути, а не в params
 					url: `/chat/message/text/${args.user_uid}/`,
 					params: {
 						// Остальные параметры — в query string
-						page_size: args.page_size ?? MESSAGES_PAGE_SIZE,
-						ordering: args.ordering ?? MESSAGES_ORDERING,
-						page: args.page,
-						search: args.search
+						page_size: pageSize,
+						ordering: args.ordering ?? MESSAGES_ORDERING ?? '-created_at',
+						page: args.page ?? 1,
+						search: args.search?.trim() || undefined
 					},
 					method: 'GET'
 				};
@@ -135,6 +137,7 @@ export const chatApi = rtkApi.injectEndpoints({
 				{ type: 'Chats', id: 'LIST' }
 			]
 		}),
+
 		// ─── Blacklist (блокировка) ────────────────────────────────
 		blockUser: build.mutation<void, string>({
 			query: userUid => ({
@@ -265,6 +268,7 @@ export const {
 // ─────────────────────────────────────────────────────────────
 //  СЕЛЕКТОРЫ
 // ─────────────────────────────────────────────────────────────
+
 export const selectChatByUid = createSelector(
 	[(state: RootState) => state, (_: RootState, chatUid: string) => chatUid],
 	(state, chatUid) => {

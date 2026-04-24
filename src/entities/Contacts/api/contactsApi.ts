@@ -41,7 +41,7 @@ export const contactApi = rtkApi.injectEndpoints({
 		}),
 
 		searchGlobalContacts: build.query<
-			GlobalSearchResponse, // Оставляем тип с пагинацией
+			GlobalSearchResponse,
 			CheckContactRequest[]
 		>({
 			query: body => ({
@@ -73,7 +73,6 @@ export const contactApi = rtkApi.injectEndpoints({
 			invalidatesTags: ['Contacts', { type: 'Contacts', id: 'LIST' }]
 		}),
 
-		// Удаление одного контакта (204 No Content)
 		deleteContact: build.mutation<void, string>({
 			query: (contactUid: string) => ({
 				url: `/contact/messenger-delete-contact/${encodeURIComponent(contactUid)}/`,
@@ -110,15 +109,16 @@ export const contactApi = rtkApi.injectEndpoints({
 				try {
 					await queryFulfilled;
 				} catch {
-					// Откатываем все изменения при ошибке сервера
 					patches.forEach(patch => patch.undo());
 				}
 			},
-			// Страховка: перезагрузит список, если оптимистичное обновление не покрыло все кейсы
-			invalidatesTags: [{ type: 'Contacts', id: 'LIST' }]
+
+			invalidatesTags: [
+				{ type: 'Contacts', id: 'LIST' },
+				{ type: 'Chats', id: 'LIST' }
+			]
 		}),
 
-		//  Массовое удаление (200 с телом)
 		bulkDeleteContacts: build.mutation<
 			PaginatedContactReadByUidList,
 			BulkDeleteRequest
@@ -165,7 +165,10 @@ export const contactApi = rtkApi.injectEndpoints({
 					patches.forEach(patch => patch.undo());
 				}
 			},
-			invalidatesTags: [{ type: 'Contacts', id: 'LIST' }]
+			invalidatesTags: [
+				{ type: 'Contacts', id: 'LIST' },
+				{ type: 'Chats', id: 'LIST' }
+			]
 		})
 	}),
 	overrideExisting: true

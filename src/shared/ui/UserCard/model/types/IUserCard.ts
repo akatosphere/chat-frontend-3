@@ -1,3 +1,5 @@
+import { MessageStatus } from '@/entities/Chat';
+
 export interface IUserCard {
 	user?: UserCardInfo;
 	notifications?: boolean;
@@ -38,6 +40,7 @@ interface LastMessage {
 	new: boolean;
 	created_at: number;
 	updated_at: number;
+	status?: MessageStatus;
 }
 
 enum ChatType {

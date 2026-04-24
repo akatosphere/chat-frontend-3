@@ -4,10 +4,6 @@ import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useChatHeaderData } from '../useChatHeaderData/useChatHeaderData';
 import { useSafeHeaderData } from '../useSafeHeaderData/useSafeHeaderData';
 import {
-	selectChatByUid,
-	useGetMessagesQuery
-} from '@/entities/Chat/api/chatApi';
-import {
 	Chat,
 	ChatMessage,
 	UseChatViewDataOptions,
@@ -15,6 +11,8 @@ import {
 } from '../../../types/chat.types/chat.types';
 import { RootState } from '@/app/providers/StoreProvider';
 import { MESSAGES_PAGE_SIZE, MESSAGES_ORDERING } from '@/shared/model';
+import { useGetMessagesQuery } from '../../../../api/chatApi/chatApi';
+import { selectChatByUid } from '../../../selectors/selectors';
 
 export const useChatViewData = ({
 	chatUid,

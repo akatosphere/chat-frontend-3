@@ -9,6 +9,7 @@ import { KebabMenu } from '@/shared/ui/KebabMenu';
 import { KebabMenuItem } from '@/shared/ui/KebabMenu/model/types/type'; // уточните путь при необходимости
 
 import cls from './AttachmentButton.module.scss';
+import { logger } from '@/shared/lib/logger/logger';
 
 interface AttachmentButtonProps {
 	setFiles: (files: VoiceFile[]) => void;
@@ -38,9 +39,7 @@ export function AttachmentButton({
 				}
 			]);
 		} catch (error) {
-			if (process.env.NODE_ENV === 'development') {
-				console.error('File conversion error:', error);
-			}
+			logger.error('File conversion error:', error);
 		}
 
 		if (imageInputRef.current) {

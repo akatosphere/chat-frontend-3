@@ -89,11 +89,6 @@ export type {
 	Message
 } from './model/types/chat.types/chat.types';
 
-export { mapChatToUserCard } from './model/mapper/mapChatType/chatMapper';
+export { selectChatByUid } from './model/selectors/selectors';
 
-export {
-	chatApi,
-	useGetChatsQuery,
-	useGetChatByIdQuery,
-	useLazyGetChatsQuery
-} from './api/chatApi';
+export { mapChatToUserCard } from './model/mapper/mapChatType/chatMapper';

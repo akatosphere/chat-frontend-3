@@ -1,6 +1,6 @@
 'use client';
 
-import { convertVoice } from '@/entities/Chat/api/convertVoice';
+import { convertVoice } from '@/entities/Chat/api/converVoice/convertVoice';
 import { useRef, useState, useCallback } from 'react';
 
 export const useVoiceRecorder = () => {
