@@ -192,7 +192,10 @@ export const chatApi = rtkApi.injectEndpoints({
 				method: 'POST',
 				body
 			}),
-			invalidatesTags: (result, error, { id }) => [{ type: 'Chats', id }]
+			invalidatesTags: (result, error, { id }) => [
+				{ type: 'Chats', id },
+				{ type: 'Chats', id: 'LIST' }
+			]
 		}),
 
 		// ─── Очистка чата ────────────────────────────────
