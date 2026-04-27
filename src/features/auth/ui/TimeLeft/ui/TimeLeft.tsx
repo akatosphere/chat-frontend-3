@@ -1,8 +1,9 @@
+'use client';
 import { formatTime } from '@/shared/lib/formatTime/formatTime';
 import { useEffect, useState } from 'react';
-import styles from './TimeLeft.module.scss';
 import { authActions } from '@/features/auth';
 import { useAppDispatch } from '@/shared/lib/hooks/useAppDispatch/useAppDispatch';
+import styles from './TimeLeft.module.scss';
 
 interface TimeLeftProps {
 	initialTime: number;
