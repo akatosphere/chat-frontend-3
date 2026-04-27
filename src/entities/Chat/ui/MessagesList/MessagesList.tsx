@@ -40,7 +40,7 @@ interface MessagesProps {
 	className?: string;
 	activeResultId?: string;
 	searchQuery?: string;
-	chatId: number;
+	chatId?: number;
 	backendNewCount?: number;
 	onContainerReady?: (container: HTMLDivElement | null) => void;
 	onScrollContainerReady?: (container: HTMLDivElement | null) => void;
