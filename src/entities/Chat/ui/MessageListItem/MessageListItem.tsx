@@ -1,17 +1,21 @@
-import { MessageBubble } from '@/entities/Chat/ui/MessageBubble/MessageBubble';
-import { classNames } from '@/shared/lib/classNames/classNames';
 import { memo } from 'react';
-import { MessageListItem as MessageListItemType } from '../../model/lib/hooks/useMessagesData/useMessagesData';
+import { MessageBubble } from '@/entities/Chat/ui/MessageBubble/MessageBubble';
 import { SmartDateSeparator } from '../SystemMessages/ui/SmartDateSeparator/SmartDateSeparator';
 import SystemMessage from '../SystemMessages/ui/SystemMessages/SystemMessages';
-import cls from './MessagesList.module.scss';
+import { classNames } from '@/shared/lib/classNames/classNames';
+import { MessageListItem as MessageListItemType } from '../../model/lib/hooks/useMessagesData/useMessagesData';
+import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
+import { selectCurrentUserId } from '@/entities/Profile';
 
-interface Props {
+import cls from './MessageListItem.module.scss';
+
+export interface Props {
 	item: MessageListItemType;
 	activeResultId?: string;
 	searchQuery?: string;
 	activeContextMessageId?: string;
-	onContextMenu: (e: React.MouseEvent) => void;
+	isLastInChat?: boolean;
+	onContextMenu?: (e: React.MouseEvent, messageId: string) => void;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
 }
 
@@ -21,9 +25,12 @@ export const MessageListItem = memo(
 		activeResultId,
 		searchQuery,
 		activeContextMessageId,
+		isLastInChat,
 		onContextMenu,
 		getActiveOccurrencesForMessage
 	}: Props) => {
+		const currentUserId = useAppSelector(selectCurrentUserId);
+
 		if (item.type === 'separator') {
 			return <SmartDateSeparator key={item.id} id={item.id} date={item.date} />;
 		}
@@ -42,19 +49,31 @@ export const MessageListItem = memo(
 			[cls.messageBubble_hasQuery]: hasQuery && !isActive
 		});
 
+		const isFromCurrentUser =
+			!!currentUserId && item.data.senderId === currentUserId;
+		const isNew = !!item.data.new;
+
+		const handleContextMenu = onContextMenu
+			? (e: React.MouseEvent) => onContextMenu(e, item.data.uid)
+			: undefined;
+
 		return (
 			<MessageBubble
-				key={item.data.id}
-				id={item.data.id}
+				key={item.data.uid}
+				id={item.data.uid}
 				text={item.data.text}
 				time={item.data.createdAt}
 				status={item.data.status}
 				onClick={() => {}}
 				className={className}
-				data-message-id={item.data.id}
+				data-message-id={item.data.uid}
 				searchQuery={searchQuery}
+				activeResultId={activeResultId}
 				getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
-				onContextMenu={onContextMenu}
+				isFromCurrentUser={isFromCurrentUser}
+				isNew={isNew}
+				isLastInChat={isLastInChat}
+				onContextMenu={handleContextMenu}
 			/>
 		);
 	}

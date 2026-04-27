@@ -5,14 +5,14 @@ import { rtkApi } from '@/shared/api/rtkApi';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import {
 	FLUSH,
+	REHYDRATE,
 	PAUSE,
 	PERSIST,
-	PersistConfig,
-	persistReducer,
-	persistStore,
 	PURGE,
 	REGISTER,
-	REHYDRATE
+	PersistConfig,
+	persistReducer,
+	persistStore
 } from 'redux-persist';
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import createWebStorage from 'redux-persist/lib/storage/createWebStorage';

@@ -54,7 +54,6 @@ export const ContactsListItem = memo(
 		const isMobile = useMediaQuery();
 		const href = `/chats/${chatUid}`;
 
-		//  Динамические классы
 		const itemClass = useMemo(() => {
 			const classes = [cls.contactItem];
 			if (isActive) {
@@ -68,18 +67,10 @@ export const ContactsListItem = memo(
 
 		const handleClick = useCallback(
 			(e: React.MouseEvent<HTMLAnchorElement>) => {
-				e.preventDefault(); // Блокируем переход — управляем через onClick
+				e.preventDefault();
 				onClick?.();
-
-				if (isMobile) {
-					if (isSelectionMode) {
-						console.log('Mobile selection toggle:', chatUid);
-					} else {
-						console.log('Mobile click on contact → chat:', chatUid);
-					}
-				}
 			},
-			[isMobile, chatUid, onClick, isSelectionMode]
+			[onClick]
 		);
 
 		return (
@@ -104,11 +95,10 @@ export const ContactsListItem = memo(
 						<UserCard
 							userData={userCardData}
 							type={UserCardType.CONTACT}
-							isActive={isSelectionMode && isSelected} //  Инвертируем при выделении
+							isActive={isSelectionMode && isSelected}
 						/>
 					</div>
 
-					{/*  ЧЕКБОКС: только в режиме выбора */}
 					{isSelectionMode && (
 						<div className={cls.checkbox}>
 							{isSelected ? (

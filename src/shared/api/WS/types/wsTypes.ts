@@ -14,6 +14,21 @@ export interface WSResponse<T = unknown> {
 	object?: T;
 }
 
+export interface ChangeStatusReadResponse {
+	id: number;
+	uid: string;
+	from_user: { uid: string };
+	to_user: { uid: string };
+	new: boolean;
+	created_at: string;
+	updated_at: string;
+	chat_data: {
+		chat_key: string;
+		chat_type: string;
+	};
+	reader_uid: string;
+}
+
 // Все твои actions
 export enum WS_ACTIONS {
 	CONNECT = '_connect',

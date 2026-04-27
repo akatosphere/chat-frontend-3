@@ -5,7 +5,7 @@ import { AttachmentButton } from '../AttachmentButton/AttachmentButton';
 import { MessageForm, MessageFormRef } from '../MessageForm/MessageForm';
 import { VoiceRecorder } from '../VoiceRecorder/VoiceRecorder';
 import { Button, ButtonColor, ButtonType } from '@/shared/ui/Button';
-import { SendIcon } from '@icons/index';
+import { Block, SendIcon } from '@icons/index';
 import {
 	ChatType,
 	GetMessagesRequest,
@@ -14,20 +14,24 @@ import {
 import { MESSAGES_ORDERING, MESSAGES_PAGE_SIZE } from '@/shared/model';
 import { useChatSender } from '@/entities/Chat/model/lib/hooks/useChatSender/useChatSender';
 import { resolveChatProps } from '@/entities/Chat/model/lib/utils/resolveChatProps/resolveChatProps';
+import { Text, TextSize, TextColor } from '@/shared/ui/Text';
 
 import cls from './MessageFormComponent.module.scss';
+
 export interface MessageFormComponentProps {
 	chatUid?: string;
 	chatType?: ChatType;
 	messagesQueryArgs?: GetMessagesRequest | null;
 	chatKey?: string;
+	isBlocked?: boolean;
 }
 
 export function MessageFormComponent({
 	chatUid: propChatUid,
 	chatType: propChatType,
 	messagesQueryArgs: propMessagesQueryArgs,
-	chatKey: propChatKey
+	chatKey: propChatKey,
+	isBlocked = false
 }: MessageFormComponentProps) {
 	const [, setFiles] = useState<VoiceFile[]>([]);
 	const [isTextFilled, setIsTextFilled] = useState<boolean>(false);
@@ -62,6 +66,23 @@ export function MessageFormComponent({
 	);
 
 	// ─────────────────────────────────────────────────────────────
+
+	if (isBlocked) {
+		return (
+			<section className={cls.messageFormComponent}>
+				<div className={cls.blockedHint}>
+					<Block />
+					<Text
+						fontSize={TextSize.S}
+						color={TextColor.GRAY}
+						className={cls.blockedHintText}
+					>
+						Сообщение невозможно отправить — пользователь в черном списке
+					</Text>
+				</div>
+			</section>
+		);
+	}
 
 	const isDisabled = !chatUid;
 

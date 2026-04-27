@@ -8,6 +8,10 @@ import type {
 	SystemMessageData
 } from '../../types/chat.types/chat.types';
 import {
+	MessageListItem as MessageListItemType,
+	toLocalTextMessage
+} from '../../../model/lib/hooks/useMessagesData/useMessagesData';
+import {
 	ChatType,
 	MessageStatus,
 	MessageType,
@@ -37,7 +41,8 @@ const mapChatType = (type: string): UserCardChatType | undefined => {
 };
 
 const mapLastMessage = (
-	message: ChatMessage | null
+	message: ChatMessage | null,
+	currentUserId?: string | null
 ): IUserCard['last_message'] => {
 	if (!message) {
 		return undefined;
@@ -47,6 +52,16 @@ const mapLastMessage = (
 		typeof message.from_user === 'string'
 			? message.from_user
 			: message.from_user?.uid || '';
+
+	const isSentByMe = currentUserId ? fromUserUid === currentUserId : false;
+
+	const status = isSentByMe
+		? (message.status ?? MessageStatus.READ)
+		: message.new
+			? MessageStatus.UNREAD
+			: MessageStatus.RECEIVED;
+
+	const isNew = isSentByMe ? false : (message.new ?? false);
 
 	return {
 		id: message.id,
@@ -61,19 +76,39 @@ const mapLastMessage = (
 			: { types: [], count: 0 },
 		has_replied_message: message.has_replied_message,
 		has_forwarded_message: message.has_forwarded_message,
-		new: message.new,
+		new: isNew,
 		created_at: message.created_at,
-		updated_at: message.updated_at
+		updated_at: message.updated_at,
+		status
 	};
 };
 
-export const mapChatToUserCard = (chat: Chat): IUserCard => {
+export const mapChatToUserCard = (
+	chat: Chat,
+	currentUserId?: string | null
+): IUserCard => {
 	const chatData = chat.chat;
 	const chatName = chat.name || '';
 
 	let firstName = '';
 	let lastName = '';
 	let nickname = chatName;
+
+	const lastMessageFrom = chat.last_message?.from_user;
+	const lastMessageIsNew = chat.last_message?.new === true;
+
+	const fromUserUid =
+		typeof lastMessageFrom === 'string'
+			? lastMessageFrom
+			: lastMessageFrom?.uid || '';
+
+	const isLastMessageFromMe = currentUserId && fromUserUid === currentUserId;
+
+	const displayNewMessageCount = isLastMessageFromMe
+		? 0
+		: lastMessageIsNew
+			? (chat.new_message_count ?? 0)
+			: 0;
 
 	if (!chat.is_group) {
 		firstName = chatData.first_name || '';
@@ -101,38 +136,44 @@ export const mapChatToUserCard = (chat: Chat): IUserCard => {
 		},
 		notifications: chat.notifications,
 		is_favorite: chat.is_favorite,
-		new_message_count: chat.new_message_count,
+
+		new_message_count: displayNewMessageCount,
+
 		chat_type: mapChatType(chat.chat_type),
 		chat_key: chat.chat_key,
 		last_message: chat.last_message
-			? mapLastMessage(chat.last_message)
+			? mapLastMessage(chat.last_message, currentUserId)
 			: undefined
 	};
 };
 
 export const mapApiMessageToFrontend = (
 	apiMsg: RawApiChatMessage
-): ChatMessage => ({
-	id: apiMsg.id,
-	uid: apiMsg.uid,
-	from_user: apiMsg.from_user?.uid ?? '',
-	content: apiMsg.content,
-	files_summary: apiMsg.files_list?.length
-		? {
-				types: [...new Set(apiMsg.files_list.map(f => f.file_type))].slice(
-					0,
-					3
-				),
-				count: apiMsg.files_list.length
-			}
-		: { types: [], count: 0 },
-	has_replied_message: apiMsg.replied_messages?.length > 0,
-	has_forwarded_message: apiMsg.forwarded_messages?.length > 0,
-	new: apiMsg.new ?? false,
-
-	created_at: new Date(apiMsg.created_at).getTime(),
-	updated_at: new Date(apiMsg.updated_at).getTime()
-});
+): ChatMessage => {
+	return {
+		id: apiMsg.id,
+		uid:
+			apiMsg.uid && String(apiMsg.uid).trim()
+				? String(apiMsg.uid)
+				: String(apiMsg.id),
+		from_user: apiMsg.from_user?.uid ?? '',
+		content: apiMsg.content,
+		files_summary: apiMsg.files_list?.length
+			? {
+					types: [...new Set(apiMsg.files_list.map(f => f.file_type))].slice(
+						0,
+						3
+					),
+					count: apiMsg.files_list.length
+				}
+			: { types: [], count: 0 },
+		has_replied_message: apiMsg.replied_messages?.length > 0,
+		has_forwarded_message: apiMsg.forwarded_messages?.length > 0,
+		new: apiMsg.new ?? false,
+		created_at: new Date(apiMsg.created_at).getTime(),
+		updated_at: new Date(apiMsg.updated_at).getTime()
+	};
+};
 
 export const mapApiMessagesList = (
 	apiResults: readonly RawApiChatMessage[]
@@ -189,10 +230,16 @@ export const mapChatMessageToSystemMessageData = (
 	};
 };
 
-export const isSystemMessageType = (
-	msg: ChatMessage
-): msg is ChatMessage & { type: typeof MessageType.SYSTEM } => {
-	return msg.type === MessageType.SYSTEM;
+export const isSystemMessageType = (msg: ChatMessage): boolean => {
+	if (!msg.content) {
+		return false;
+	}
+	try {
+		const parsed = JSON.parse(msg.content);
+		return parsed.eventType !== undefined;
+	} catch {
+		return false;
+	}
 };
 
 export function mapChatMessageToSearchMessage(msg: ChatMessage): Message {
@@ -217,3 +264,23 @@ export function mapChatMessageToSearchMessage(msg: ChatMessage): Message {
 		has_forwarded_message: msg.has_forwarded_message || false
 	};
 }
+
+export const mapRawMessagesToListItems = (
+	rawMessages: ChatMessage[],
+	currentUserId?: string
+): MessageListItemType[] => {
+	return rawMessages
+		.map(msg => {
+			if (isSystemMessageType(msg)) {
+				return {
+					type: 'system' as const,
+					data: mapChatMessageToSystemMessageData(msg)
+				};
+			}
+			return {
+				type: 'text' as const,
+				data: toLocalTextMessage(msg, currentUserId)
+			};
+		})
+		.reverse();
+};

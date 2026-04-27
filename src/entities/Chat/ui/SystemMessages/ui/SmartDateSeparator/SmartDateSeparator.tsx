@@ -16,27 +16,28 @@ export const SmartDateSeparator: React.FC<SmartDateSeparatorProps> = ({
 	className = ''
 }) => {
 	const elementRef = useRef<HTMLDivElement>(null);
-	const { registerSeparator, unregisterSeparator, isActive, isHidden } =
+	const { registerSeparator, unregisterSeparator, isHidden } =
 		useStickyDateContext();
 
 	useEffect(() => {
-		const element = elementRef.current;
-		if (!element) {
+		const el = elementRef.current;
+		if (!el) {
 			return;
 		}
 
-		registerSeparator(id, date, element);
-		return () => unregisterSeparator(id);
-	}, [id, date, registerSeparator, unregisterSeparator]);
+		registerSeparator(id, date, el);
 
-	const shouldBeHidden = isHidden(id) || isActive(id);
+		return () => {
+			unregisterSeparator(id);
+		};
+	}, [id, date, registerSeparator, unregisterSeparator]);
 
 	return (
 		<DateSeparator
 			ref={elementRef}
 			date={date}
 			className={className}
-			isHidden={shouldBeHidden}
+			isHidden={isHidden(id)}
 		/>
 	);
 };

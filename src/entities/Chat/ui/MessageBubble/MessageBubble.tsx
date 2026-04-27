@@ -1,12 +1,16 @@
-import { classNames } from '@/shared/lib/classNames/classNames';
+'use client';
+
+import React, { useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { formatUnixToLocalTime } from '@/shared/lib/formatUnixToLocalTime/formatUnixToLocalTime';
 import { FontWeight, Text, TextColor, TextSize } from '@/shared/ui/Text';
-import Image from 'next/image';
+import { MessageStatusNode } from './MessageStatusNode';
+import { classNames } from '@/shared/lib/classNames/classNames';
 import { highlightText } from '../../model/lib/service/highlightText/highlightText';
 import { MessageStatus } from '../../model/types/chat.types/chat.types';
-import { MessageStatusNode } from './MessageStatusNode';
 
 import styles from './MessageBubble.module.scss';
+
 interface MessageBubbleProps {
 	id: string;
 	time: number;
@@ -14,26 +18,36 @@ interface MessageBubbleProps {
 	status: MessageStatus | 'received' | 'sending' | 'unread' | 'read';
 	onClick: (id: string) => void;
 
+	// пропсы для авто-прочтения
+	isFromCurrentUser: boolean;
+	isNew: boolean;
+
+	// Групповые чаты
 	isGroupChat?: boolean;
 	senderName?: string;
 	senderAvatar?: string;
-
 	isFirstInGroup?: boolean;
 	isLastInGroup?: boolean;
+
+	// UI
 	className?: string;
 	'data-message-id'?: string;
 	searchQuery?: string;
+	activeResultId?: string;
+	isLastInChat?: boolean;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
-	onContextMenu: (e: React.MouseEvent) => void;
+
+	onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-export const MessageBubble = ({
+const MessageBubbleComponent = ({
 	id,
 	time,
 	text,
 	status,
 	onClick,
-
+	isFromCurrentUser,
+	isNew,
 	isGroupChat = false,
 	senderName,
 	senderAvatar,
@@ -42,16 +56,19 @@ export const MessageBubble = ({
 	className,
 	'data-message-id': dataMessageId,
 	searchQuery = '',
+	activeResultId,
+	isLastInChat = false,
 	getActiveOccurrencesForMessage,
 	onContextMenu
 }: MessageBubbleProps) => {
+	//
+	const formattedTime = useMemo(() => formatUnixToLocalTime(time), [time]);
+
+	const handleActivate = useCallback(() => onClick(id), [onClick, id]);
+
 	const isGroupReceived = isGroupChat && status === 'received';
 	const showName = isGroupReceived && senderName && isFirstInGroup;
 	const showAvatar = isGroupReceived && senderAvatar && isLastInGroup;
-
-	const handleActivate = () => {
-		onClick(id);
-	};
 
 	const messageClass = classNames(styles.message, {
 		[styles.message_sent]: status !== 'received',
@@ -70,6 +87,9 @@ export const MessageBubble = ({
 				[className].filter(Boolean)
 			)}
 			data-message-id={dataMessageId || id}
+			data-is-from-current-user={isFromCurrentUser}
+			data-is-new={isNew}
+			data-is-last-message={isLastInChat}
 			onContextMenu={onContextMenu}
 		>
 			<div className={styles.messageRow}>
@@ -119,7 +139,10 @@ export const MessageBubble = ({
 							{searchQuery
 								? highlightText(text, {
 										query: searchQuery,
-										activeIndices: getActiveOccurrencesForMessage?.(id) || [],
+										activeIndices:
+											String(activeResultId) === String(id)
+												? getActiveOccurrencesForMessage?.(String(id)) || []
+												: [],
 										baseClassName: styles.searchHighlight,
 										activeClassName: styles.searchHighlight_active,
 										caseSensitive: false
@@ -134,10 +157,15 @@ export const MessageBubble = ({
 								color={TextColor.GRAY}
 								className={styles.message__time}
 							>
-								{formatUnixToLocalTime(time)}
+								{formattedTime}
 							</Text>
 
-							{status !== 'received' && <MessageStatusNode status={status} />}
+							{status !== 'received' && (
+								<MessageStatusNode
+									status={status as MessageStatus}
+									isOwn={isFromCurrentUser}
+								/>
+							)}
 						</div>
 					</div>
 				</div>
@@ -145,3 +173,5 @@ export const MessageBubble = ({
 		</div>
 	);
 };
+
+export const MessageBubble = React.memo(MessageBubbleComponent);

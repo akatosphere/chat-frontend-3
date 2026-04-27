@@ -146,3 +146,18 @@ export interface GlobalSearchResponse {
 	previous: string | null;
 	results: GlobalSearchContact[];
 }
+
+/**
+ * Ошибка валидации при массовом удалении контактов
+ * Бэкенд возвращает массив сообщений в поле contact_uids
+ */
+export interface BulkDeleteValidationError {
+	contact_uids: string[];
+}
+
+/**
+ * Union-тип для ответа массового удаления
+ */
+export type BulkDeleteApiResponse =
+	| PaginatedContactReadByUidList
+	| BulkDeleteValidationError;

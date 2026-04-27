@@ -19,7 +19,11 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 		process.env.NEXT_PUBLIC_PROXY_PREFIX as string,
 		''
 	);
-	const targetUrl = `${process.env.NEXT_PUBLIC_BASE_API}${path}/`;
+
+	const baseUrl = `${process.env.NEXT_PUBLIC_BASE_API}${path}/`;
+	const search = request.nextUrl.search;
+
+	const targetUrl = search ? `${baseUrl}${search}` : baseUrl;
 
 	const accessToken = request.cookies.get('accessToken')?.value;
 
@@ -58,9 +62,8 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 		return response;
 	} catch (error) {
 		if (process.env.NODE_ENV === 'development') {
-			console.error('Proxy error', error);
+			console.error('Proxy error:', error);
 		}
-
 		return NextResponse.json({ error: 'Proxy failed' }, { status: 500 });
 	}
 }

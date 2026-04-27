@@ -50,7 +50,7 @@ export interface Chat {
 	last_activity_at: number;
 	last_seen_message: { id: number; uid: string };
 	last_message: ChatMessage;
-	first_new_message: ChatMessage;
+	first_new_message: ChatMessage | null;
 }
 
 // ─── Сообщения: ФРОНТЕНД-формат (после маппинга) ───────────────────────────
@@ -66,6 +66,7 @@ export interface ChatMessage {
 	created_at: number; // timestamp
 	updated_at: number;
 	type?: MessageType;
+	status?: MessageStatus;
 }
 
 // ─── Вложения ──────────────────────────────────────────────────────────────
@@ -263,6 +264,7 @@ export interface ChatHeaderProps {
 	navigateToNext?: () => void;
 	navigateToPrev?: () => void;
 	onNavigateToMessage?: (messageId: string) => void;
+	isSuccessModalOpen?: boolean;
 }
 
 // ─── MessageBubble / MessagesList ──────────────────────────────────────────
@@ -270,7 +272,7 @@ export interface TextMessageUI {
 	id: string;
 	uid: string;
 	text: string;
-	time: number; // timestamp
+	time: number;
 	status: 'received' | 'sending' | 'unread' | 'read';
 }
 
@@ -314,7 +316,7 @@ export interface ChatItemSchema {
 	chat_key: string;
 	last_activity_at: number;
 	last_seen_message: { id: number; uid: string };
-	first_new_message: { id: number; uid: string };
+	first_new_message?: { id: number; uid: string } | null;
 	last_message: ChatMessage;
 }
 

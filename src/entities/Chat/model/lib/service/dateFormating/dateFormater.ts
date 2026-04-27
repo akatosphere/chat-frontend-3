@@ -44,15 +44,22 @@ export function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export function shouldShowDateSeparator(
-	currentDate: number,
-	previousDate?: number
+	current: number | Date | undefined | null,
+	previous: number | Date | undefined | null
 ): boolean {
-	if (previousDate === undefined || previousDate === null) {
+	if (!current) {
+		return false;
+	}
+	if (!previous) {
 		return true;
 	}
 
-	const current = new Date(currentDate);
-	const previous = new Date(previousDate);
+	const d1 = current instanceof Date ? current : new Date(current);
+	const d2 = previous instanceof Date ? previous : new Date(previous);
 
-	return !isSameDay(current, previous);
+	return (
+		d1.getFullYear() !== d2.getFullYear() ||
+		d1.getMonth() !== d2.getMonth() ||
+		d1.getDate() !== d2.getDate()
+	);
 }

@@ -16,10 +16,12 @@ const StickyDateHeader: React.FC<StickyDateHeaderProps> = ({
 	isVisible = false,
 	className = ''
 }) => {
-	const label = date ? formatDateSeparator(date) : '';
-	if (!date) {
+	if (!date || !isVisible) {
 		return null;
 	}
+
+	const label = formatDateSeparator(date);
+
 	return (
 		<div
 			className={`${cls.stickyHeader} ${className} ${isVisible ? cls.visible : cls.hidden}`}

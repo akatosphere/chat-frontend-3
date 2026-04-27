@@ -1,3 +1,4 @@
+import { logger } from '@/shared/lib/logger/logger';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface SeparatorInfo {
@@ -7,7 +8,7 @@ export interface SeparatorInfo {
 }
 
 export interface UseStickyDateOptions {
-	containerRef: React.RefObject<HTMLDivElement | null>;
+	scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 	offsetTop?: number;
 	tolerance?: number;
 }
@@ -24,7 +25,7 @@ const DEFAULT_OFFSET_TOP = 10;
 const DEFAULT_TOLERANCE = 20;
 
 export const useStickyDate = ({
-	containerRef,
+	scrollContainerRef,
 	offsetTop = DEFAULT_OFFSET_TOP,
 	tolerance = DEFAULT_TOLERANCE
 }: UseStickyDateOptions): UseStickyDateReturn => {
@@ -32,57 +33,13 @@ export const useStickyDate = ({
 	const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
 	const separatorsRef = useRef<Map<string, SeparatorInfo>>(new Map());
-	const sortedSeparatorsRef = useRef<SeparatorInfo[]>([]);
-	const observerRef = useRef<IntersectionObserver | null>(null);
 	const activeIdRef = useRef<string | null>(null);
 	const isMountedRef = useRef(false);
-
-	const register = useCallback(
-		(id: string, date: Date, element: HTMLElement) => {
-			const info: SeparatorInfo = { id, date, element };
-			separatorsRef.current.set(id, info);
-
-			sortedSeparatorsRef.current = Array.from(separatorsRef.current.values())
-				.filter(s => s.element.isConnected)
-				.sort((a, b) => {
-					const aRect = a.element.getBoundingClientRect();
-					const bRect = b.element.getBoundingClientRect();
-					return aRect.top - bRect.top;
-				});
-		},
-		[]
-	);
-
-	const unregister = useCallback((id: string) => {
-		separatorsRef.current.delete(id);
-		sortedSeparatorsRef.current = sortedSeparatorsRef.current.filter(
-			s => s.id !== id
-		);
-
-		setHiddenIds(prev => {
-			if (!prev.has(id)) {
-				return prev;
-			}
-			const next = new Set(prev);
-			next.delete(id);
-			return next;
-		});
-
-		if (activeIdRef.current === id) {
-			activeIdRef.current = null;
-			setActiveDate(null);
-		}
-	}, []);
-
-	const isActive = useCallback((id: string) => id === activeIdRef.current, []);
-	const isHidden = useCallback((id: string) => hiddenIds.has(id), [hiddenIds]);
+	const rafRef = useRef<number | null>(null);
 
 	const updateActiveSeparator = useCallback(() => {
-		if (!containerRef) {
-			return;
-		}
-		const container = containerRef.current;
-		if (!container || sortedSeparatorsRef.current.length === 0) {
+		const container = scrollContainerRef.current;
+		if (!container || separatorsRef.current.size === 0) {
 			return;
 		}
 
@@ -90,43 +47,33 @@ export const useStickyDate = ({
 		const threshold = containerRect.top + offsetTop;
 
 		let active: SeparatorInfo | null = null;
+		let maxTop = -Infinity;
 
-		for (const sep of sortedSeparatorsRef.current) {
+		for (const sep of separatorsRef.current.values()) {
 			if (!sep.element.isConnected) {
 				continue;
 			}
 
 			const rect = sep.element.getBoundingClientRect();
 
-			if (
-				rect.top <= threshold + tolerance &&
-				rect.top > threshold - rect.height
-			) {
+			if (rect.top <= threshold + tolerance && rect.top > maxTop) {
+				maxTop = rect.top;
 				active = sep;
-				break;
 			}
 		}
 
-		if (active?.id !== activeIdRef.current) {
-			activeIdRef.current = active?.id ?? null;
-
+		if (active && active.id !== activeIdRef.current) {
+			activeIdRef.current = active.id;
 			requestAnimationFrame(() => {
 				if (isMountedRef.current) {
-					setActiveDate(active?.date ?? null);
+					setActiveDate(active.date);
 				}
 			});
 		}
 
-		const newHidden = new Set<string>();
-		for (const sep of sortedSeparatorsRef.current) {
-			if (!sep.element.isConnected) {
-				continue;
-			}
-			const rect = sep.element.getBoundingClientRect();
-			if (rect.bottom < threshold) {
-				newHidden.add(sep.id);
-			}
-		}
+		const newHidden = activeIdRef.current
+			? new Set([activeIdRef.current])
+			: new Set<string>();
 
 		setHiddenIds(prev => {
 			if (
@@ -137,42 +84,64 @@ export const useStickyDate = ({
 			}
 			return newHidden;
 		});
-	}, [containerRef, offsetTop, tolerance]);
+	}, [scrollContainerRef, offsetTop, tolerance]);
+
+	const handleScroll = useCallback(() => {
+		if (!isMountedRef.current) {
+			return;
+		}
+
+		if (rafRef.current) {
+			return;
+		}
+		rafRef.current = requestAnimationFrame(() => {
+			if (isMountedRef.current) {
+				updateActiveSeparator();
+			}
+			rafRef.current = null;
+		});
+	}, [updateActiveSeparator]);
+
+	const register = useCallback(
+		(id: string, date: Date, element: HTMLElement) => {
+			separatorsRef.current.set(id, { id, date, element });
+
+			requestAnimationFrame(() => {
+				if (isMountedRef.current) {
+					updateActiveSeparator();
+				}
+			});
+		},
+		[updateActiveSeparator]
+	);
+
+	const unregister = useCallback(
+		(id: string) => {
+			separatorsRef.current.delete(id);
+
+			requestAnimationFrame(() => {
+				if (isMountedRef.current) {
+					updateActiveSeparator();
+				}
+			});
+		},
+		[updateActiveSeparator]
+	);
+
+	const isActive = useCallback((id: string) => id === activeIdRef.current, []);
+	const isHidden = useCallback((id: string) => hiddenIds.has(id), [hiddenIds]);
 
 	useEffect(() => {
-		if (!containerRef) {
+		const targetEl = scrollContainerRef.current;
+
+		if (!targetEl) {
+			logger.warn('[useStickyDate] Scroll container not found!');
 			return;
 		}
+
 		isMountedRef.current = true;
 
-		const container = containerRef.current;
-		if (!container) {
-			return;
-		}
-
-		const observer = new IntersectionObserver(
-			entries => {
-				requestIdleCallback(
-					() => {
-						if (isMountedRef.current) {
-							updateActiveSeparator();
-						}
-					},
-					{ timeout: 16 }
-				);
-			},
-			{
-				root: container,
-				threshold: [0, 0.1, 0.5, 1.0],
-				rootMargin: `-${offsetTop}px 0px 0px 0px`
-			}
-		);
-
-		separatorsRef.current.forEach(({ element }) => {
-			if (element.isConnected) {
-				observer.observe(element);
-			}
-		});
+		targetEl.addEventListener('scroll', handleScroll, { passive: true });
 
 		requestAnimationFrame(() => {
 			if (isMountedRef.current) {
@@ -180,37 +149,20 @@ export const useStickyDate = ({
 			}
 		});
 
-		observerRef.current = observer;
-
 		return () => {
 			isMountedRef.current = false;
-			observer.disconnect();
-			observerRef.current = null;
+			targetEl.removeEventListener('scroll', handleScroll);
+			if (rafRef.current) {
+				cancelAnimationFrame(rafRef.current);
+			}
 		};
-	}, [containerRef, offsetTop, updateActiveSeparator]);
+	}, [scrollContainerRef, handleScroll, updateActiveSeparator]);
 
 	useEffect(() => {
-		if (observerRef.current) {
-			observerRef.current.disconnect();
-			separatorsRef.current.forEach(({ element }) => {
-				if (element.isConnected) {
-					observerRef.current?.observe(element);
-				}
-			});
-
-			requestAnimationFrame(() => {
-				if (isMountedRef.current) {
-					updateActiveSeparator();
-				}
-			});
-		}
-	}, [separatorsRef, updateActiveSeparator]);
-
-	useEffect(() => {
-		return () => {
-			isMountedRef.current = false;
-		};
-	}, []);
+		const handleResize = () => updateActiveSeparator();
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, [updateActiveSeparator]);
 
 	return {
 		activeDate,

@@ -5,7 +5,7 @@ import { rtkApi } from '@/shared/api/rtkApi';
 
 export interface StateSchema {
 	[rtkApi.reducerPath]: ReturnType<typeof rtkApi.reducer>;
-	routeApi: ReturnType<typeof localApi.reducer>;
+	[localApi.reducerPath]: ReturnType<typeof localApi.reducer>;
 	auth: AuthSchema;
 	profile: ProfileSchema;
 }

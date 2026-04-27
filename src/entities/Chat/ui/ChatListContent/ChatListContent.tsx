@@ -1,7 +1,6 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Chat } from '../../model/types/chat.types/chat.types';
 import { ChatListItem } from '../ChatListItem/ChatListItem';
-
 import {
 	AddContactByPhoneRequest,
 	useAddContactByPhoneMutation,
@@ -24,10 +23,11 @@ import {
 import {
 	useDeleteChatMutation,
 	useUpdateChatPropertiesMutation
-} from '../../api/chatApi';
+} from '../../api/chatApi/chatApi';
+import { useGetBlackListQuery } from '@/entities/BlackList/api/blackListApi';
+
 import cls from './ChatListContent.module.scss';
 
-// Вспомогательный компонент для рендера элемента списка
 export const ChatListContent = memo(
 	({
 		chats,
@@ -47,6 +47,20 @@ export const ChatListContent = memo(
 		const [addContact] = useAddContactByPhoneMutation();
 		const [getContact] = useLazySearchGlobalContactsQuery();
 		const [updateChatProperties] = useUpdateChatPropertiesMutation();
+
+		const { data: blackList } = useGetBlackListQuery();
+
+		const filteredChats = useMemo(() => {
+			if (!blackList) {
+				return chats;
+			}
+
+			const blockedUids = new Set(blackList.map(user => user.uid));
+
+			return chats.filter(chat => {
+				return !blockedUids.has(chat.chat?.uid);
+			});
+		}, [chats, blackList]);
 
 		const handleDelete = useCallback(async () => {
 			if (chatToDelete) {
@@ -141,7 +155,7 @@ export const ChatListContent = memo(
 		return (
 			<>
 				<div className={cls.list} role='listbox' aria-multiselectable='false'>
-					{chats.map(chat => (
+					{filteredChats.map(chat => (
 						<ChatListItem
 							key={`${chat.id}-${chat.notifications}-${chat.is_favorite}`}
 							chat={chat}

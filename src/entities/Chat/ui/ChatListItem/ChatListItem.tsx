@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { memo, useMemo } from 'react';
 import { mapChatToUserCard } from '../../model/mapper/mapChatType/chatMapper';
 import type { Chat } from '../../model/types/chat.types/chat.types';
-
 import { classNames } from '@/shared/lib/classNames/classNames';
+import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
+import { selectCurrentUserId } from '@/entities/Profile';
+
 import cls from './ChatListItem.module.scss';
 
 export interface ChatListItemProps {
@@ -25,6 +27,7 @@ const propsAreEqual = (
 		prev.isActive === next.isActive &&
 		prev.chat.last_activity_at === next.chat.last_activity_at &&
 		prev.chat.new_message_count === next.chat.new_message_count &&
+		prev.chat.last_message?.uid === next.chat.last_message?.uid &&
 		prev.chat.last_message?.updated_at === next.chat.last_message?.updated_at
 	);
 };
@@ -33,7 +36,12 @@ export const ChatListItem = memo(
 	({ chat, isActive, onContextMenu }: ChatListItemProps) => {
 		const uid = chat.chat.uid;
 
-		const userCardData = useMemo(() => mapChatToUserCard(chat), [chat]);
+		const currentUserId = useAppSelector(selectCurrentUserId);
+
+		const userCardData = useMemo(
+			() => mapChatToUserCard(chat, currentUserId),
+			[chat, currentUserId]
+		);
 
 		const isMobile = useMediaQuery();
 

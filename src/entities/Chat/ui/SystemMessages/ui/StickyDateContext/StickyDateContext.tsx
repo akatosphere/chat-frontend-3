@@ -27,57 +27,41 @@ const StickyDateContext = createContext<StickyDateContextValue | undefined>(
 export const StickyDateProvider: React.FC<{
 	children: React.ReactNode;
 	containerRef?: React.RefObject<HTMLDivElement>;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 	onScrollContainerReady?: (container: HTMLDivElement | null) => void;
 }> = ({
 	children,
 	containerRef: externalContainerRef,
+	scrollContainerRef: externalScrollRef,
 	onScrollContainerReady
 }) => {
-	// ─────────────────────────────────────────────────────────────
-	// Рефы: разделение ответственности
-	// ─────────────────────────────────────────────────────────────
-
-	// Контейнер для позиционирования (может быть внешним)
 	const internalContainerRef = useRef<HTMLDivElement>(null);
+	const internalScrollRef = useRef<HTMLDivElement>(null);
+
+	const effectiveScrollRef = externalScrollRef || internalScrollRef;
 	const containerRef = externalContainerRef || internalContainerRef;
-
-	// Скролл-контейнер (всегда внутренний, на него вешается логика)
-	const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-	// ─────────────────────────────────────────────────────────────
-	// Делегируем всю логику хуку
-	// ─────────────────────────────────────────────────────────────
 
 	const { activeDate, register, unregister, isActive, isHidden } =
 		useStickyDate({
-			containerRef: scrollContainerRef,
+			scrollContainerRef: effectiveScrollRef,
 			offsetTop: 10,
 			tolerance: 20
 		});
-
-	// ─────────────────────────────────────────────────────────────
-	// Callback для родителя (например, MessagesList)
 	// ─────────────────────────────────────────────────────────────
 
 	useEffect(() => {
-		if (onScrollContainerReady && scrollContainerRef.current) {
-			onScrollContainerReady(scrollContainerRef.current);
+		if (onScrollContainerReady && effectiveScrollRef.current) {
+			onScrollContainerReady(effectiveScrollRef.current);
 		}
-	}, [onScrollContainerReady]);
-
-	// ─────────────────────────────────────────────────────────────
-	// Реф-коллбэк для скролл-контейнера
+	}, [onScrollContainerReady, effectiveScrollRef]);
 	// ─────────────────────────────────────────────────────────────
 
 	const handleScrollContainerRef = useCallback(
 		(node: HTMLDivElement | null) => {
-			scrollContainerRef.current = node;
+			internalScrollRef.current = node;
 		},
 		[]
 	);
-
-	// ─────────────────────────────────────────────────────────────
-	// Значение контекста (без isAtBottom!)
 	// ─────────────────────────────────────────────────────────────
 
 	const value: StickyDateContextValue = {
@@ -94,16 +78,24 @@ export const StickyDateProvider: React.FC<{
 
 	return (
 		<StickyDateContext.Provider value={value}>
-			<div ref={containerRef} className={cls.stickyDateProvider}>
+			<div
+				ref={containerRef}
+				className={cls.stickyDateProvider}
+				style={{ position: 'relative' }}
+			>
 				<StickyDateHeader date={activeDate} isVisible={activeDate !== null} />
 
-				<div
-					ref={handleScrollContainerRef}
-					className={cls.scrollContainer}
-					data-scroll-container
-				>
-					{children}
-				</div>
+				{externalScrollRef ? (
+					<>{children}</>
+				) : (
+					<div
+						ref={handleScrollContainerRef}
+						className={cls.scrollContainer}
+						data-scroll-container
+					>
+						{children}
+					</div>
+				)}
 			</div>
 		</StickyDateContext.Provider>
 	);
