@@ -10,7 +10,7 @@ export const MESSAGE_HIGHLIGHT_DURATION = 2500;
 /**
  * Порог скролла для кнопки "вниз" (пиксели от низа)
  */
-export const SCROLL_BOTTOM_THRESHOLD = 50;
+export const SCROLL_BOTTOM_THRESHOLD = 20;
 
 /**
  * Задержка для авто-скролла после загрузки сообщений (мс)

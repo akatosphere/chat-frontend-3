@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import {
 	Button,
@@ -12,7 +13,6 @@ import { filterChatsLocal, Search, useHybridSearch } from '@/shared/ui/Search';
 import { UserCardSkeleton } from '@/shared/ui/Skeleton';
 import { UserCardType } from '@/shared/ui/UserCard';
 import { CreateNew } from '@icons/index';
-import { memo, useCallback, useEffect, useMemo } from 'react';
 import { sortChatsByLastMessage } from '../../model/lib/utils/sortChatsByLastMessage/sortChatsByLastMessage';
 import { Chat, GetChatsRequest } from '../../model/types/chat.types/chat.types';
 import { ChatListContent } from '../ChatListContent/ChatListContent';
@@ -20,10 +20,10 @@ import {
 	useGetChatsQuery,
 	useLazyGetChatsQuery
 } from '../../api/chatApi/chatApi';
+import { CHATS_ORDERING, CHATS_PAGE_SIZE } from '@/shared/model';
 
 import cls from './ChatList.module.scss';
 
-const LOCAL_CACHE_SIZE = 30;
 const GLOBAL_SEARCH_MIN_LENGTH = 3;
 const SEARCH_DEBOUNCE_MS = 300;
 const GLOBAL_SEARCH_PREFIX = '@';
@@ -42,8 +42,8 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 		refetch
 	} = useGetChatsQuery(
 		{
-			pageSize: LOCAL_CACHE_SIZE,
-			ordering: '-last_activity_at'
+			pageSize: CHATS_PAGE_SIZE,
+			ordering: CHATS_ORDERING
 		} as GetChatsRequest,
 		{
 			refetchOnFocus: true,
@@ -71,8 +71,8 @@ export const ChatList = memo(({ selectedChatUid }: ChatListProps) => {
 			try {
 				const result = await triggerGlobalSearch({
 					search: searchTerm,
-					pageSize: 30,
-					ordering: '-last_activity_at'
+					pageSize: CHATS_PAGE_SIZE,
+					ordering: CHATS_ORDERING
 				} as GetChatsRequest).unwrap();
 
 				return sortChatsByLastMessage(result?.results ?? []);

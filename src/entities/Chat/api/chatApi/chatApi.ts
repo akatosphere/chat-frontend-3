@@ -105,6 +105,21 @@ const chatApi = rtkApi.injectEndpoints({
 				body
 			}),
 			invalidatesTags: (result, error, { id }) => [{ type: 'Chats', id }]
+		}),
+
+		markChatLastSeen: build.mutation<
+			void,
+			{ id: number; last_seen_message: string }
+		>({
+			query: ({ id, last_seen_message }) => ({
+				url: `/chat/list/${id}/`,
+				method: 'POST',
+				body: { last_seen_message }
+			}),
+			invalidatesTags: (result, error, { id }) => [
+				{ type: 'Chats', id },
+				{ type: 'Chats', id: 'LIST' }
+			]
 		})
 	}),
 	overrideExisting: false
@@ -118,6 +133,7 @@ export const {
 	useLazyGetMessagesQuery,
 	useDeleteChatMutation,
 	useUpdateChatPropertiesMutation,
+	useMarkChatLastSeenMutation,
 	endpoints: { getChats, getChatById, getMessages }
 } = chatApi;
 

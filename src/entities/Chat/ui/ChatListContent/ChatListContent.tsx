@@ -28,7 +28,6 @@ import { useGetBlackListQuery } from '@/entities/BlackList/api/blackListApi';
 
 import cls from './ChatListContent.module.scss';
 
-// Вспомогательный компонент для рендера элемента списка
 export const ChatListContent = memo(
 	({
 		chats,

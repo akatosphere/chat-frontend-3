@@ -7,6 +7,28 @@
 	flex-direction: column;
 	gap: 8px;
 	scroll-behavior: smooth;
+
+	&::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--color-gray-100);
+		border-radius: 3px;
+		cursor: default;
+
+		&:hover {
+			cursor: default;
+			background: var(--color-gray-200);
+		}
+	}
+
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-gray-200) transparent;
 }
 
 .wrapper {
@@ -98,33 +120,6 @@
 	}
 }
 
-.messageBubble_active {
-	border-radius: 12px;
-	z-index: 10;
-	position: relative;
-
-	&:focus-visible {
-		outline: none;
-	}
-}
-
-.messageBubble_selected {
-	background-color: var(--color-gray-100);
-}
-
-.messageBubble_hasQuery {
-	opacity: 0.7;
-	transition: opacity 0.2s ease;
-
-	&:focus-visible {
-		outline: none;
-	}
-
-	&:hover {
-		opacity: 1;
-	}
-}
-
 @media (max-width: 768px) {
 	.scrollButton {
 		right: 16px;
@@ -134,4 +129,10 @@
 	.messages {
 		padding: 0 12px;
 	}
+}
+
+.endOfChat {
+	text-align: center;
+	padding: 16px 0 8px;
+	opacity: 0.8;
 }

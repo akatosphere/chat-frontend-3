@@ -3,9 +3,9 @@ import { useMessageSearch } from '../useMessageSearch/useMessageSearch';
 import {
 	Message,
 	MessageStatus,
-	MessageType
+	MessageType,
+	ChatMessage
 } from '../../../types/chat.types/chat.types';
-import { ChatMessage } from '../../../types/chat.types/chat.types';
 
 export interface UseChatSearchReturn {
 	searchQuery: string;
@@ -37,13 +37,11 @@ export const useChatSearch = (messages: ChatMessage[]): UseChatSearchReturn => {
 				type: MessageType.TEXT,
 				createdAt: msg.created_at,
 				updatedAt: msg.updated_at,
-
 				content: msg.content || '',
 				text: msg.content || '',
 				senderId,
 				senderName: '',
 				status: MessageStatus.RECEIVED,
-
 				has_replied_message: msg.has_replied_message || false,
 				has_forwarded_message: msg.has_forwarded_message || false,
 				isEdited: false,
@@ -62,23 +60,71 @@ export const useChatSearch = (messages: ChatMessage[]): UseChatSearchReturn => {
 		debounceDelay: 300
 	});
 
-	const onSearchQueryChange = useCallback((value: string) => {
-		setSearchQuery(value);
-	}, []);
+	const onSearchQueryChange = useCallback(
+		(value: string) => setSearchQuery(value),
+		[]
+	);
 
 	const onSearchToggle = useCallback(() => {
 		setIsSearchVisible(prev => !prev);
-
 		if (isSearchVisible) {
 			setSearchQuery('');
 		}
 	}, [isSearchVisible]);
+
+	const idToUidMap = useMemo(() => {
+		const map = new Map<string, string>();
+		messages.forEach(msg => {
+			map.set(String(msg.id), msg.uid || '');
+		});
+		return map;
+	}, [messages]);
+
+	const activeResultUid = useMemo(() => {
+		const activeId = searchHook.activeResultId;
+		if (!activeId) {
+			return undefined;
+		}
+		return idToUidMap.get(activeId) || undefined;
+	}, [searchHook.activeResultId, idToUidMap]);
+
+	const getActiveOccurrencesForMessage = useCallback(
+		(messageUid: string) => {
+			if (activeResultUid !== messageUid) {
+				return [];
+			}
+			if (!searchHook.activeResultId) {
+				return [];
+			}
+			return (
+				searchHook.getActiveOccurrencesForMessage(searchHook.activeResultId) ||
+				[]
+			);
+		},
+		[activeResultUid, searchHook]
+	);
+
+	const navigateToNext = useCallback(() => {
+		searchHook.navigateToNext?.();
+	}, [searchHook]);
+
+	const navigateToPrev = useCallback(() => {
+		searchHook.navigateToPrev?.();
+	}, [searchHook]);
 
 	return {
 		searchQuery,
 		isSearchVisible,
 		onSearchQueryChange,
 		onSearchToggle,
-		...searchHook
+
+		navigateToNext,
+		navigateToPrev,
+
+		activeResultId: activeResultUid,
+		searchResultsCount: searchHook.searchResultsCount ?? 0,
+		activeResultIndex: searchHook.activeResultIndex ?? 0,
+
+		getActiveOccurrencesForMessage
 	};
 };

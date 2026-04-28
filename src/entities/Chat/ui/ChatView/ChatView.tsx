@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
 	ChatHeader,
 	MessageFormComponent,
@@ -35,6 +35,7 @@ import cls from './ChatView.module.scss';
 
 interface ChatViewProps {
 	chatUid: string;
+	chatId?: number;
 	onBack?: () => void;
 	userDataFromSearch?: {
 		userName: string;
@@ -44,6 +45,7 @@ interface ChatViewProps {
 }
 
 export const ChatView = ({
+	chatId: externalChatId,
 	chatUid,
 	userDataFromSearch,
 	onBack
@@ -51,7 +53,7 @@ export const ChatView = ({
 	// ─────────────────────────────────────────────────────────────
 
 	const router = useRouter();
-	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(true);
+	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(false);
 	const [isActionBarVisible, setIsActionBarVisible] = useState(true);
 	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 	const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -100,14 +102,15 @@ export const ChatView = ({
 		activeClass: cls.messageBubble_active
 	});
 
+	const numericChatId = useMemo(() => {
+		return externalChatId ?? chatData?.id ?? 0;
+	}, [externalChatId, chatData?.id]);
+
 	// ─────────────────────────────────────────────────────────────
 
-	const handleScrollContainerReady = useCallback(
-		(container: HTMLDivElement | null) => {
-			scrollContainerRef.current = container;
-		},
-		[]
-	);
+	const setScrollContainer = useCallback((node: HTMLDivElement | null) => {
+		scrollContainerRef.current = node;
+	}, []);
 
 	const handleBack = useCallback(() => {
 		if (onBack) {
@@ -165,13 +168,12 @@ export const ChatView = ({
 				);
 
 				setIsActionBarVisible(false);
-
 				setIsSuccessModalOpen(true);
 			}
 		} catch (error) {
 			logger.error('Failed to add contact:', error);
 		}
-	}, [chatData, chatUid, getContact, addContact, dispatch]);
+	}, [getContact, addContact, dispatch, chatUid, chatData]);
 
 	const handleBlock = useCallback(() => {
 		setIsBlockModalOpen(true);
@@ -328,14 +330,16 @@ export const ChatView = ({
 			{hasMessages ? (
 				<>
 					<MessagesList
-						userUid={chatUid}
-						chatKey={chatData?.chat_key ?? chatUid}
+						userUid={chatData?.chat.uid ?? ''}
+						chatKey={chatData?.chat_key ?? chatData?.chat?.uid ?? ''}
+						chatId={numericChatId}
 						currentUserId={currentUserId || undefined}
 						className={messagesClass}
 						activeResultId={activeResultId}
 						searchQuery={searchQuery}
-						onScrollContainerReady={handleScrollContainerReady}
+						onScrollContainerReady={setScrollContainer}
 						getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
+						backendNewCount={chatData?.new_message_count}
 					/>
 					<MessageFormComponent
 						chatUid={chatUid}

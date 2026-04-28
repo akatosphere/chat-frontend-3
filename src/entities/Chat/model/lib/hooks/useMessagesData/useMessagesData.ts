@@ -13,10 +13,10 @@ import {
 import { shouldShowDateSeparator } from '../../service/dateFormating/dateFormater';
 import { MESSAGES_QUERY_DEFAULTS } from '@/shared/model';
 import { MessageOrdering } from '../../../../../../shared/model/constants/chat.constants';
-import { useGetMessagesQuery } from '../../../../api/chatApi/chatApi';
+import { useGetMessagesQuery } from '@/entities/Chat/api';
 
 export type MessageListItem =
-	| { type: 'text'; data: TextMessage }
+	| { type: 'text'; data: TextMessage; isLastInChat?: boolean }
 	| { type: 'system'; data: SystemMessageData }
 	| { type: 'separator'; date: Date; id: string };
 
@@ -40,7 +40,7 @@ export interface UseMessagesDataReturn {
 	isEmpty: boolean;
 }
 
-const toLocalTextMessage = (
+export const toLocalTextMessage = (
 	msg: ChatMessage,
 	currentUserId?: string
 ): TextMessage => {
@@ -53,7 +53,8 @@ const toLocalTextMessage = (
 		id: String(msg.id),
 		uid: msg.uid && msg.uid.trim() ? msg.uid : String(msg.id),
 		type: MessageType.TEXT,
-		createdAt: msg.created_at,
+
+		createdAt: msg.created_at * 1000,
 		content: msg.content,
 		text: msg.content,
 		new: msg.new,
@@ -108,6 +109,7 @@ export const useMessagesData = ({
 		if (!response?.results?.length) {
 			return [];
 		}
+
 		const result: MessageListItem[] = [];
 
 		const chronologicalResults = [...response.results].reverse();
@@ -124,31 +126,36 @@ export const useMessagesData = ({
 				return;
 			}
 
-			const createdAt = message.created_at;
-			const prevCreatedAt =
+			const currTimestamp = message.created_at;
+			const prevTimestamp =
 				prevMessage && !isSystemMessageType(prevMessage)
 					? prevMessage.created_at
 					: undefined;
 
-			if (shouldShowDateSeparator(createdAt, prevCreatedAt)) {
+			const needsSeparator = shouldShowDateSeparator(
+				currTimestamp,
+				prevTimestamp
+			);
+			if (needsSeparator) {
+				const dateObj = new Date(currTimestamp * 1000);
+
+				const isoDate = dateObj.toISOString().split('T')[0];
+
 				result.push({
 					type: 'separator',
-					date: new Date(createdAt),
-					id: `separator-${createdAt}-${index}`
+					date: dateObj,
+					id: `sep-${isoDate}`
 				});
 			}
 
-			const mappedMsg = messages.find(m => m.uid === message.uid);
-			if (mappedMsg) {
-				result.push({
-					type: 'text',
-					data: mappedMsg
-				});
-			}
+			result.push({
+				type: 'text',
+				data: toLocalTextMessage(message, currentUserId)
+			});
 		});
 
 		return result;
-	}, [response, messages]);
+	}, [response, currentUserId]);
 
 	const nextUrl = useMemo(() => response?.next ?? null, [response?.next]);
 	const hasMore = useMemo(() => !!nextUrl, [nextUrl]);

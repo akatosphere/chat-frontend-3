@@ -1,3 +1,6 @@
+'use client';
+
+import React, { useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { formatUnixToLocalTime } from '@/shared/lib/formatUnixToLocalTime/formatUnixToLocalTime';
 import { FontWeight, Text, TextColor, TextSize } from '@/shared/ui/Text';
@@ -30,45 +33,42 @@ interface MessageBubbleProps {
 	className?: string;
 	'data-message-id'?: string;
 	searchQuery?: string;
+	activeResultId?: string;
+	isLastInChat?: boolean;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
 
 	onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-export const MessageBubble = ({
+const MessageBubbleComponent = ({
 	id,
 	time,
 	text,
 	status,
 	onClick,
-
-	// Авто-прочтение
 	isFromCurrentUser,
 	isNew,
-
-	// Групповые чаты
 	isGroupChat = false,
 	senderName,
 	senderAvatar,
 	isFirstInGroup = false,
 	isLastInGroup = false,
-
-	// UI
 	className,
 	'data-message-id': dataMessageId,
 	searchQuery = '',
+	activeResultId,
+	isLastInChat = false,
 	getActiveOccurrencesForMessage,
-
-	// Контекстное меню
 	onContextMenu
 }: MessageBubbleProps) => {
+	//
+	const formattedTime = useMemo(() => formatUnixToLocalTime(time), [time]);
+
+	const handleActivate = useCallback(() => onClick(id), [onClick, id]);
+
 	const isGroupReceived = isGroupChat && status === 'received';
 	const showName = isGroupReceived && senderName && isFirstInGroup;
 	const showAvatar = isGroupReceived && senderAvatar && isLastInGroup;
-
-	const handleActivate = () => {
-		onClick(id);
-	};
 
 	const messageClass = classNames(styles.message, {
 		[styles.message_sent]: status !== 'received',
@@ -89,6 +89,7 @@ export const MessageBubble = ({
 			data-message-id={dataMessageId || id}
 			data-is-from-current-user={isFromCurrentUser}
 			data-is-new={isNew}
+			data-is-last-message={isLastInChat}
 			onContextMenu={onContextMenu}
 		>
 			<div className={styles.messageRow}>
@@ -138,7 +139,10 @@ export const MessageBubble = ({
 							{searchQuery
 								? highlightText(text, {
 										query: searchQuery,
-										activeIndices: getActiveOccurrencesForMessage?.(id) || [],
+										activeIndices:
+											String(activeResultId) === String(id)
+												? getActiveOccurrencesForMessage?.(String(id)) || []
+												: [],
 										baseClassName: styles.searchHighlight,
 										activeClassName: styles.searchHighlight_active,
 										caseSensitive: false
@@ -153,7 +157,7 @@ export const MessageBubble = ({
 								color={TextColor.GRAY}
 								className={styles.message__time}
 							>
-								{formatUnixToLocalTime(time)}
+								{formattedTime}
 							</Text>
 
 							{status !== 'received' && (
@@ -169,3 +173,5 @@ export const MessageBubble = ({
 		</div>
 	);
 };
+
+export const MessageBubble = React.memo(MessageBubbleComponent);

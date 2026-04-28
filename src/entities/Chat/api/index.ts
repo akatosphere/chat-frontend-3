@@ -17,6 +17,8 @@ export {
 	addMembersToChat
 } from './ws/chatActions/chatActions';
 
+export type { ChangeStatusReadResponse } from '@/shared/api/WS/types/wsTypes';
+
 export type {
 	Chat,
 	ChatListResponse,

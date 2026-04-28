@@ -5,7 +5,7 @@
 /**
  * Количество чатов на странице в списке
  */
-export const CHATS_PAGE_SIZE = 30;
+export const CHATS_PAGE_SIZE = 20;
 
 /**
  * Сортировка списка чатов: по последней активности
@@ -20,7 +20,7 @@ export type ChatsOrdering = typeof CHATS_ORDERING;
 /**
  * Количество сообщений на странице в чате
  */
-export const MESSAGES_PAGE_SIZE = 30;
+export const MESSAGES_PAGE_SIZE = 50;
 
 /**
  * Сортировка сообщений: новые сверху

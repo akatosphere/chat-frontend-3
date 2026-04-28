@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
 	Button,
 	ButtonColor,
@@ -50,8 +51,15 @@ export const ChatHeader = (props: ChatHeaderProps) => {
 		onBack
 	} = props;
 
-	const canGoPrev = (activeResultIndex ?? 0) > 0;
-	const canGoNext = (activeResultIndex ?? 0) < (searchResultsCount ?? 0) - 1;
+	const canGoPrev = useMemo(
+		() => (activeResultIndex ?? 0) > 0,
+		[activeResultIndex]
+	);
+
+	const canGoNext = useMemo(
+		() => (activeResultIndex ?? 0) < (searchResultsCount ?? 0) - 1,
+		[activeResultIndex, searchResultsCount]
+	);
 
 	return (
 		<>
@@ -116,7 +124,6 @@ export const ChatHeader = (props: ChatHeaderProps) => {
 								placeholder='Поиск в чате...'
 								alwaysShowClear
 								showIcon
-								autoFocus
 								className={cls.searchInput}
 								showNavigation
 								onNavigatePrev={props.navigateToPrev}

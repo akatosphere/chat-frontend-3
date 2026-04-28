@@ -27,10 +27,31 @@ export const useChatHeader = ({
 			return;
 		}
 
-		requestAnimationFrame(() => {
-			onNavigateToMessage(activeResultId);
-		});
-	}, [activeResultId, isSearchVisible, onNavigateToMessage]);
+		onNavigateToMessage(activeResultId);
+
+		const restoreFocus = () => {
+			if (searchRef.current) {
+				const input = searchRef.current.querySelector('input');
+
+				if (document.activeElement instanceof HTMLElement) {
+					document.activeElement.blur();
+				}
+
+				requestAnimationFrame(() => {
+					input?.focus({ preventScroll: true });
+
+					setTimeout(() => {
+						if (document.activeElement !== input && isSearchVisible) {
+							input?.focus({ preventScroll: true });
+						}
+					}, 50);
+				});
+			}
+		};
+
+		// 🔥 Даём scrollIntoView время отработать (100мс — безопасно)
+		setTimeout(restoreFocus, 100);
+	}, [activeResultId, isSearchVisible, onNavigateToMessage, searchRef]);
 
 	useEffect(() => {
 		if (!isSearchVisible || !searchResultsCount) {

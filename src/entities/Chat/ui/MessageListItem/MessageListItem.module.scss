@@ -1,0 +1,26 @@
+.messageBubble_active {
+	border-radius: 12px;
+	z-index: 10;
+	position: relative;
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+.messageBubble_selected {
+	background-color: var(--color-gray-100);
+}
+
+.messageBubble_hasQuery {
+	opacity: 0.7;
+	transition: opacity 0.2s ease;
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&:hover {
+		opacity: 1;
+	}
+}

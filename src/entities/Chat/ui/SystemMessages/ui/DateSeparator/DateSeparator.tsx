@@ -19,7 +19,8 @@ const DateSeparator = forwardRef<HTMLDivElement, DateSeparatorProps>(
 			? {
 					opacity: 0,
 					visibility: 'hidden',
-					pointerEvents: 'none'
+					pointerEvents: 'none',
+					position: 'relative'
 				}
 			: {};
 
@@ -47,4 +48,5 @@ const DateSeparator = forwardRef<HTMLDivElement, DateSeparatorProps>(
 );
 
 DateSeparator.displayName = 'DateSeparator';
-export default DateSeparator;
+
+export default React.memo(DateSeparator);

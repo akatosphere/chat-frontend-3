@@ -7,39 +7,38 @@ import {
 	MessageStatus,
 	ChatMessage
 } from '../../../types/chat.types/chat.types';
-import { CHATS_PAGE_SIZE, CHATS_ORDERING } from '@/shared/model';
+import { CHATS_QUERY_DEFAULTS } from '@/shared/model';
 import { logger } from '@/shared/lib/logger/logger';
-import { chatApi } from '../../../../api/chatApi/chatApi';
-import { markMessagesAsRead } from '../../../../api/ws/chatActions/chatActions';
+import { chatApi, markMessagesAsRead } from '@/entities/Chat/api';
+import { useMarkChatLastSeenMutation } from '@/entities/Chat/api/chatApi/chatApi';
 
 const AUTO_READ_CONFIG = {
 	THRESHOLD: 0.1,
 	ROOT_MARGIN: '50px',
 	BATCH_DELAY: 300
-} as const;
+};
 
 interface UseMessageReadTrackerOptions {
 	containerRef: React.RefObject<HTMLDivElement | null>;
 	queryArgs: GetMessagesRequest | null;
 	chatKey: string;
+	chatId?: number;
 }
 
 export const useMessageReadTracker = ({
 	containerRef,
 	queryArgs,
-	chatKey
+	chatKey,
+	chatId
 }: UseMessageReadTrackerOptions) => {
 	const dispatch = useAppDispatch();
 	const currentUserId = useAppSelector(selectCurrentUserId);
+	const [markChatLastSeen] = useMarkChatLastSeenMutation();
 
-	const currentUserIdRef = useRef(currentUserId);
 	const markedRef = useRef<Set<string>>(new Set());
 	const batchQueueRef = useRef<{ uid: string; chatKey: string }[]>([]);
 	const batchTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-	useEffect(() => {
-		currentUserIdRef.current = currentUserId;
-	}, [currentUserId]);
+	const lastSeenSentRef = useRef<Set<string>>(new Set());
 
 	const flushBatch = useCallback(async () => {
 		if (batchQueueRef.current.length === 0) {
@@ -49,16 +48,13 @@ export const useMessageReadTracker = ({
 		const batch = [...batchQueueRef.current];
 		batchQueueRef.current = [];
 
-		const userId = currentUserIdRef.current;
-		if (!userId) {
-			return;
-		}
-
 		const results = await Promise.allSettled(
 			batch.map(({ uid, chatKey }) =>
-				markMessagesAsRead([uid], userId, chatKey, false)
+				markMessagesAsRead([uid], currentUserId!, chatKey, false)
 			)
 		);
+
+		dispatch(chatApi.util.invalidateTags([{ type: 'Chats', id: 'LIST' }]));
 
 		const errors = results.filter(
 			(r): r is PromiseRejectedResult => r.status === 'rejected'
@@ -69,17 +65,59 @@ export const useMessageReadTracker = ({
 				errors
 			);
 		}
-	}, []);
+	}, [currentUserId, dispatch]);
+
+	const markChatAsRead = useCallback(
+		async (lastMessageUid: string) => {
+			if (!chatId || chatId <= 0) {
+				logger.warn('[markChatAsRead] Invalid chatId:', chatId);
+				return;
+			}
+
+			if (lastSeenSentRef.current.has(lastMessageUid)) {
+				return;
+			}
+
+			lastSeenSentRef.current.add(lastMessageUid);
+
+			try {
+				await markChatLastSeen({
+					id: chatId,
+					last_seen_message: lastMessageUid
+				}).unwrap();
+
+				dispatch(
+					chatApi.util.invalidateTags([
+						{ type: 'Chats', id: chatId },
+						{ type: 'Chats', id: 'LIST' }
+					])
+				);
+
+				dispatch(
+					chatApi.util.prefetch('getChats', CHATS_QUERY_DEFAULTS, {
+						force: true
+					})
+				);
+			} catch (error) {
+				logger.error('[markChatAsRead] Failed:', {
+					chatId,
+					lastMessageUid,
+					error
+				});
+				lastSeenSentRef.current.delete(lastMessageUid);
+			}
+		},
+		[chatId, markChatLastSeen, dispatch]
+	);
 
 	const markAsRead = useCallback(
 		(messageUids: string[]) => {
-			const userId = currentUserIdRef.current;
-			if (!userId || !queryArgs || messageUids.length === 0) {
+			if (!currentUserId || !queryArgs || messageUids.length === 0) {
 				return;
 			}
 
 			const toMark = messageUids.filter(uid => {
-				if (!uid || uid.startsWith('temp_') || markedRef.current.has(uid)) {
+				if (markedRef.current.has(uid) || uid.startsWith('temp_')) {
 					return false;
 				}
 				markedRef.current.add(uid);
@@ -107,10 +145,12 @@ export const useMessageReadTracker = ({
 				})
 			);
 
+			const incomingUnreadInBatch = toMark.length;
+
 			dispatch(
 				chatApi.util.updateQueryData(
 					'getChats',
-					{ pageSize: CHATS_PAGE_SIZE, ordering: CHATS_ORDERING },
+					CHATS_QUERY_DEFAULTS,
 					draft => {
 						if (!draft?.results) {
 							return;
@@ -118,15 +158,17 @@ export const useMessageReadTracker = ({
 						const chat = draft.results.find(
 							c => c.chat_key === chatKey || c.chat.uid === chatKey
 						);
+
 						if (!chat) {
 							return;
 						}
 
-						if (chat.new_message_count > 0) {
+						if (incomingUnreadInBatch > 0 && chat.new_message_count > 0) {
 							chat.new_message_count = Math.max(
 								0,
-								chat.new_message_count - toMark.length
+								chat.new_message_count - incomingUnreadInBatch
 							);
+
 							if (chat.new_message_count === 0) {
 								chat.first_new_message = null;
 							}
@@ -136,14 +178,10 @@ export const useMessageReadTracker = ({
 							chat.last_message?.uid &&
 							toMark.includes(chat.last_message.uid)
 						) {
-							const isLastMsgSentByMe =
-								userId && chat.last_message.from_user === userId;
 							chat.last_message = {
 								...chat.last_message,
 								new: false,
-								status: isLastMsgSentByMe
-									? MessageStatus.READ
-									: MessageStatus.RECEIVED
+								status: MessageStatus.READ
 							};
 						}
 					}
@@ -157,47 +195,69 @@ export const useMessageReadTracker = ({
 			if (batchTimerRef.current) {
 				clearTimeout(batchTimerRef.current);
 			}
-			batchTimerRef.current = setTimeout(() => {
-				queueMicrotask(flushBatch);
-			}, AUTO_READ_CONFIG.BATCH_DELAY);
+			batchTimerRef.current = setTimeout(
+				flushBatch,
+				AUTO_READ_CONFIG.BATCH_DELAY
+			);
 		},
-		[queryArgs, chatKey, dispatch, flushBatch]
+		[currentUserId, queryArgs, chatKey, dispatch, flushBatch]
 	);
 
 	useEffect(() => {
 		const container = containerRef.current;
-		const userId = currentUserIdRef.current;
 
-		if (!container || !queryArgs || !userId || !chatKey) {
+		if (!container || !queryArgs) {
 			return;
 		}
 
 		const observer = new IntersectionObserver(
 			entries => {
-				const visibleUids = entries
-					.filter(entry => entry.isIntersecting)
-					.map(entry => {
-						const el = entry.target as HTMLElement;
-						return el.dataset.messageId || '';
-					})
-					.filter(uid => {
-						if (!uid || uid.startsWith('temp_')) {
-							return false;
+				const visibleUids: string[] = [];
+				let lastMessageUid: string | null = null;
+
+				entries.forEach(entry => {
+					if (!entry.isIntersecting) {
+						return;
+					}
+
+					const el = entry.target as HTMLElement;
+					const uid = el.getAttribute('data-message-id'); // 🔥 Тип: string | null
+					const isFromCurrentUser = el.getAttribute(
+						'data-is-from-current-user'
+					);
+					const isNew = el.getAttribute('data-is-new');
+					const isLastMessage =
+						el.getAttribute('data-is-last-message') === 'true';
+
+					if (isLastMessage && uid) {
+						const isTemp = uid && (uid as string).startsWith('temp_');
+						const isOwn = isFromCurrentUser === 'true';
+						if (!isTemp && !isOwn) {
+							lastMessageUid = uid;
+						} else {
+							lastMessageUid = null;
 						}
-						const el = container.querySelector(
-							`[data-message-id="${uid}"]`
-						) as HTMLElement | null;
-						if (!el) {
-							return false;
-						}
-						const isFromCurrentUser = el.dataset.isFromCurrentUser;
-						const isNew = el.dataset.isNew;
-						return (
-							isFromCurrentUser !== 'true' &&
-							isNew === 'true' &&
-							!markedRef.current.has(uid)
-						);
-					});
+					}
+
+					if (
+						uid &&
+						!(uid as string).startsWith('temp_') &&
+						isFromCurrentUser !== 'true' &&
+						isNew === 'true' &&
+						!markedRef.current.has(uid)
+					) {
+						visibleUids.push(uid);
+					}
+				});
+
+				if (
+					lastMessageUid &&
+					chatId &&
+					chatId > 0 &&
+					!(lastMessageUid as string).startsWith('temp_')
+				) {
+					markChatAsRead(lastMessageUid);
+				}
 
 				if (visibleUids.length > 0) {
 					markAsRead(visibleUids);
@@ -210,43 +270,45 @@ export const useMessageReadTracker = ({
 			}
 		);
 
-		const initObservers = () => {
-			container
-				.querySelectorAll('[data-message-id][data-is-new="true"]')
-				.forEach(el => {
-					const uid = el.getAttribute('data-message-id');
-					if (uid && !uid.startsWith('temp_') && !markedRef.current.has(uid)) {
-						observer.observe(el);
-					}
-				});
-		};
+		const messages = container.querySelectorAll('[data-message-id]');
+		messages.forEach(el => observer.observe(el));
 
-		const resizeObserver = new ResizeObserver(() => {
-			requestAnimationFrame(initObservers);
+		return () => observer.disconnect();
+	}, [containerRef, queryArgs, markAsRead, markChatAsRead, chatId]);
+
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) {
+			return;
+		}
+		const observer = new IntersectionObserver(() => {}, {
+			root: container,
+			rootMargin: AUTO_READ_CONFIG.ROOT_MARGIN,
+			threshold: AUTO_READ_CONFIG.THRESHOLD
 		});
-		resizeObserver.observe(container);
 
-		initObservers();
+		container.querySelectorAll('[data-message-id]').forEach(el => {
+			const uid = el.getAttribute('data-message-id');
+			if (
+				uid &&
+				!(uid as string).startsWith('temp_') &&
+				!markedRef.current.has(uid)
+			) {
+				observer.observe(el);
+			}
+		});
 
-		return () => {
-			observer.disconnect();
-			resizeObserver.disconnect();
-		};
-	}, [containerRef, queryArgs, chatKey, markAsRead]);
+		return () => observer.disconnect();
+	}, [containerRef, queryArgs?.user_uid]);
 
 	useEffect(() => {
 		return () => {
 			markedRef.current.clear();
 			batchQueueRef.current = [];
+			lastSeenSentRef.current.clear();
 			if (batchTimerRef.current) {
 				clearTimeout(batchTimerRef.current);
-				batchTimerRef.current = null;
 			}
 		};
-	}, []);
-
-	return {
-		markAsRead,
-		forceFlush: flushBatch
-	};
+	}, [queryArgs?.user_uid]);
 };

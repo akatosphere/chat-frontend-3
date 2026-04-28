@@ -16,6 +16,9 @@ export function useMessageSearch({
 	searchInSender = true,
 	searchInSystemText = false
 }: UseMessageSearchOptions): UseMessageSearchReturn {
+	//
+	const [activeOccurrenceIndex, setActiveOccurrenceIndex] = useState<number>(0);
+
 	const normalize = useCallback(
 		(text: string) => (caseSensitive ? text : text.toLowerCase()),
 		[caseSensitive]
@@ -108,20 +111,21 @@ export function useMessageSearch({
 			});
 		});
 
-		return all;
+		return all.reverse();
 	}, [filteredMessages, searchQuery, findAllOccurrences]);
-
-	const [activeOccurrenceIndex, setActiveOccurrenceIndex] = useState(0);
 
 	const activeOccurrence = useMemo(() => {
 		if (occurrences.length === 0) {
 			return null;
 		}
-		const safe = Math.max(
-			0,
-			Math.min(activeOccurrenceIndex, occurrences.length - 1)
-		);
-		return occurrences[safe];
+
+		const targetIndex =
+			activeOccurrenceIndex === -1 ||
+			activeOccurrenceIndex >= occurrences.length
+				? occurrences.length - 1
+				: Math.max(0, activeOccurrenceIndex);
+
+		return occurrences[targetIndex];
 	}, [occurrences, activeOccurrenceIndex]);
 
 	const goToNextOccurrence = useCallback(() => {
@@ -162,15 +166,20 @@ export function useMessageSearch({
 	}, [messages, searchQuery, messageMatches]);
 
 	useEffect(() => {
-		setActiveOccurrenceIndex(0);
-	}, [searchQuery]);
+		if (occurrences.length > 0 && searchQuery.trim()) {
+			setActiveOccurrenceIndex(occurrences.length - 1);
+		}
+	}, [occurrences.length, searchQuery]);
 
 	return useMemo(
 		() => ({
 			filteredMessages,
 			matchingIndices,
 			occurrences,
-			activeOccurrenceIndex,
+			activeOccurrenceIndex:
+				activeOccurrenceIndex === -1
+					? Math.max(0, occurrences.length - 1)
+					: activeOccurrenceIndex,
 			activeOccurrence,
 			totalOccurrences: occurrences.length,
 			goToNextOccurrence,

@@ -272,7 +272,7 @@ export interface TextMessageUI {
 	id: string;
 	uid: string;
 	text: string;
-	time: number; // timestamp
+	time: number;
 	status: 'received' | 'sending' | 'unread' | 'read';
 }
 

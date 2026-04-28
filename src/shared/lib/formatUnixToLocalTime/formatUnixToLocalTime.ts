@@ -1,4 +1,11 @@
 export const formatUnixToLocalTime = (unixTime: number): string => {
-	const date = new Date(unixTime * 1000);
-	return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	const timestamp = unixTime > 1e10 ? unixTime : unixTime * 1000;
+
+	const date = new Date(timestamp);
+
+	return date.toLocaleTimeString('ru-RU', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
 };

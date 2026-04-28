@@ -7,14 +7,14 @@ import { MessageListItem as MessageListItemType } from '../../model/lib/hooks/us
 import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
 import { selectCurrentUserId } from '@/entities/Profile';
 
-import cls from './MessagesList.module.scss';
+import cls from './MessageListItem.module.scss';
 
-interface Props {
+export interface Props {
 	item: MessageListItemType;
 	activeResultId?: string;
 	searchQuery?: string;
-
 	activeContextMessageId?: string;
+	isLastInChat?: boolean;
 	onContextMenu?: (e: React.MouseEvent, messageId: string) => void;
 	getActiveOccurrencesForMessage?: (messageId: string) => number[] | undefined;
 }
@@ -25,6 +25,7 @@ export const MessageListItem = memo(
 		activeResultId,
 		searchQuery,
 		activeContextMessageId,
+		isLastInChat,
 		onContextMenu,
 		getActiveOccurrencesForMessage
 	}: Props) => {
@@ -67,9 +68,11 @@ export const MessageListItem = memo(
 				className={className}
 				data-message-id={item.data.uid}
 				searchQuery={searchQuery}
+				activeResultId={activeResultId}
 				getActiveOccurrencesForMessage={getActiveOccurrencesForMessage}
 				isFromCurrentUser={isFromCurrentUser}
 				isNew={isNew}
+				isLastInChat={isLastInChat}
 				onContextMenu={handleContextMenu}
 			/>
 		);
