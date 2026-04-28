@@ -342,7 +342,7 @@ export const ChatView = ({
 						backendNewCount={chatData?.new_message_count}
 					/>
 					<MessageFormComponent
-						chatUid={chatData?.chat?.uid ?? ''}
+						chatUid={chatUid}
 						chatType={chatData?.chat_type}
 						chatKey={chatData?.chat_key}
 					/>
@@ -353,7 +353,7 @@ export const ChatView = ({
 						<NotMessage />
 					</div>
 					<MessageFormComponent
-						chatUid={chatData?.chat?.uid ?? ''}
+						chatUid={chatUid}
 						chatType={chatData?.chat_type}
 						chatKey={chatData?.chat_key}
 						isBlocked={chatData?.chat?.is_blocked}
