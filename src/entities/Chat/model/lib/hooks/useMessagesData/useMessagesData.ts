@@ -1,4 +1,3 @@
-// useMessagesData.ts
 import { useMemo } from 'react';
 import {
 	ChatMessage,

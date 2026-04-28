@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useChatHeaderData } from '../useChatHeaderData/useChatHeaderData';
 import { useSafeHeaderData } from '../useSafeHeaderData/useSafeHeaderData';
@@ -13,6 +12,7 @@ import { RootState } from '@/app/providers/StoreProvider';
 import { MESSAGES_PAGE_SIZE, MESSAGES_ORDERING } from '@/shared/model';
 import { useGetMessagesQuery } from '@/entities/Chat/api';
 import { selectChatByUid } from '../../../selectors/selectors';
+import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
 
 export const useChatViewData = ({
 	chatUid,
@@ -20,7 +20,7 @@ export const useChatViewData = ({
 	pageSize = MESSAGES_PAGE_SIZE,
 	ordering = MESSAGES_ORDERING
 }: UseChatViewDataOptions): UseChatViewDataReturn => {
-	const chatDataFromCache = useSelector((state: RootState) =>
+	const chatDataFromCache = useAppSelector((state: RootState) =>
 		selectChatByUid(state, chatUid)
 	);
 
