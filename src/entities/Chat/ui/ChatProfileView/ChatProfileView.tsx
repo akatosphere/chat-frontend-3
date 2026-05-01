@@ -45,9 +45,14 @@ import s from './ChatProfileView.module.scss';
 interface ChatProfileViewProps {
 	userUid: string;
 	onBack: () => void;
+	onShare: (id: string) => void;
 }
 
-export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
+export const ChatProfileView = ({
+	userUid,
+	onBack,
+	onShare
+}: ChatProfileViewProps) => {
 	// получаем данные контакта по uid
 	const { data: contact, isLoading } = useGetContactByUidQuery(userUid);
 
@@ -257,6 +262,7 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			icon: <Send />,
 			onClick: () => {
 				console.log('[menu] поделиться профилем');
+				onShare(userUid);
 				setIsKebabMenuOpen(false);
 			}
 		},
