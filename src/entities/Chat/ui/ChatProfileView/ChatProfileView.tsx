@@ -152,6 +152,12 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			return;
 		}
 
+		console.log({
+			phone: contact.username,
+			first_name: contact.first_name,
+			last_name: contact.last_name
+		});
+
 		try {
 			await addContactByPhone({
 				phone: contact.username,
@@ -356,88 +362,88 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 				/>
 			)}
 
-			<div
-				className={s.profile}
-				style={{
-					backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 50%), ${contact.avatar_url ? `url(${contact.avatar_url})` : `url(/images/png/NoAvatarAvatar.png)`}`
-				}}
-			>
-				<p className={s.name}>
-					{contact.first_name} {contact.last_name}
-				</p>
-				<p className={s.status}>{status}</p>
-			</div>
-
-			<div className={s.notifications}>
-				<p>Уведомления</p>
-				<button
-					onClick={handleToggleNotifications}
-					className={s.toggleButton}
-					aria-label='Переключить уведомления'
+			<div className={s.wrapper}>
+				<div
+					className={s.profile}
+					style={{
+						backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 50%), ${contact.avatar_url ? `url(${contact.avatar_url})` : `url(/images/png/NoAvatarAvatar.png)`}`
+					}}
 				>
-					<svg width='60' height='48' viewBox='0 0 60 48' fill='none'>
-						<rect
-							y='8'
-							width='52'
-							height='32'
-							rx='16'
-							fill={notificationsOn ? '#7769E1' : '#b3b3b3'}
-						/>
-						<rect
-							x={notificationsOn ? '24' : '4'}
-							y='12'
-							width='24'
-							height='24'
-							rx='12'
-							fill='white'
-						/>
-					</svg>
-				</button>
-			</div>
-
-			<div className={s.card}>
-				{rows.map(
-					(item, i) =>
-						item.value && (
-							<div key={i} className={s.row}>
-								<div className={s.rowText}>
-									<p className={s.label}>{item.label}</p>
-									<p
-										className={
-											item.type === 'primary' ? s.valuePrimary : s.valueDefault
-										}
-									>
-										{item.value}
-									</p>
+					<p className={s.name}>
+						{contact.first_name} {contact.last_name}
+					</p>
+					<p className={s.status}>{status}</p>
+				</div>
+				<div className={s.notifications}>
+					<p>Уведомления</p>
+					<button
+						onClick={handleToggleNotifications}
+						className={s.toggleButton}
+						aria-label='Переключить уведомления'
+					>
+						<svg width='60' height='48' viewBox='0 0 60 48' fill='none'>
+							<rect
+								y='8'
+								width='52'
+								height='32'
+								rx='16'
+								fill={notificationsOn ? '#7769E1' : '#b3b3b3'}
+							/>
+							<rect
+								x={notificationsOn ? '24' : '4'}
+								y='12'
+								width='24'
+								height='24'
+								rx='12'
+								fill='white'
+							/>
+						</svg>
+					</button>
+				</div>
+				<div className={s.card}>
+					{rows.map(
+						(item, i) =>
+							item.value && (
+								<div key={i} className={s.row}>
+									<div className={s.rowText}>
+										<p className={s.label}>{item.label}</p>
+										<p
+											className={
+												item.type === 'primary'
+													? s.valuePrimary
+													: s.valueDefault
+											}
+										>
+											{item.value}
+										</p>
+									</div>
+									{item.type === 'primary' && (
+										<button
+											className={copiedId === i ? s.checkIcon : s.copyIcon}
+											onClick={() => handleCopy(item.value, item.label, i)}
+											title={`Копировать ${item.label.toLowerCase()}`}
+											aria-label={`Копировать ${item.label}`}
+										>
+											{copiedId === i ? <Check /> : <CopyMessage />}
+										</button>
+									)}
 								</div>
-								{item.type === 'primary' && (
-									<button
-										className={copiedId === i ? s.checkIcon : s.copyIcon}
-										onClick={() => handleCopy(item.value, item.label, i)}
-										title={`Копировать ${item.label.toLowerCase()}`}
-										aria-label={`Копировать ${item.label}`}
-									>
-										{copiedId === i ? <Check /> : <CopyMessage />}
-									</button>
-								)}
-							</div>
-						)
+							)
+					)}
+				</div>
+				{!isInContacts && (
+					<button className={s.action} onClick={handleAddToContacts}>
+						<ActionAdd />
+						<span>Добавить в контакты</span>
+					</button>
+				)}
+				{contact.is_blocked && (
+					<button className={s.action} onClick={handleUnblock}>
+						<ActionAdd />
+						<span>Разблокировать</span>
+					</button>
 				)}
 			</div>
-
-			{!isInContacts && (
-				<button className={s.action} onClick={handleAddToContacts}>
-					<ActionAdd />
-					<span>Добавить в контакты</span>
-				</button>
-			)}
-
-			{contact.is_blocked && (
-				<button className={s.action} onClick={handleUnblock}>
-					<ActionAdd />
-					<span>Разблокировать</span>
-				</button>
-			)}
 
 			<ChatProfileAttachs
 				mediaItems={mediaItems}
