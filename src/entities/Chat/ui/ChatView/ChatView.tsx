@@ -41,17 +41,25 @@ interface ChatViewProps {
 		avatar?: string;
 		isOnline?: boolean;
 	};
+	onOpenProfile?: () => void;
+	shareUserUid?: string | null;
+	isShareModalOpen?: boolean;
+	onCloseShareModal?: () => void;
 }
 
 export const ChatView = ({
 	chatUid,
 	userDataFromSearch,
-	onBack
+	onBack,
+	onOpenProfile,
+	shareUserUid,
+	isShareModalOpen,
+	onCloseShareModal
 }: ChatViewProps) => {
 	// ─────────────────────────────────────────────────────────────
 
+	const isMobile = useMediaQuery();
 	const router = useRouter();
-	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(true);
 	const [isActionBarVisible, setIsActionBarVisible] = useState(true);
 	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 	const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -59,8 +67,6 @@ export const ChatView = ({
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	const dispatch = useAppDispatch();
-
-	const isMobile = useMediaQuery();
 
 	const currentUserId = useAppSelector(selectCurrentUserId);
 
@@ -318,12 +324,16 @@ export const ChatView = ({
 	return (
 		<section className={cls.chatView}>
 			<ModalChats
-				isOpen={chatsModalOpen}
-				onClose={() => setChatsModalOpen(false)}
-				onClick={() => console.log('haha')}
-			></ModalChats>
+				isOpen={isShareModalOpen ?? false}
+				onClose={onCloseShareModal ?? (() => {})}
+				onClick={targetChatUid => {
+					console.log('share from:', shareUserUid);
+					console.log('send to chat:', targetChatUid);
+					onCloseShareModal?.();
+				}}
+			/>
 
-			<ChatHeader {...headerProps} />
+			<ChatHeader {...headerProps} onUserClick={onOpenProfile} />
 
 			{hasMessages ? (
 				<>

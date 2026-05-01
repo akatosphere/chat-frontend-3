@@ -171,7 +171,7 @@ export const contactApi = rtkApi.injectEndpoints({
 			]
 		})
 	}),
-	overrideExisting: false
+	overrideExisting: true
 });
 
 export const {
