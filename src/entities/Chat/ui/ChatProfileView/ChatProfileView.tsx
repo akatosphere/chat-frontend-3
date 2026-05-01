@@ -48,90 +48,118 @@ interface ChatProfileViewProps {
 }
 
 export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
+	// получаем данные контакта по uid
 	const { data: contact, isLoading } = useGetContactByUidQuery(userUid);
 
+	// получаем список чатов
 	const { data: chatsData } = useGetChatsQuery();
 
+	// ищем текущий чат по uid
 	const chat = userUid
 		? chatsData?.results?.find(
 				c => c.chat?.uid === userUid || c.chat_key === userUid
 			)
 		: undefined;
 
+	// сохраняем id чата между рендерами
 	const chatIdRef = useRef<number | null>(null);
+	// сохраняем состояние уведомлений
 	const notificationsRef = useRef<boolean>(false);
 
 	useEffect(() => {
+		console.log('[chat] обновление данных чата', chat);
+
 		if (chat?.id) {
+			console.log('[chat] сохраняем chatId:', chat.id);
 			chatIdRef.current = chat.id;
 		}
 
 		if (typeof chat?.notifications === 'boolean') {
+			console.log('[chat] сохраняем notifications:', chat.notifications);
 			notificationsRef.current = chat.notifications;
 		}
 	}, [chat?.id, chat?.notifications]);
 
+	// текущее состояние уведомлений
 	const notificationsState: ChatNotificationsState = {
 		enabled: chat?.notifications ?? notificationsRef.current
 	};
 	const notificationsOn = notificationsState.enabled;
 
+	// получаем сообщения
 	const { data: messages } = useGetMessagesQuery(
 		{ user_uid: userUid },
 		{ skip: !userUid }
 	);
+	// получаем файлы
 	const { data: filesResponse } = useGetFilesQuery(
 		{ user_uid: userUid },
 		{ skip: !userUid }
 	);
+	// получаем ссылки
 	const { data: linksResponse } = useGetLinksQuery(
 		{ user_uid: userUid },
 		{ skip: !userUid }
 	);
+	// получаем список контактов
 	const { data: contacts } = useGetMessengerListQuery();
 
+	// мутации
 	const [updateChatProperties] = useUpdateChatPropertiesMutation();
 	const [addContactByPhone] = useAddContactByPhoneMutation();
 	const [unblockUser] = useUnblockUserMutation();
 	const [blockUser] = useBlockUserMutation();
 	const [clearChat] = useClearChatMutation();
 
+	// состояние меню
 	const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
+	// id скопированного элемента
 	const [copiedId, setCopiedId] = useState<number | null>(null);
 
+	// проверяем есть ли пользователь в контактах
 	const isInContacts = contacts?.results?.some(
 		c => c.system_contact?.uid === userUid
 	);
 
+	// копирование в буфер
 	const copyToClipboard = async (text: string, label?: string) => {
 		if (!text) {
+			console.warn('[clipboard] пустое значение, копирование отменено');
 			return;
 		}
 
 		try {
 			await navigator.clipboard.writeText(text);
-			console.log(`Скопировано: ${label || text}`);
+			console.log(`[clipboard] скопировано: ${label || text}`);
 		} catch (err) {
-			console.error('Не удалось скопировать:', err);
+			console.error('[clipboard] ошибка копирования:', err);
 		}
 	};
 
+	// обработчик копирования
 	const handleCopy = async (value: string, label: string, index: number) => {
+		console.log('[clipboard] попытка копирования', { value, label, index });
+
 		await copyToClipboard(value, label);
 		setCopiedId(index);
 
-		setTimeout(() => setCopiedId(null), 2000);
+		setTimeout(() => {
+			console.log('[clipboard] сброс состояния copiedId');
+			setCopiedId(null);
+		}, 2000);
 	};
 
+	// переключение уведомлений
 	const handleToggleNotifications = async () => {
 		const chatId = chatIdRef.current;
 
 		if (!chatId) {
-			console.warn('ID чата не найден - уведомления нельзя переключить');
+			console.warn('[notifications] chatId отсутствует');
 			return;
 		}
 
 		const nextNotifications = !notificationsRef.current;
+		console.log('[notifications] переключение:', nextNotifications);
 
 		try {
 			notificationsRef.current = nextNotifications;
@@ -140,19 +168,27 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 				id: chatId,
 				notifications: nextNotifications
 			}).unwrap();
+
+			console.log('[notifications] успешно обновлены');
 		} catch (error) {
 			notificationsRef.current = !nextNotifications;
-			console.error('Не удалось обновить уведомления:', error);
+			console.error('[notifications] ошибка обновления:', error);
 		}
 	};
 
+	// добавление в контакты
 	const handleAddToContacts = async () => {
 		if (!contact?.username || !contact?.first_name || !contact?.last_name) {
-			console.warn('Недостаточно данных для добавления в контакты');
+			console.warn(
+				'[contacts] недостаточно данных',
+				contact?.username,
+				contact?.first_name,
+				contact?.last_name
+			);
 			return;
 		}
 
-		console.log({
+		console.log('[contacts] добавление', {
 			phone: contact.username,
 			first_name: contact.first_name,
 			last_name: contact.last_name
@@ -165,55 +201,62 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 				last_name: contact.last_name
 			}).unwrap();
 
-			console.log('Пользователь успешно добавлен в контакты');
+			console.log('[contacts] успешно добавлен');
 		} catch (error) {
-			console.error(
-				`Не удалось добавить в контакты (${contact.username})`,
-				error
-			);
+			console.error('[contacts] ошибка добавления:', error);
 		}
 	};
 
+	// разблокировка пользователя
 	const handleUnblock = async () => {
+		console.log('[user] попытка разблокировки', userUid);
+
 		try {
 			await unblockUser(userUid).unwrap();
-			console.log('Пользователь успешно разблокирован');
+			console.log('[user] успешно разблокирован');
 		} catch (error) {
-			console.error('Не удалось разблокировать пользователя', error);
+			console.error('[user] ошибка разблокировки:', error);
 		}
 	};
 
+	// блокировка пользователя
 	const handleBlock = async () => {
+		console.log('[user] попытка блокировки', userUid);
+
 		try {
-			console.log('Начинаем блокировку пользователя:', userUid);
 			await blockUser(userUid).unwrap();
-			console.log('Пользователь успешно заблокирован');
+			console.log('[user] успешно заблокирован');
 		} catch (error) {
-			console.error('Ошибка при блокировке:', error);
+			console.error('[user] ошибка блокировки:', error);
 		}
 	};
 
+	// очистка чата
 	const handleClearChat = async () => {
 		const chatId = chatIdRef.current;
 
 		if (!chatId) {
-			console.error('ID чата не найден');
+			console.error('[chat] chatId отсутствует');
 			return;
 		}
 
+		console.log('[chat] очистка чата', chatId);
+
 		try {
 			await clearChat(chatId).unwrap();
-			console.log('Чат успешно очищен');
+			console.log('[chat] чат очищен');
 		} catch (error) {
-			console.error('Не удалось очистить чат:', error);
+			console.error('[chat] ошибка очистки:', error);
 		}
 	};
 
+	// пункты меню
 	const kebabMenuItems: KebabMenuItem[] = [
 		{
 			text: 'Поделиться профилем',
 			icon: <Send />,
 			onClick: () => {
+				console.log('[menu] поделиться профилем');
 				setIsKebabMenuOpen(false);
 			}
 		},
@@ -221,6 +264,7 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			text: 'Очистить чат',
 			icon: <Clear />,
 			onClick: () => {
+				console.log('[menu] очистка чата');
 				handleClearChat();
 				setIsKebabMenuOpen(false);
 			}
@@ -230,12 +274,14 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			icon: <Block />,
 			danger: true,
 			onClick: () => {
+				console.log('[menu] блокировка пользователя');
 				handleBlock();
 				setIsKebabMenuOpen(false);
 			}
 		}
 	];
 
+	// собираем медиа (картинки и видео)
 	const mediaItems: ChatMediaItem[] =
 		messages?.results
 			.flatMap(m => (m as MessageWithAttachments).attachments ?? [])
@@ -247,6 +293,7 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 				createdAt: a.created_at
 			})) ?? [];
 
+	// собираем файлы
 	const fileItems: ChatFileItem[] =
 		filesResponse?.results.map(f => ({
 			uid: f.uid,
@@ -257,6 +304,7 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			createdAt: f.created_at
 		})) ?? [];
 
+	// собираем ссылки
 	const linkItems: ChatLinkItem[] =
 		linksResponse?.results.map(l => ({
 			url: l.url,
@@ -278,6 +326,7 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			updated_at: l.updated_at
 		})) ?? [];
 
+	// собираем голосовые
 	const voiceItems: ChatVoiceItem[] =
 		filesResponse?.results
 			.filter(f => f.media_kind === 'audio' || f.file_type?.includes('audio'))
@@ -288,6 +337,8 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 			})) ?? [];
 
 	if (isLoading) {
+		console.log('[ui] загрузка пользователя');
+
 		return (
 			<div className={s.emptyState}>
 				<Text color={TextColor.GRAY}>Загружаем данные пользователя...</Text>
@@ -296,6 +347,8 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 	}
 
 	if (!contact) {
+		console.error('[ui] пользователь не найден');
+
 		return (
 			<div className={s.emptyState}>
 				<Text color={TextColor.ERROR}>Ошибка загрузки пользователя</Text>
@@ -315,6 +368,7 @@ export const ChatProfileView = ({ userUid, onBack }: ChatProfileViewProps) => {
 
 	const birthday = formatDateRu(contact.birthday);
 
+	// строки профиля
 	const rows = [
 		{
 			label: 'Никнейм',
