@@ -42,19 +42,24 @@ interface ChatViewProps {
 		isOnline?: boolean;
 	};
 	onOpenProfile?: () => void;
+	shareUserUid?: string | null;
+	isShareModalOpen?: boolean;
+	onCloseShareModal?: () => void;
 }
 
 export const ChatView = ({
 	chatUid,
 	userDataFromSearch,
 	onBack,
-	onOpenProfile
+	onOpenProfile,
+	shareUserUid,
+	isShareModalOpen,
+	onCloseShareModal
 }: ChatViewProps) => {
 	// ─────────────────────────────────────────────────────────────
 
 	const isMobile = useMediaQuery();
 	const router = useRouter();
-	const [chatsModalOpen, setChatsModalOpen] = useState<boolean>(false);
 	const [isActionBarVisible, setIsActionBarVisible] = useState(true);
 	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 	const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -319,10 +324,14 @@ export const ChatView = ({
 	return (
 		<section className={cls.chatView}>
 			<ModalChats
-				isOpen={chatsModalOpen}
-				onClose={() => setChatsModalOpen(false)}
-				onClick={() => console.log('haha')}
-			></ModalChats>
+				isOpen={isShareModalOpen ?? false}
+				onClose={onCloseShareModal ?? (() => {})}
+				onClick={targetChatUid => {
+					console.log('share from:', shareUserUid);
+					console.log('send to chat:', targetChatUid);
+					onCloseShareModal?.();
+				}}
+			/>
 
 			<ChatHeader {...headerProps} onUserClick={onOpenProfile} />
 

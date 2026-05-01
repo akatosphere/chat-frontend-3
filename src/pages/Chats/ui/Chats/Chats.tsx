@@ -19,6 +19,8 @@ const ChatsPageComponent = () => {
 	const isMobile = useMediaQuery();
 
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
+	const [shareUserUid, setShareUserUid] = useState<string | null>(null);
+	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
 	const openProfile = () => setIsProfileOpen(true);
 	const closeProfile = () => setIsProfileOpen(false);
@@ -56,7 +58,14 @@ const ChatsPageComponent = () => {
 							type={ContainerType.CONTENT}
 							className={currentView !== 'profile' ? cls.hidden : ''}
 						>
-							<ChatProfileView userUid={chatUid} onBack={closeProfile} />
+							<ChatProfileView
+								userUid={chatUid}
+								onBack={closeProfile}
+								onShare={uid => {
+									setShareUserUid(uid);
+									setIsShareModalOpen(true);
+								}}
+							/>
 						</Container>
 					</>
 				)}
@@ -87,7 +96,14 @@ const ChatsPageComponent = () => {
 
 			{isProfileOpen && chatUid && (
 				<Container type={ContainerType.CONTENT}>
-					<ChatProfileView userUid={chatUid} onBack={closeProfile} />
+					<ChatProfileView
+						userUid={chatUid}
+						onBack={closeProfile}
+						onShare={uid => {
+							setShareUserUid(uid);
+							setIsShareModalOpen(true);
+						}}
+					/>
 				</Container>
 			)}
 		</Container>
