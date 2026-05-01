@@ -95,8 +95,6 @@
 
 .card {
 	margin: 0 16px 8px;
-	background: white;
-	border-radius: 16px;
 }
 
 .copyIcon {
@@ -129,9 +127,15 @@
 	align-items: center;
 	justify-content: space-between;
 	border-bottom: 1px solid #b3b3b3;
+	background: white;
+
+	&:first-child {
+		border-radius: 16px 16px 0 0;
+	}
 
 	&:last-child {
 		border-bottom: none;
+		border-radius: 0 0 16px 16px;
 	}
 }
 
@@ -356,5 +360,41 @@
 @media (max-width: 768px) {
 	.container {
 		background: #d6d2f6;
+		border-radius: 0;
+	}
+
+	.header {
+		background: none;
+		border: none;
+	}
+
+	.title {
+		display: none;
+	}
+
+	.closeIcon {
+		path {
+			fill: #747474;
+		}
+	}
+
+	.menuIcon path {
+		stroke: #747474;
+	}
+
+	.profile {
+		margin: 0 16px;
+		border-radius: 8px 8px 0 0;
+	}
+
+	.notifications {
+		padding: 8px 16px;
+		margin: 0 16px;
+		background: #e5e4f7;
+	}
+
+	.card {
+		padding: 0 16px;
+		background: #e5e4f7;
 	}
 }
