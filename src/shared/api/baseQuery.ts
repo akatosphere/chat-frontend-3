@@ -1,5 +1,4 @@
 import { RootState } from '@/app/providers/StoreProvider';
-
 import { authActions } from '@/features/auth/model/slices/authSlice';
 import {
 	BaseQueryFn,

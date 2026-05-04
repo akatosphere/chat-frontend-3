@@ -1,5 +1,5 @@
 import type { AppDispatch } from '@/app/providers/StoreProvider/config/store';
-import { RawApiChatMessage } from '@/entities/Chat';
+import { RawApiChatMessage, ChatListResponse } from '@/entities/Chat';
 import {
 	MESSAGES_PAGE_SIZE,
 	MESSAGES_ORDERING,
@@ -102,7 +102,7 @@ const handleReadStatusChange = (response: WSResponse) => {
 				: obj.from_user
 		);
 
-		const { dispatch } = wsContext;
+		const { dispatch, currentUserId } = wsContext;
 
 		if (targetUserUid) {
 			dispatch(
@@ -132,13 +132,33 @@ const handleReadStatusChange = (response: WSResponse) => {
 			chatApi.util.updateQueryData(
 				'getChats',
 				{ pageSize: CHATS_PAGE_SIZE, ordering: CHATS_ORDERING },
-				draft => {
+				(draft: ChatListResponse | undefined) => {
 					if (!draft?.results) {
 						return;
 					}
 					const chat = draft.results.find(c => c.chat_key === chatKey);
-					if (chat?.last_message?.uid === uid) {
+
+					if (!chat) {
+						return;
+					}
+
+					if (chat.last_message?.uid === uid) {
 						chat.last_message = { ...chat.last_message, new: serverNewValue };
+					}
+
+					if (serverNewValue === false && chat.new_message_count > 0) {
+						const fromUid =
+							typeof chat.last_message?.from_user === 'string'
+								? chat.last_message?.from_user
+								: chat.last_message?.from_user?.uid;
+
+						if (fromUid && fromUid !== currentUserId) {
+							const oldCount = chat.new_message_count;
+							chat.new_message_count = Math.max(0, chat.new_message_count - 1);
+							if (chat.new_message_count === 0) {
+								chat.first_new_message = null;
+							}
+						}
 					}
 				}
 			)
@@ -164,4 +184,12 @@ export const registerChatWSHandlers = (): (() => void) => {
 		unsub1();
 		unsub2();
 	};
+};
+
+export const disconnectChatWS = () => {
+	wsContext = null;
+};
+
+export const isChatWSActive = (): boolean => {
+	return wsContext !== null;
 };

@@ -1,7 +1,7 @@
 export type AuthStep =
 	| 'greeting'
 	| 'phone'
-	| 'code'
+	| 'reverse_call'
 	| 'register'
 	| 'support'
 	| 'success'

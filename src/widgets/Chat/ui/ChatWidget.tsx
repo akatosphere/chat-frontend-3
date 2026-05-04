@@ -11,9 +11,6 @@ interface ChatWidgetProps {
 }
 
 const ChatWidgetComponent = ({ chatUid, onClose }: ChatWidgetProps) => {
-	// const containerClass = useMemo(() => cls.chatWidget, []);
-
-	//  Мемоизируем обработчик, если он появится
 	const handleClose = useCallback(() => {
 		onClose?.();
 	}, [onClose]);
@@ -21,7 +18,6 @@ const ChatWidgetComponent = ({ chatUid, onClose }: ChatWidgetProps) => {
 	return (
 		<div className={cls.chatWidget}>
 			<div className={cls.header}>
-				{/* <Text fontSize={TextSize.XL}>Диалог с {chatUid}</Text> */}
 				{onClose && (
 					<Button
 						onClick={handleClose}

@@ -12,6 +12,7 @@ export interface WSResponse<T = unknown> {
 	status: 'OK' | 'error';
 	error?: string;
 	object?: T;
+	code?: number;
 }
 
 export interface ChangeStatusReadResponse {
@@ -47,3 +48,24 @@ export enum WS_ACTIONS {
 	TRANSFER_OWNER = 'transfer_owner',
 	UPDATE_MESSAGE = 'update_message'
 }
+
+export type AuthResponse = {
+	access?: string;
+	accessToken?: string;
+	token?: string;
+	refresh?: string;
+
+	expiresIn?: number;
+	expires_in?: number;
+	exp?: number;
+
+	success?: boolean;
+
+	data?: {
+		access?: string;
+		accessToken?: string;
+		expiresIn?: number;
+	};
+
+	[key: string]: unknown;
+};
