@@ -43,6 +43,16 @@ interface ChatViewProps {
 	};
 }
 
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	return String(error);
+};
+
 export const ChatView = ({
 	chatUid,
 	userDataFromSearch,
@@ -121,7 +131,10 @@ export const ChatView = ({
 
 	const handleAddToContacts = useCallback(async () => {
 		if (!chatData?.chat?.nickname) {
-			logger.warn('No nickname to search contact');
+			logger.warn('No nickname to search contact', {
+				category: 'ui',
+				prefix: 'handleAddToContacts'
+			});
 			return;
 		}
 
@@ -168,8 +181,11 @@ export const ChatView = ({
 
 				setIsSuccessModalOpen(true);
 			}
-		} catch (error) {
-			logger.error('Failed to add contact:', error);
+		} catch (err: unknown) {
+			logger.error('Failed to add contact', {
+				category: 'api',
+				prefix: getErrorMessage(err)
+			});
 		}
 	}, [chatData, chatUid, getContact, addContact, dispatch]);
 
@@ -179,7 +195,10 @@ export const ChatView = ({
 
 	const confirmBlock = useCallback(async () => {
 		if (!chatData?.chat?.uid) {
-			logger.warn('No chat uid to block');
+			logger.warn('No chat uid to block', {
+				category: 'ui',
+				prefix: 'confirmBlock'
+			});
 			return;
 		}
 
@@ -225,9 +244,10 @@ export const ChatView = ({
 			setIsActionBarVisible(false);
 			setIsBlockModalOpen(false);
 		} catch (error: unknown) {
-			const err = error as { data?: { message?: string } };
-			const isAlreadyBlocked =
-				err?.data?.message === 'Пользователь уже заблокирован.';
+			const errData = error instanceof Error ? error.message : String(error);
+			const isAlreadyBlocked = errData.includes(
+				'Пользователь уже заблокирован'
+			);
 
 			if (isAlreadyBlocked) {
 				dispatch(
@@ -255,7 +275,10 @@ export const ChatView = ({
 				return;
 			}
 
-			logger.error('Failed to block user:', error);
+			logger.error('Failed to block user', {
+				category: 'api',
+				prefix: getErrorMessage(error)
+			});
 		}
 	}, [chatData, addBlackList, dispatch, router]);
 

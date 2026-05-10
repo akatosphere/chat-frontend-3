@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 import { VoiceFile } from '@/entities/Chat/model/types/chat.types/chat.types';
 import { blobToBase64 } from '../../../../model/lib/service/blobToBase64/blobToBase64';
 import { KebabMenu } from '@/shared/ui/KebabMenu';
-import { KebabMenuItem } from '@/shared/ui/KebabMenu/model/types/type'; // уточните путь при необходимости
+import { KebabMenuItem } from '@/shared/ui/KebabMenu/model/types/type';
 
 import cls from './AttachmentButton.module.scss';
 import { logger } from '@/shared/lib/logger/logger';
@@ -15,6 +15,16 @@ interface AttachmentButtonProps {
 	setFiles: (files: VoiceFile[]) => void;
 	disabled?: boolean;
 }
+
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	return String(error);
+};
 
 export function AttachmentButton({
 	setFiles,
@@ -38,8 +48,11 @@ export function AttachmentButton({
 					type: file.type
 				}
 			]);
-		} catch (error) {
-			logger.error('File conversion error:', error);
+		} catch (err: unknown) {
+			logger.error('File conversion error', {
+				category: 'ui',
+				prefix: getErrorMessage(err)
+			});
 		}
 
 		if (imageInputRef.current) {
