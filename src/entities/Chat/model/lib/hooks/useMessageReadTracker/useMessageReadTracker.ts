@@ -4,8 +4,7 @@ import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector
 import { selectCurrentUserId } from '@/entities/Profile/model/selectors/selectCurrentUserId';
 import {
 	GetMessagesRequest,
-	MessageStatus,
-	ChatMessage
+	MessageStatus
 } from '../../../types/chat.types/chat.types';
 import { CHATS_PAGE_SIZE, CHATS_ORDERING } from '@/shared/model';
 import { logger } from '@/shared/lib/logger/logger';
@@ -63,11 +62,18 @@ export const useMessageReadTracker = ({
 		const errors = results.filter(
 			(r): r is PromiseRejectedResult => r.status === 'rejected'
 		);
+
 		if (errors.length > 0) {
-			logger.warn(
-				`Ошибки при отправке read receipt: ${errors.length} из ${batch.length}`,
-				errors
-			);
+			const errorMessages = errors
+				.map(e =>
+					e.reason instanceof Error ? e.reason.message : String(e.reason)
+				)
+				.join('; ');
+
+			logger.warn('Ошибки при отправке read receipt', {
+				category: 'ws',
+				prefix: `${errors.length} из ${batch.length} - ${errorMessages}`
+			});
 		}
 	}, []);
 
@@ -96,7 +102,7 @@ export const useMessageReadTracker = ({
 						return;
 					}
 					toMark.forEach(uid => {
-						const msg = draft.results.find((m: ChatMessage) => m.uid === uid);
+						const msg = draft.results.find(m => m.uid === uid);
 						if (msg?.new === true) {
 							msg.new = false;
 							if ('status' in msg) {
@@ -116,7 +122,7 @@ export const useMessageReadTracker = ({
 							return;
 						}
 						const chat = draft.results.find(
-							c => c.chat_key === chatKey || c.chat.uid === chatKey
+							c => c.chat_key === chatKey || c.chat?.uid === chatKey
 						);
 						if (!chat) {
 							return;
