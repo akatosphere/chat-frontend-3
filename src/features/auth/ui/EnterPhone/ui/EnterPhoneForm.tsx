@@ -35,6 +35,16 @@ interface LoginPhoneForm {
 	phone_number: string;
 }
 
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	return String(error);
+};
+
 export const EnterPhoneForm = ({
 	containerRef
 }: {
@@ -116,10 +126,16 @@ export const EnterPhoneForm = ({
 				setStep('reverse_call');
 			} else {
 				const err = result as { message?: string };
-				logger.warn('Auth blocked:', err.message);
+				logger.warn('Auth blocked', {
+					category: 'auth',
+					prefix: err.message || 'Unknown reason'
+				});
 			}
-		} catch (error) {
-			logger.error('Failed to start auth:', error);
+		} catch (err: unknown) {
+			logger.error('Failed to start auth', {
+				category: 'auth',
+				prefix: getErrorMessage(err)
+			});
 		}
 	};
 
