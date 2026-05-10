@@ -26,6 +26,57 @@ const actionHandlers = new Map<string, Set<WSHandler>>();
 
 let tokenUnsubscribe: (() => void) | null = null;
 
+let pingInterval: ReturnType<typeof setInterval> | null = null;
+const PING_INTERVAL_MS = 25_000;
+
+const startPingKeepalive = () => {
+	if (pingInterval) {
+		clearInterval(pingInterval);
+	}
+	pingInterval = setInterval(() => {
+		if (socket?.readyState === WebSocket.OPEN) {
+			try {
+				socket.send(
+					JSON.stringify({ action: 'ping', request_uid: crypto.randomUUID() })
+				);
+			} catch (err) {
+				logger.error('[WS] Failed to send ping', {
+					category: 'ws',
+					prefix: 'keepalive',
+					sendToSentry: false
+				});
+			}
+		}
+	}, PING_INTERVAL_MS);
+};
+
+const stopPingKeepalive = () => {
+	if (pingInterval) {
+		clearInterval(pingInterval);
+		pingInterval = null;
+	}
+};
+
+// ✅ Фикс: async + токен в URL (временный фикс)
+const getWebSocketUrl = async (): Promise<string> => {
+	const baseUrl = process.env.NEXT_PUBLIC_WS_URL;
+	if (!baseUrl) {
+		logger.error('[WS] NEXT_PUBLIC_WS_URL is not defined', {
+			category: 'ws',
+			prefix: 'config'
+		});
+		throw new Error('WebSocket URL not configured');
+	}
+
+	// 🔥 Временный фикс: добавляем токен в URL
+	const token = await tokenManager.getToken();
+	if (token) {
+		return `${baseUrl}?authorization=${encodeURIComponent(token)}`;
+	}
+
+	return baseUrl;
+};
+
 const isAuthErrorResponse = (
 	response: WSResponse
 ): response is WSResponse & { code: 401 | 4001 } => {
@@ -47,26 +98,24 @@ const isRetryableAction = (action?: string): boolean => {
 	return !nonRetryable.includes(action);
 };
 
-const encodeTokenForUrl = (token: string | null | undefined): string => {
-	if (!token || token === 'undefined' || token === 'null') {
-		logger.error('[WS] Invalid token for URL encoding:', token);
-		throw new Error('Invalid token');
-	}
-	return encodeURIComponent(token);
-};
-
 export const initWSHandlers = (dispatch: AppDispatch) => {
 	wsDispatch = dispatch;
 
 	if (!tokenUnsubscribe) {
 		tokenUnsubscribe = tokenManager.subscribe(async newToken => {
 			if (!newToken) {
-				logger.warn('[WS] Received empty token, skipping reconnect');
+				logger.warn('[WS] Received empty token, skipping reconnect', {
+					category: 'ws'
+				});
 				wsDispatch?.(authActions.logout());
 				return;
 			}
+
 			reconnectWithNewToken(newToken).catch(err => {
-				logger.error('[WS] Reconnect failed:', err);
+				logger.error('[WS] Reconnect failed', {
+					category: 'ws',
+					prefix: getErrorMessage(err)
+				});
 			});
 		});
 	}
@@ -106,7 +155,11 @@ const routeIncomingMessage = (response: WSResponse) => {
 			try {
 				handler(response);
 			} catch (err) {
-				logger.error(`[WS] Handler error for ${response.action}:`, err);
+				// ✅ Фикс: используем хелпер wsError
+				logger.wsError(
+					`Handler error for ${response.action}`,
+					getErrorMessage(err)
+				);
 			}
 		});
 	}
@@ -115,7 +168,7 @@ const routeIncomingMessage = (response: WSResponse) => {
 		try {
 			cb(response);
 		} catch (err) {
-			logger.error('[WS] Subscriber error:', err);
+			logger.wsError('Subscriber error', getErrorMessage(err));
 		}
 	});
 };
@@ -124,10 +177,19 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 1000;
 let reconnectAttempts = 0;
 
-const reconnectWithNewToken = async (newToken: string) => {
+const reconnectWithNewToken = async (newToken: string): Promise<void> => {
 	if (!newToken) {
-		logger.error('[WS] Reconnect aborted: newToken is empty');
+		logger.error('[WS] Reconnect aborted: newToken is empty', {
+			category: 'ws'
+		});
 		wsDispatch?.(authActions.logout());
+		return;
+	}
+
+	if (!wsDispatch) {
+		logger.warn('[WS] wsDispatch not initialized, skipping reconnect', {
+			category: 'ws'
+		});
 		return;
 	}
 
@@ -136,8 +198,8 @@ const reconnectWithNewToken = async (newToken: string) => {
 		return;
 	}
 
-	// const pendingUids = Array.from(pendingRequests.keys());
 	pendingRequests.clear();
+	stopPingKeepalive();
 
 	socket.onclose = null;
 	socket.close(1000, 'Token refresh');
@@ -146,16 +208,7 @@ const reconnectWithNewToken = async (newToken: string) => {
 	abortController = new AbortController();
 	isConnecting = true;
 
-	let wsUrl: string;
-	try {
-		wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}?authorization=${encodeTokenForUrl(newToken)}`;
-	} catch (err) {
-		logger.error('[WS] Failed to encode token for URL:', err);
-		isConnecting = false;
-		wsDispatch?.(authActions.logout());
-		return;
-	}
-
+	const wsUrl = await getWebSocketUrl();
 	const newSocket = new WebSocket(wsUrl);
 
 	newSocket.onopen = () => {
@@ -170,27 +223,46 @@ const reconnectWithNewToken = async (newToken: string) => {
 		isConnecting = false;
 		connectPromise = null;
 
+		startPingKeepalive();
+
 		socket!.onmessage = event => {
 			try {
 				const response: WSResponse = JSON.parse(event.data);
+
+				if (response.action === 'pong') {
+					// ✅ Фикс: используем wsPing для тихих логов
+					logger.wsPing('Pong received');
+					return;
+				}
+
 				routeIncomingMessage(response);
 			} catch (err) {
-				logger.error('WS onmessage error:', err);
+				logger.wsError('onmessage error', getErrorMessage(err));
 			}
 		};
 
 		socket!.onclose = e => {
+			stopPingKeepalive();
+
 			if (socket && socket.readyState !== WebSocket.OPEN) {
 				socket = null;
 			}
 			if (e.code !== 1000) {
 				isSocketInitialized = false;
 			}
+
+			if (e.code === 4004) {
+				logger.warn('[WS] Account deactivated/deleted (4004)', {
+					category: 'ws'
+				});
+				wsDispatch?.(authActions.logout());
+				isSocketInitialized = false;
+				return;
+			}
+
 			if (e.code === 4001 || e.code === 4003) {
-				logger.warn('Auth error on WS, logging out');
-				if (wsDispatch) {
-					wsDispatch(authActions.logout());
-				}
+				logger.warn('[WS] Auth error on WS, logging out', { category: 'ws' });
+				wsDispatch?.(authActions.logout());
 				isSocketInitialized = false;
 				return;
 			}
@@ -210,8 +282,19 @@ const reconnectWithNewToken = async (newToken: string) => {
 			connectPromise = null;
 		};
 
-		socket!.onerror = () => {
-			logger.error('WS connection failed after token refresh');
+		// ✅ Фикс: правильный формат для нового logger
+		socket!.onerror = (event: Event) => {
+			stopPingKeepalive();
+			if (reconnectAttempts > 3) {
+				logger.warn('[WS] Endpoint not ready, stopping retries', {
+					category: 'ws'
+				});
+				return;
+			}
+			logger.error('msg', {
+				category: 'ws',
+				prefix: `type:${(event as ErrorEvent).type ?? 'unknown'}`
+			});
 			isConnecting = false;
 			if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
 				reconnectAttempts++;
@@ -226,8 +309,12 @@ const reconnectWithNewToken = async (newToken: string) => {
 		});
 	};
 
-	newSocket.onerror = () => {
-		logger.error('WS connection failed during token refresh reconnect');
+	newSocket.onerror = (event: Event) => {
+		stopPingKeepalive();
+		logger.error('msg', {
+			category: 'ws',
+			prefix: `type:${(event as ErrorEvent).type ?? 'unknown'}`
+		});
 		isConnecting = false;
 		if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
 			reconnectAttempts++;
@@ -242,38 +329,6 @@ export const setupSocket = async (): Promise<WebSocket> => {
 	}
 	abortController = new AbortController();
 
-	let token: string | null = null;
-
-	try {
-		token = await tokenManager.getToken();
-	} catch (err: unknown) {
-		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-
-		if (
-			(errorMessage.includes('Server error') || errorMessage.includes('502')) &&
-			tokenManager['accessToken'] &&
-			tokenManager.hasValidToken()
-		) {
-			logger.warn('[WS] Server error during refresh, using current token');
-			token = tokenManager['accessToken'];
-		} else if (errorMessage === 'TOKEN_EXPIRED') {
-			logger.warn('[WS] Token expired, cannot connect');
-			wsDispatch?.(authActions.logout());
-			throw new Error('Auth token expired');
-		} else {
-			logger.error('[WS] Failed to get token:', err);
-			wsDispatch?.(authActions.logout());
-			throw new Error(`No valid token: ${errorMessage}`);
-		}
-	}
-
-	if (!token || token === 'undefined' || token === 'null') {
-		logger.error('[WS] Cannot connect: token is empty or invalid', { token });
-		disconnectWS();
-		wsDispatch?.(authActions.logout());
-		throw new Error('No valid token for WS connection');
-	}
-
 	if (isSocketInitialized && socket?.readyState === WebSocket.OPEN) {
 		return socket;
 	}
@@ -284,19 +339,10 @@ export const setupSocket = async (): Promise<WebSocket> => {
 		socket.close();
 	}
 
-	connectPromise = new Promise((resolve, reject) => {
+	connectPromise = new Promise(async (resolve, reject) => {
 		isConnecting = true;
 
-		let wsUrl: string;
-		try {
-			wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}?authorization=${encodeTokenForUrl(token)}`;
-		} catch (err: unknown) {
-			logger.error('[WS] Failed to encode token for URL:', err);
-			isConnecting = false;
-			connectPromise = null;
-			reject(new Error('Failed to encode token'));
-			return;
-		}
+		const wsUrl = await getWebSocketUrl();
 
 		socket = new WebSocket(wsUrl);
 
@@ -307,12 +353,21 @@ export const setupSocket = async (): Promise<WebSocket> => {
 			}
 			isSocketInitialized = true;
 			reconnectAttempts = 0;
+
+			startPingKeepalive();
+
 			socket!.onmessage = event => {
 				try {
 					const response: WSResponse = JSON.parse(event.data);
+
+					if (response.action === 'pong') {
+						logger.wsPing('Pong received');
+						return;
+					}
+
 					routeIncomingMessage(response);
 				} catch (err: unknown) {
-					logger.error('WS onmessage error:', err);
+					logger.wsError('onmessage error', getErrorMessage(err));
 				}
 			};
 			isConnecting = false;
@@ -320,11 +375,16 @@ export const setupSocket = async (): Promise<WebSocket> => {
 			resolve(socket!);
 		};
 
-		socket.onerror = () => {
+		// ✅ Фикс: правильный формат для нового logger
+		socket.onerror = (event: Event) => {
+			stopPingKeepalive();
 			isConnecting = false;
 			connectPromise = null;
 			socket = null;
-			logger.error('WS connection failed');
+			logger.error('msg', {
+				category: 'ws',
+				prefix: `type:${(event as ErrorEvent).type ?? 'unknown'}`
+			});
 
 			if (reconnectAttempts === 0 && MAX_RECONNECT_ATTEMPTS > 0) {
 				reconnectAttempts++;
@@ -337,6 +397,8 @@ export const setupSocket = async (): Promise<WebSocket> => {
 		};
 
 		socket.onclose = e => {
+			stopPingKeepalive();
+
 			if (socket && socket.readyState !== WebSocket.OPEN) {
 				socket = null;
 			}
@@ -344,11 +406,20 @@ export const setupSocket = async (): Promise<WebSocket> => {
 				isSocketInitialized = false;
 			}
 
+			if (e.code === 4004) {
+				logger.warn('[WS] Account deactivated/deleted (4004)', {
+					category: 'ws'
+				});
+				wsDispatch?.(authActions.logout());
+				isConnecting = false;
+				connectPromise = null;
+				reject(new Error(`WS closed: ${e.code}`));
+				return;
+			}
+
 			if (e.code === 4001 || e.code === 4003) {
-				logger.warn('Auth error on WS, logging out');
-				if (wsDispatch) {
-					wsDispatch(authActions.logout());
-				}
+				logger.warn('[WS] Auth error on WS, logging out', { category: 'ws' });
+				wsDispatch?.(authActions.logout());
 				isSocketInitialized = false;
 				isConnecting = false;
 				connectPromise = null;
@@ -381,7 +452,9 @@ export const setupSocket = async (): Promise<WebSocket> => {
 	return connectPromise;
 };
 
-export const disconnectWS = () => {
+export const disconnectWS = (): void => {
+	stopPingKeepalive();
+
 	if (tokenUnsubscribe) {
 		tokenUnsubscribe();
 		tokenUnsubscribe = null;
@@ -389,7 +462,6 @@ export const disconnectWS = () => {
 
 	socket?.close();
 	socket = null;
-
 	isSocketInitialized = false;
 	abortController?.abort();
 	abortController = null;
@@ -469,7 +541,9 @@ export const sendWS = async <T = WSResponse>(
 								}
 							})
 							.catch(() => {
-								logger.warn('[WS] Auth error recovery failed, logging out');
+								logger.warn('[WS] Auth error recovery failed, logging out', {
+									category: 'ws'
+								});
 								wsDispatch?.(authActions.logout());
 								reject(new Error('Auth error'));
 							});

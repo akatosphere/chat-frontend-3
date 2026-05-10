@@ -1,5 +1,5 @@
-import { logger } from '@/shared/lib/logger/logger';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/shared/lib/logger/logger';
 
 const handler = (request: NextRequest) => handleProxy(request);
 export { handler as DELETE, handler as GET, handler as POST, handler as PUT };
@@ -9,7 +9,6 @@ const excludeHeaders = [
 	'connection',
 	'content-length',
 	'accept-encoding',
-	'set-cookie',
 	'transfer-encoding',
 	'content-encoding'
 ];
@@ -29,6 +28,17 @@ const AUTH_COOKIE_PATHS = [
 	'/auth/getAccessToken',
 	'/auth/logout'
 ];
+
+//  Хелпер для безопасного получения строки ошибки (без any)
+const getLogPrefix = (error: unknown): string => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	return String(error);
+};
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
 	const path = request.nextUrl.pathname.replace(
@@ -52,7 +62,6 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 			if (lowerKey === 'cookie' && needsAuthCookie) {
 				headers.set(key, value);
 			}
-
 			return;
 		}
 
@@ -77,43 +86,97 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 		const res = await fetch(targetUrl, {
 			method: request.method,
 			headers,
-			body
+			body,
+			credentials:
+				process.env.NODE_ENV === 'production' ? 'include' : 'same-origin'
 		});
 
-		const responseHeaders = new Headers(res.headers);
+		if (
+			path.includes('/auth/providers/plusofon/flash-call/claim/') ||
+			path.includes('/auth/refresh') ||
+			path.includes('/auth/getAccessToken')
+		) {
+			const data = await res.clone().json();
+			const response = new NextResponse(JSON.stringify(data), {
+				status: res.status,
+				headers: { 'content-type': 'application/json' }
+			});
 
-		excludeHeaders.forEach(h => {
-			if (h !== 'set-cookie') {
-				responseHeaders.delete(h);
+			if (data.access) {
+				response.cookies.set('accessToken', data.access, {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+					sameSite: 'lax',
+					path: '/',
+					maxAge: 15 * 60
+				});
+			}
+
+			if (data.refresh) {
+				response.cookies.set('refreshToken', data.refresh, {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+					sameSite: 'lax',
+					path: '/',
+					maxAge: 7 * 24 * 60 * 60
+				});
+			}
+
+			if (data.access) {
+				response.cookies.set('ws_access_token', data.access, {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+					sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+					domain:
+						process.env.NODE_ENV === 'production' ? '.ktsf.ru' : undefined,
+					path: '/',
+					maxAge: 15 * 60
+				});
+			}
+
+			res.headers.forEach((value, key) => {
+				const lowerKey = key.toLowerCase();
+				if (
+					!['set-cookie', 'content-length', 'content-encoding'].includes(
+						lowerKey
+					)
+				) {
+					response.headers.set(key, value);
+				}
+			});
+
+			return response;
+		}
+
+		const responseHeaders = new Headers();
+		res.headers.forEach((value, key) => {
+			const lowerKey = key.toLowerCase();
+			if (!excludeHeaders.includes(lowerKey)) {
+				responseHeaders.set(key, value);
 			}
 		});
 
-		const setCookie = res.headers.get('set-cookie');
-		if (setCookie) {
-			responseHeaders.set('set-cookie', setCookie);
-		}
+		const rawCookies =
+			typeof res.headers.getSetCookie === 'function'
+				? res.headers.getSetCookie()
+				: ([res.headers.get('set-cookie')].filter(Boolean) as string[]);
 
-		const response = new NextResponse(res.body, {
+		rawCookies.forEach(cookie => {
+			responseHeaders.append('set-cookie', cookie);
+		});
+
+		return new NextResponse(res.body, {
 			status: res.status,
 			statusText: res.statusText,
 			headers: responseHeaders
 		});
+	} catch (error: unknown) {
+		logger.error('Proxy error', {
+			category: 'api',
+			prefix: getLogPrefix(error),
+			sendToSentry: true
+		});
 
-		return response;
-	} catch (error) {
-		if (process.env.NODE_ENV === 'development') {
-			logger.error('Proxy error:', error);
-		}
-
-		// В начале handleProxy, для development:
-		if (process.env.NODE_ENV === 'development' && needsAuthCookie) {
-			logger.log('[Proxy] Auth endpoint request:', {
-				path,
-				hasCookie: request.headers.has('cookie'),
-				cookiePreview: request.headers.get('cookie')?.slice(0, 80) + '...',
-				targetUrl
-			});
-		}
 		return NextResponse.json({ error: 'Proxy failed' }, { status: 500 });
 	}
 }

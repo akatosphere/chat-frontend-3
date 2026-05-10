@@ -38,7 +38,7 @@ class TokenManager {
 			try {
 				cb(token);
 			} catch (e) {
-				logger.error('[TokenManager] Subscriber error:', e);
+				logger.error(`[TokenManager] Subscriber error:, ${e}`);
 			}
 		});
 	}
@@ -83,9 +83,11 @@ class TokenManager {
 					}
 				} catch {}
 
-				logger.warn(`[TokenManager] Refresh failed: ${response.status}`, {
-					body: errorBody
-				});
+				logger.warn(
+					`[TokenManager] Refresh failed: ${response.status}, ${{
+						body: errorBody
+					}}`
+				);
 
 				if (response.status === 401) {
 					if (this.refreshTimer) {
@@ -109,8 +111,8 @@ class TokenManager {
 				const parseMessage =
 					parseError instanceof Error ? parseError.message : 'Parse error';
 				logger.error(
-					'[TokenManager] Failed to parse refresh response:',
-					parseMessage
+					`[TokenManager] Failed to parse refresh response:,
+					${parseMessage}`
 				);
 				throw new Error('Invalid response format from server');
 			}
@@ -153,10 +155,10 @@ class TokenManager {
 
 				this.accessToken = newToken;
 			} else {
-				logger.error('[TokenManager] Unknown refresh response format', {
-					responseKeys: Object.keys(data),
-					dataSample: JSON.stringify(data).slice(0, 200)
-				});
+				logger.error(`[TokenManager] Unknown refresh response format, {
+				${{ responseKeys: Object.keys(data) }},
+			${{ dataSample: JSON.stringify(data).slice(0, 200) }}
+				}`);
 				throw new Error('No access token in refresh response');
 			}
 
@@ -169,7 +171,7 @@ class TokenManager {
 			return this.accessToken!;
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
-			logger.error('[TokenManager] Refresh error:', message);
+			logger.error(`[TokenManager] Refresh error:, ${message}`);
 
 			if (message.includes('Server error') && this.hasValidToken()) {
 				logger.warn(
@@ -242,7 +244,11 @@ class TokenManager {
 
 		this.scheduleRefresh();
 
-		logger.warn('[TokenManager] Tokens set successfully');
+		logger.info('[TokenManager] Tokens set successfully');
+	}
+
+	public getAccessToken(): string | null {
+		return this.accessToken;
 	}
 
 	logout() {
@@ -275,18 +281,18 @@ class TokenManager {
 
 			if (!res.ok) {
 				if (res.status === 401 || res.status === 404) {
-					logger.warn(
+					logger.info(
 						'[TokenManager] No stored token (expected for new users)'
 					);
 				} else {
-					logger.warn(`[TokenManager] getAccessToken failed: ${res.status}`);
+					logger.info(`[TokenManager] getAccessToken failed: ${res.status}`);
 				}
 				return null;
 			}
 
 			const contentType = res.headers.get('content-type');
 			if (!contentType?.includes('application/json')) {
-				logger.warn('[TokenManager] Expected JSON, got:', contentType);
+				logger.info(`[TokenManager] Expected JSON, got:, ${contentType}`);
 
 				const text = await res.clone().text();
 				if (
@@ -294,11 +300,13 @@ class TokenManager {
 					text.startsWith('<html') ||
 					text.startsWith('<!doctype')
 				) {
-					logger.warn(
+					logger.info(
 						'[TokenManager] Received HTML page instead of JSON — check if endpoint exists'
 					);
 				} else if (text.length < 200) {
-					logger.warn('[TokenManager] Response preview:', text.slice(0, 200));
+					logger.info(
+						`[TokenManager] Response preview:, ${text.slice(0, 200)}`
+					);
 				}
 				return null;
 			}
@@ -310,8 +318,8 @@ class TokenManager {
 				const parseMessage =
 					parseError instanceof Error ? parseError.message : 'Parse error';
 				logger.error(
-					'[TokenManager] Failed to parse getAccessToken response:',
-					parseMessage
+					`[TokenManager] Failed to parse getAccessToken response:,
+				${parseMessage}`
 				);
 				return null;
 			}
@@ -324,10 +332,10 @@ class TokenManager {
 				null;
 
 			if (!accessToken) {
-				logger.warn('[TokenManager] No valid access token in response', {
-					receivedKeys: Object.keys(data),
-					sample: JSON.stringify(data).slice(0, 150)
-				});
+				logger.warn(`[TokenManager] No valid access token in response, {
+				${{ receivedKeys: Object.keys(data) }},
+					${{ sample: JSON.stringify(data).slice(0, 150) }}
+				}`);
 				return null;
 			}
 
@@ -341,21 +349,21 @@ class TokenManager {
 
 			this.tokenExpiry = Date.now() + expiresIn * 1000 - 60_000;
 
-			logger.warn('[TokenManager] Token loaded successfully', {
-				expiresIn,
-				expiresAt: new Date(this.tokenExpiry).toISOString()
-			});
+			logger.warn(`[TokenManager] Token loaded successfully, {
+				${expiresIn},
+			${{ expiresAt: new Date(this.tokenExpiry).toISOString() }}
+			}`);
 
 			return accessToken;
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 
 			if (message.includes('Unexpected token') || message.includes('JSON')) {
-				logger.warn(
+				logger.info(
 					'[TokenManager] No stored token found (expected on first visit)'
 				);
 			} else {
-				logger.error('[TokenManager] fetchStoredToken error:', message);
+				logger.error(`[TokenManager] fetchStoredToken error:, ${message}`);
 			}
 
 			return null;

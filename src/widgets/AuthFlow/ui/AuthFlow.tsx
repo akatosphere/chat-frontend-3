@@ -54,7 +54,14 @@ export const AuthFlow = ({
 
 				await import('@/shared/api').then(({ initWSHandlers, setupSocket }) => {
 					initWSHandlers(dispatch);
-					setupSocket().catch(err => logger.error('WS init error:', err));
+					setupSocket().catch(err => {
+						if (
+							process.env.NODE_ENV === 'production' ||
+							!err.message.includes('WS connection failed')
+						) {
+							logger.error('WS init error:', err);
+						}
+					});
 				});
 
 				if (tokens.is_filled) {
@@ -63,7 +70,7 @@ export const AuthFlow = ({
 					dispatch(authActions.setStep('register'));
 				}
 			} catch (err) {
-				logger.error('Auth success handler error:', err);
+				logger.error(`Auth success handler error:  ${err}`);
 				dispatch(authActions.logout());
 			}
 		},
@@ -71,7 +78,7 @@ export const AuthFlow = ({
 	);
 
 	const handleAuthError = useCallback(
-		(err: Error) => logger.error('Auth error:', err),
+		(err: Error) => logger.error(`Auth error:, ${err}`),
 		[]
 	);
 
