@@ -14,6 +14,16 @@ export interface LogoutOptions {
 	skipRedirect?: boolean;
 }
 
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	return String(error);
+};
+
 export const logoutUser = async (
 	dispatch: AppDispatch,
 	options?: LogoutOptions
@@ -24,9 +34,12 @@ export const logoutUser = async (
 			method: 'POST',
 			credentials: 'include' //  Обязательно: браузер отправит куки
 		});
-	} catch (e) {
-		// Если бэкенд недоступен — всё равно чистим локально
-		logger.warn('[Auth] Logout endpoint failed, clearing locally anyway', e);
+	} catch (err: unknown) {
+		logger.warn('[Auth] Logout endpoint failed, clearing locally anyway', {
+			category: 'auth',
+			prefix: getErrorMessage(err),
+			sendToSentry: false
+		});
 	} finally {
 		// 2. Очищаем Redux стейт
 		dispatch(authActions.logout());
@@ -44,7 +57,10 @@ export const logoutUser = async (
 		// 5. Очищаем persisted state (redux-persist)
 		await persistor.purge();
 
-		logger.log('[Auth] User logged out successfully');
+		logger.log('[Auth] User logged out successfully', {
+			category: 'auth',
+			prefix: 'cleanup'
+		});
 
 		// 6. Редирект — только если не указан флаг skipRedirect
 		if (!options?.skipRedirect) {
