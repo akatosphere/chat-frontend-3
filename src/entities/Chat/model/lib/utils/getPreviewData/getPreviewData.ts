@@ -1,6 +1,16 @@
 import { logger } from '@/shared/lib/logger/logger';
 import { ChatPreviewData } from '../../../types/chat.types/chat.types';
 
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	return String(error);
+};
+
 export const getPreviewData = (uid: string | undefined): ChatPreviewData => {
 	if (!uid) {
 		return {};
@@ -22,8 +32,11 @@ export const getPreviewData = (uid: string | undefined): ChatPreviewData => {
 
 			return JSON.parse(localRaw) as ChatPreviewData;
 		}
-	} catch (error) {
-		logger.error('Preview parse error:', error);
+	} catch (err: unknown) {
+		logger.error('Preview parse error', {
+			category: 'ui',
+			prefix: getErrorMessage(err)
+		});
 	}
 
 	return {};
