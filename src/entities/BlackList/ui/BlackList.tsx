@@ -39,14 +39,20 @@ export const BlackList = ({ className }: BlackListProps) => {
 
 	const onDeleteHandler = async (uid: string) => {
 		if (!uid) {
-			logger.error('onDeleteHandler: uid is undefined');
+			logger.error('onDeleteHandler: uid is undefined', {
+				category: 'ui',
+				prefix: 'blacklist'
+			});
 			return;
 		}
 		try {
 			await deleteBlackList(uid).unwrap();
 			refetch();
-		} catch (error) {
-			logger.error('Failed to delete from blacklist:', error);
+		} catch (err: unknown) {
+			logger.error('Failed to delete from blacklist', {
+				category: 'api',
+				prefix: err instanceof Error ? err.message : String(err)
+			});
 		}
 	};
 
