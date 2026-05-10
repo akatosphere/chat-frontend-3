@@ -77,11 +77,15 @@ export const useMessagePagination = (
 			}
 
 			onMessagesLoaded?.(older);
-		} catch (err) {
+		} catch (err: unknown) {
 			if (err instanceof DOMException && err.name === 'AbortError') {
 				return;
 			}
-			logger.error('Failed to load older messages:', err);
+
+			logger.error('Failed to load older messages', {
+				category: 'api',
+				prefix: err instanceof Error ? err.message : String(err)
+			});
 		} finally {
 			isFetchingMoreRef.current = false;
 		}
