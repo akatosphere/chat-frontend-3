@@ -1,0 +1,41 @@
+.loginCode {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 24px 16px;
+	width: 100%;
+	max-width: 400px;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+
+.phoneBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	margin: 0 auto;
+}
+
+.callNumber {
+	font-size: var(--font-size-18);
+	font-weight: 500;
+	color: var(--color-primary);
+	text-decoration: none;
+	cursor: pointer;
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: background 0.2s;
+
+	&:hover {
+		background: rgba(0, 0, 0, 5%);
+	}
+}
+
+.btn {
+	margin-top: auto;
+	width: 100%;
+	max-width: 320px;
+}

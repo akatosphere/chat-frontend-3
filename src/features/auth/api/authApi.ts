@@ -1,6 +1,8 @@
 import { authActions } from '@/features/auth/model/slices/authSlice';
 import { rtkApi } from '@/shared/api/rtkApi';
 import {
+	ClaimRequest,
+	ClaimResponse,
 	RegisterResponse,
 	StartRequest,
 	StartResponseErr,
@@ -11,23 +13,17 @@ import {
 
 export const authApi = rtkApi.injectEndpoints({
 	endpoints: builder => ({
-		sendPhone: builder.mutation<
+		startPlusofon: builder.mutation<
 			StartResponseOk | StartResponseErr,
 			StartRequest
 		>({
-			query: data => ({
-				url: `/auth/providers/plusofon/flash-call/start/`,
+			query: (data: StartRequest) => ({
+				url: '/auth/providers/plusofon/flash-call/start/',
 				method: 'POST',
 				body: data
 			}),
-			invalidatesTags: ['sendPhone'],
 			async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-				//  optimistic update — СРАЗУ кладём в store
-				dispatch(
-					authActions.setPhoneData({
-						phone_number: arg.phone_number
-					})
-				);
+				dispatch(authActions.setPhoneData({ phone_number: arg.phone_number }));
 
 				try {
 					const { data } = await queryFulfilled;
@@ -39,12 +35,12 @@ export const authApi = rtkApi.injectEndpoints({
 								session_secret: data.session_secret,
 								call_number: data.call_number,
 								expires_at: data.expires_at,
-								poll_interval_seconds: data.poll_interval_seconds
+								poll_interval_seconds: data.poll_interval_seconds,
+								attempt_number: data.attempt_number
 							})
 						);
 					} else {
 						const err = data as StartResponseErr;
-						// Ошибка → сохраняем поля ошибки
 						dispatch(
 							authActions.setPhoneSession({
 								blocked_until: err.blocked_until,
@@ -54,18 +50,29 @@ export const authApi = rtkApi.injectEndpoints({
 							})
 						);
 					}
-				} catch {
+				} catch (error) {
 					dispatch(authActions.clearPhoneData());
 				}
 			}
 		}),
 
-		checkStatus: builder.mutation<
+		checkPlusofonStatus: builder.mutation<
 			StatusResponse,
 			{ session_uid: string } & StatusRequest
 		>({
 			query: ({ session_uid, session_secret }) => ({
 				url: `/auth/providers/plusofon/flash-call/status/${session_uid}/`,
+				method: 'POST',
+				body: { session_secret }
+			})
+		}),
+
+		claimPlusofonToken: builder.mutation<
+			ClaimResponse,
+			{ session_uid: string } & ClaimRequest
+		>({
+			query: ({ session_uid, session_secret }) => ({
+				url: `/auth/providers/plusofon/flash-call/claim/${session_uid}/`,
 				method: 'POST',
 				body: { session_secret }
 			})
@@ -77,11 +84,13 @@ export const authApi = rtkApi.injectEndpoints({
 				method: 'GET'
 			})
 		})
-	})
+	}),
+	overrideExisting: process.env.NODE_ENV === 'development'
 });
 
 export const {
-	useSendPhoneMutation,
-	useCheckStatusMutation,
+	useStartPlusofonMutation,
+	useCheckPlusofonStatusMutation,
+	useClaimPlusofonTokenMutation,
 	useSendNicknameMutation
 } = authApi;

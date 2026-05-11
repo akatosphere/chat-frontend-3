@@ -1,4 +1,3 @@
-// endpoint - start
 export interface StartRequest {
 	phone_number: string;
 }
@@ -7,11 +6,11 @@ export interface StartResponseOk {
 	session_uid: string;
 	session_secret: string;
 	call_number: string;
-	expires_at: string;
+	expires_at: number;
 	poll_interval_seconds: number;
 	attempt_number: number;
-	block_duration_seconds: null;
-	block_created_at: null;
+	block_duration_seconds: number | null;
+	block_created_at: string | null;
 }
 
 export interface StartResponseErr {
@@ -22,7 +21,6 @@ export interface StartResponseErr {
 	block_created_at?: number;
 }
 
-// endpoint - status
 export interface StatusRequest {
 	session_secret: string;
 }
@@ -30,12 +28,12 @@ export interface StatusRequest {
 export interface StatusResponse {
 	status: 'pending' | 'verified' | 'expired' | 'consumed';
 	session_uid: string;
-	expires_at: string;
+	expires_at: number;
 	poll_interval_seconds: number;
 	is_claim_available: boolean;
+	verified_at?: string | null;
 }
 
-// endpoint - claim
 export interface ClaimRequest {
 	session_secret: string;
 }
@@ -46,7 +44,6 @@ export interface ClaimResponse {
 	is_filled: boolean;
 }
 
-// регистрация
 export interface IRegister {
 	name: string;
 	nickname: string;

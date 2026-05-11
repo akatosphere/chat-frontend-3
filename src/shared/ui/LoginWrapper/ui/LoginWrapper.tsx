@@ -27,10 +27,6 @@ export function LoginWrapper({ children }: LoginWrapperProps) {
 			title = 'Вход/регистрация';
 			break;
 
-		case 'code':
-			title = 'Подтвердите вход';
-			break;
-
 		case 'register':
 			title = 'Личная информация';
 			break;

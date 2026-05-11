@@ -13,8 +13,9 @@ import {
 	RegisterOptions,
 	useFormContext
 } from 'react-hook-form';
-import styles from './FormAuthItem.module.scss';
 import { RenderAuthInputByType } from './RenderAuthInputByType';
+
+import styles from './FormAuthItem.module.scss';
 
 interface FormItemProps<TFormValues extends FieldValues> {
 	name: Path<TFormValues>;

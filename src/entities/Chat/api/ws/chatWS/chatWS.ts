@@ -1,5 +1,5 @@
 import type { AppDispatch } from '@/app/providers/StoreProvider/config/store';
-import { RawApiChatMessage } from '@/entities/Chat';
+import { RawApiChatMessage, ChatListResponse } from '@/entities/Chat';
 import {
 	MESSAGES_PAGE_SIZE,
 	MESSAGES_ORDERING,
@@ -14,6 +14,7 @@ import {
 	updateMessagesCache,
 	updateChatInList
 } from '../../../model/lib/utils/WSUtils/utils';
+import { logger } from '@/shared/lib/logger/logger';
 
 type WSContext = {
 	dispatch: AppDispatch;
@@ -22,13 +23,21 @@ type WSContext = {
 
 let wsContext: WSContext | null = null;
 
+//  Хелпер для безопасного форматирования списка действий (без any)
+const formatActionsList = (actions: string[]): string => actions.join(',');
+
 export const initChatWS = (dispatch: AppDispatch) => {
 	wsContext = { dispatch, currentUserId: null };
+	logger.log('[ChatWS] Initialized', { category: 'ws', prefix: 'init' });
 };
 
 export const setChatWSCurrentUserId = (userId: string | null) => {
 	if (wsContext) {
 		wsContext = { ...wsContext, currentUserId: userId };
+		logger.log('[ChatWS] User ID updated', {
+			category: 'ws',
+			prefix: `userId:${userId ?? 'null'}`
+		});
 	}
 };
 
@@ -55,6 +64,10 @@ const handleCreateTextMessage = (response: WSResponse) => {
 		queryUserUid = raw.chat_key;
 	}
 	if (!queryUserUid || !raw.uid) {
+		logger.warn('[ChatWS] Skipping message: missing uid or queryUserUid', {
+			category: 'ws',
+			prefix: 'handleCreateTextMessage'
+		});
 		return;
 	}
 
@@ -91,6 +104,10 @@ const handleReadStatusChange = (response: WSResponse) => {
 		const obj = response.object as ChangeStatusReadResponse;
 		const uid = obj?.uid;
 		if (!uid) {
+			logger.warn('[ChatWS] Skipping read status: missing uid', {
+				category: 'ws',
+				prefix: 'handleReadStatusChange'
+			});
 			return;
 		}
 
@@ -102,7 +119,7 @@ const handleReadStatusChange = (response: WSResponse) => {
 				: obj.from_user
 		);
 
-		const { dispatch } = wsContext;
+		const { dispatch, currentUserId } = wsContext;
 
 		if (targetUserUid) {
 			dispatch(
@@ -132,13 +149,33 @@ const handleReadStatusChange = (response: WSResponse) => {
 			chatApi.util.updateQueryData(
 				'getChats',
 				{ pageSize: CHATS_PAGE_SIZE, ordering: CHATS_ORDERING },
-				draft => {
+				(draft: ChatListResponse | undefined) => {
 					if (!draft?.results) {
 						return;
 					}
 					const chat = draft.results.find(c => c.chat_key === chatKey);
-					if (chat?.last_message?.uid === uid) {
+
+					if (!chat) {
+						return;
+					}
+
+					if (chat.last_message?.uid === uid) {
 						chat.last_message = { ...chat.last_message, new: serverNewValue };
+					}
+
+					if (serverNewValue === false && chat.new_message_count > 0) {
+						const fromUid =
+							typeof chat.last_message?.from_user === 'string'
+								? chat.last_message?.from_user
+								: chat.last_message?.from_user?.uid;
+
+						if (fromUid && fromUid !== currentUserId) {
+							const oldCount = chat.new_message_count;
+							chat.new_message_count = Math.max(0, chat.new_message_count - 1);
+							if (chat.new_message_count === 0) {
+								chat.first_new_message = null;
+							}
+						}
 					}
 				}
 			)
@@ -151,6 +188,11 @@ const handleReadStatusChange = (response: WSResponse) => {
 };
 
 export const registerChatWSHandlers = (): (() => void) => {
+	logger.log('[ChatWS] Registering handlers...', {
+		category: 'ws',
+		prefix: 'init'
+	});
+
 	const unsub1 = registerWSHandler(
 		WS_ACTIONS.CREATE_TEXT_MESSAGE,
 		handleCreateTextMessage
@@ -160,8 +202,37 @@ export const registerChatWSHandlers = (): (() => void) => {
 		handleReadStatusChange
 	);
 
+	logger.log('[ChatWS] Handlers registered', {
+		category: 'ws',
+		prefix: `actions:${formatActionsList([
+			WS_ACTIONS.CREATE_TEXT_MESSAGE,
+			WS_ACTIONS.CHANGE_STATUS_READ_MESSAGE
+		])}`
+	});
+
+	//  Для отладки в dev — выводим детали через console, а не logger
+	if (process.env.NODE_ENV === 'development') {
+		console.debug('  → Registered WS actions:', [
+			WS_ACTIONS.CREATE_TEXT_MESSAGE,
+			WS_ACTIONS.CHANGE_STATUS_READ_MESSAGE
+		]);
+	}
+
 	return () => {
 		unsub1();
 		unsub2();
+		logger.log('[ChatWS] Handlers unregistered', {
+			category: 'ws',
+			prefix: 'cleanup'
+		});
 	};
+};
+
+export const disconnectChatWS = () => {
+	wsContext = null;
+	logger.log('[ChatWS] Disconnected', { category: 'ws', prefix: 'cleanup' });
+};
+
+export const isChatWSActive = (): boolean => {
+	return wsContext !== null;
 };

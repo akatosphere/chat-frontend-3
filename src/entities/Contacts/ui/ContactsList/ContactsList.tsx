@@ -37,10 +37,10 @@ import {
 	CONTACTS_SEARCH_DEBOUNCE_MS
 } from '@/shared/model';
 import { logger } from '@/shared/lib/logger/logger';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
 
 import cls from './ContactsList.module.scss';
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-
 export interface ContactsListProps {
 	selectedContactUid?: string | null;
 	onSelectContact?: (uid: string) => void;
@@ -131,8 +131,11 @@ export const ContactsList = memo(
 
 				try {
 					await deleteContact(userUid).unwrap();
-				} catch (error: unknown) {
-					logger.error('Failed to delete contact:', error);
+				} catch (err: unknown) {
+					logger.error('Failed to delete contact', {
+						category: 'api',
+						prefix: getErrorMessage(err)
+					});
 				}
 			},
 			[deleteContact, localContacts]
@@ -194,22 +197,31 @@ export const ContactsList = memo(
 				handleClearSelection();
 				setIsDeleteModalOpen(false);
 			} catch (error: unknown) {
-				const fetchError = error as FetchBaseQueryError;
-				const errorData = fetchError?.data as
-					| BulkDeleteValidationError
-					| undefined;
+				if (error && typeof error === 'object' && 'status' in error) {
+					const fetchError = error as FetchBaseQueryError;
+					const errorData = fetchError?.data as
+						| BulkDeleteValidationError
+						| undefined;
 
-				const isValidationError =
-					fetchError?.status === 400 && Array.isArray(errorData?.contact_uids);
+					const isValidationError =
+						fetchError?.status === 400 &&
+						Array.isArray(errorData?.contact_uids);
 
-				if (isValidationError && errorData?.contact_uids) {
-					logger.warn('Partial delete error:', errorData.contact_uids);
-					handleClearSelection();
-					setIsDeleteModalOpen(false);
-					return;
+					if (isValidationError && errorData?.contact_uids) {
+						logger.warn('Partial delete error', {
+							category: 'api',
+							prefix: `${errorData.contact_uids.length} failed`
+						});
+						handleClearSelection();
+						setIsDeleteModalOpen(false);
+						return;
+					}
 				}
 
-				logger.error('Failed to delete contacts:', fetchError);
+				logger.error('Failed to delete contacts', {
+					category: 'api',
+					prefix: getErrorMessage(error)
+				});
 			}
 		}, [
 			selectedContacts,
@@ -252,8 +264,11 @@ export const ContactsList = memo(
 
 					const mapped = resultsArray.map(mapGlobalSearchToContactsSchema);
 					return sortContactsByStatus(mapped);
-				} catch (error) {
-					logger.error('❌ Global search error:', error);
+				} catch (err: unknown) {
+					logger.error('Global search error', {
+						category: 'api',
+						prefix: getErrorMessage(err)
+					});
 					return [];
 				}
 			},

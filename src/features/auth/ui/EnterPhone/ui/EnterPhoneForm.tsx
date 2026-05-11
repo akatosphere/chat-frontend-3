@@ -1,9 +1,14 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { FormAuthItem, useSetAuthStep } from '@/features/auth';
-import { formatPhone } from '@/shared/lib/formatPhone/formatPhone';
+import {
+	formatPhone,
+	maskPhone,
+	unmaskPhone
+} from '@/shared/lib/formatPhone/formatPhone';
 import { useAppSelector } from '@/shared/lib/hooks/useAppSelector/useAppSelector';
-import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery'; // ваш хук
+import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery/useMediaQuery';
 import {
 	Button,
 	ButtonColor,
@@ -19,15 +24,14 @@ import {
 	TextSize,
 	TextType
 } from '@/shared/ui/Text';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import {
-	useCheckStatusMutation,
-	useSendPhoneMutation
-} from '../../../api/authApi';
+import { useStartPlusofonMutation } from '../../../api/authApi';
 import { formItems } from '../model/const/formItems';
-import styles from './EnterPhoneForm.module.scss';
+import { FormItemAutocomplete } from '@/shared/ui/FormComponent/FormItems/model/types';
+import { logger } from '@/shared/lib/logger/logger';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
+
+import cls from './EnterPhoneForm.module.scss';
 
 interface LoginPhoneForm {
 	phone_number: string;
@@ -38,21 +42,13 @@ export const EnterPhoneForm = ({
 }: {
 	containerRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
-	const {
-		isDisabledCodeAttempts,
-		phone_number: phone,
-		phoneSession
-	} = useAppSelector(state => state.auth);
+	const { phone_number: storedPhone } = useAppSelector(state => state.auth);
 
-	const [sendPhone] = useSendPhoneMutation();
-	const [checkStatus, { data: statusData, isLoading: isPolling }] =
-		useCheckStatusMutation();
+	const [startPlusofon, { isLoading: isSending }] = useStartPlusofonMutation();
 
-	const router = useRouter();
 	const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 	const confirmBtnRef = useRef<HTMLButtonElement>(null);
 	const setStep = useSetAuthStep();
-	const formattedPhone = formatPhone(phone);
 
 	const isMobile = useMediaQuery();
 	const overlayMode = isMobile ? 'full' : 'container';
@@ -60,7 +56,7 @@ export const EnterPhoneForm = ({
 
 	const methods = useForm<LoginPhoneForm>({
 		defaultValues: {
-			phone_number: formattedPhone || ''
+			phone_number: storedPhone || ''
 		}
 	});
 	const { setFocus } = methods;
@@ -70,7 +66,28 @@ export const EnterPhoneForm = ({
 		name: 'phone_number'
 	});
 
-	const disabled = isDisabledCodeAttempts || phone_number.length !== 16;
+	useEffect(() => {
+		if (!phone_number) {
+			return;
+		}
+
+		const hasDigits = /\d/.test(phone_number);
+		const hasMask = phone_number.includes('(') || phone_number.includes('-');
+
+		if (hasDigits && !hasMask) {
+			const masked = maskPhone(phone_number);
+			if (masked !== phone_number) {
+				methods.setValue('phone_number', masked, {
+					shouldValidate: true,
+					shouldDirty: true
+				});
+			}
+		}
+	}, [phone_number, methods]);
+
+	const cleanPhone = unmaskPhone(phone_number || '');
+	const isValidPhone = /^\d{10,11}$/.test(cleanPhone);
+	const disabled = isSending || !isValidPhone;
 
 	useEffect(() => {
 		setFocus('phone_number');
@@ -78,101 +95,40 @@ export const EnterPhoneForm = ({
 
 	useEffect(() => {
 		if (isModalOpen && confirmBtnRef.current) {
-			confirmBtnRef?.current.focus();
+			confirmBtnRef.current.focus();
 		}
 	}, [isModalOpen]);
-
-	useEffect(() => {
-		if (!phoneSession?.session_uid || !phoneSession.session_secret) {
-			return;
-		}
-
-		if (
-			statusData &&
-			(statusData.status === 'consumed' ||
-				statusData.status === 'verified' ||
-				!statusData.is_claim_available)
-		) {
-			return;
-		}
-
-		const intervalMs = phoneSession.poll_interval_seconds
-			? phoneSession.poll_interval_seconds * 1000
-			: 2000;
-
-		const interval = setInterval(async () => {
-			try {
-				await checkStatus({
-					session_uid: phoneSession.session_uid!,
-					session_secret: phoneSession.session_secret!
-				});
-			} catch (error) {
-				if (process.env.NODE_ENV === 'development') {
-					console.error('claimTokens error:', error);
-				}
-			}
-		}, intervalMs);
-
-		return () => clearInterval(interval);
-	}, [
-		phoneSession?.session_uid,
-		phoneSession?.session_secret,
-		checkStatus,
-		phoneSession?.poll_interval_seconds,
-		phoneSession?.blocked_until,
-		statusData
-	]);
-
-	const claimTokens = useCallback(async () => {
-		if (!phoneSession?.session_uid || !phoneSession.session_secret) {
-			return;
-		}
-
-		try {
-			const response = await fetch('/api/auth/setTokens', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					session_uid: phoneSession.session_uid,
-					session_secret: phoneSession.session_secret
-				})
-			});
-
-			if (!response.ok) {
-				const err = await response.json();
-				throw new Error(err.message);
-			}
-
-			const data = await response.json();
-			if (data.success) {
-				if (data.is_filled) {
-					router.push('/chats');
-				} else {
-					setStep('register');
-				}
-			}
-		} catch (_) {}
-	}, [
-		phoneSession?.session_uid,
-		phoneSession?.session_secret,
-		setStep,
-		router
-	]);
-
-	useEffect(() => {
-		if (statusData?.status === 'verified' && statusData.is_claim_available) {
-			claimTokens();
-		}
-	}, [statusData?.status, statusData?.is_claim_available, claimTokens]);
 
 	const onModalClose = () => {
 		setIsModalOpen(false);
 	};
 
 	const onConfirm = async () => {
-		const formattedPhone = phone_number.replace(/[^\d+]/g, '');
-		await sendPhone({ phone_number: formattedPhone });
-		onModalClose();
+		const cleanNumber = unmaskPhone(phone_number || '');
+
+		const e164Phone = cleanNumber.startsWith('7')
+			? `+${cleanNumber}`
+			: `+7${cleanNumber}`;
+
+		try {
+			const result = await startPlusofon({ phone_number: e164Phone }).unwrap();
+
+			if ('session_uid' in result) {
+				onModalClose();
+				setStep('reverse_call');
+			} else {
+				const err = result as { message?: string };
+				logger.warn('Auth blocked', {
+					category: 'auth',
+					prefix: err.message || 'Unknown reason'
+				});
+			}
+		} catch (err: unknown) {
+			logger.error('Failed to start auth', {
+				category: 'auth',
+				prefix: getErrorMessage(err)
+			});
+		}
 	};
 
 	return (
@@ -180,7 +136,7 @@ export const EnterPhoneForm = ({
 			<Form<LoginPhoneForm>
 				methods={methods}
 				onSubmit={() => setIsModalOpen(true)}
-				className={styles.form}
+				className={cls.form}
 			>
 				{formItems.map(item => (
 					<FormAuthItem
@@ -189,10 +145,10 @@ export const EnterPhoneForm = ({
 						name={item.name}
 						label={item.label}
 						placeholder={item.placeholder}
-						autoComplete={undefined}
-						disabled={item.disabled}
+						autoComplete={FormItemAutocomplete.PHONE}
+						disabled={item.disabled || isSending}
 						rules={undefined}
-						classNameParentInput={styles.formItem}
+						classNameParentInput={cls.formItem}
 					/>
 				))}
 				<Button
@@ -209,7 +165,7 @@ export const EnterPhoneForm = ({
 				size='wide'
 				isOpen={isModalOpen}
 				onClose={onModalClose}
-				className={styles.modal}
+				className={cls.modal}
 				overlayMode={overlayMode}
 				containerRef={containerRef}
 				borderRadius={borderRadius}
@@ -219,33 +175,35 @@ export const EnterPhoneForm = ({
 					fontSize={TextSize.L}
 					fontWeight={FontWeight.MEDIUM}
 					color={TextColor.BLACK}
-					className={styles.modalPhone}
+					className={cls.modalPhone}
 				>
-					{phone_number}
+					{formatPhone(cleanPhone)}{' '}
 				</Text>
+
 				<Text
 					type={TextType.TEXT}
 					fontSize={TextSize.M}
 					fontWeight={FontWeight.REGULAR}
 					color={TextColor.GRAY}
-					className={styles.modalText}
+					className={cls.modalText}
 				>
 					Номер телефона указан верно?
 				</Text>
 
-				<Modal.Actions className={styles.actions}>
+				<Modal.Actions className={cls.actions}>
 					<Button
 						color={ButtonColor.PRIMARY}
 						onClick={onModalClose}
-						className={styles.btnCancel}
+						className={cls.btnCancel}
 						theme={ButtonTheme.CLEAR}
+						disabled={isSending}
 					>
 						Изменить
 					</Button>
 					<Button
 						color={ButtonColor.PRIMARY}
 						onClick={onConfirm}
-						className={styles.btnConfirm}
+						className={cls.btnConfirm}
 						btnRef={confirmBtnRef}
 					>
 						Верно

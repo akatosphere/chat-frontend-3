@@ -1,8 +1,8 @@
+'use client';
+
 import { formatTime } from '@/shared/lib/formatTime/formatTime';
 import { useEffect, useState } from 'react';
 import styles from './TimeLeft.module.scss';
-import { authActions } from '@/features/auth';
-import { useAppDispatch } from '@/shared/lib/hooks/useAppDispatch/useAppDispatch';
 
 interface TimeLeftProps {
 	initialTime: number;
@@ -11,26 +11,24 @@ interface TimeLeftProps {
 
 export function TimeLeft({ initialTime, setFinishedTime }: TimeLeftProps) {
 	const [timeLeft, setTimeLeft] = useState(initialTime);
-	const dispatch = useAppDispatch();
-
-	useEffect(() => {
-		setTimeLeft(initialTime);
-	}, [initialTime]);
 
 	useEffect(() => {
 		const timer = setInterval(() => {
-			setTimeLeft(prev => Math.max(prev - 1, 0));
+			setTimeLeft(prev => {
+				if (prev <= 1) {
+					setFinishedTime(true);
+					return 0;
+				}
+				return prev - 1;
+			});
 		}, 1000);
 
 		return () => clearInterval(timer);
-	}, []);
+	}, [setFinishedTime]);
 
-	useEffect(() => {
-		if (timeLeft === 0) {
-			setFinishedTime(true);
-			dispatch(authActions.setBlockingTime(0));
-		}
-	}, [timeLeft, setFinishedTime, dispatch]);
+	if (timeLeft <= 0) {
+		return <span className={styles.timeLeft}>00:00</span>;
+	}
 
 	return <span className={styles.timeLeft}>{formatTime(timeLeft)}</span>;
 }
