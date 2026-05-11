@@ -10,21 +10,12 @@ import { KebabMenuItem } from '@/shared/ui/KebabMenu/model/types/type';
 
 import cls from './AttachmentButton.module.scss';
 import { logger } from '@/shared/lib/logger/logger';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
 
 interface AttachmentButtonProps {
 	setFiles: (files: VoiceFile[]) => void;
 	disabled?: boolean;
 }
-
-const getErrorMessage = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-	if (typeof error === 'string') {
-		return error;
-	}
-	return String(error);
-};
 
 export function AttachmentButton({
 	setFiles,

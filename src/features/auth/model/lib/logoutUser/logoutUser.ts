@@ -9,20 +9,11 @@ import { tokenManager } from '@/shared/lib/tokenManager/tokenManager';
 import { persistor } from '@/app/providers/StoreProvider/config/store';
 import { disconnectWS } from '@/shared/api';
 import { logger } from '@/shared/lib/logger/logger';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
 
 export interface LogoutOptions {
 	skipRedirect?: boolean;
 }
-
-const getErrorMessage = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-	if (typeof error === 'string') {
-		return error;
-	}
-	return String(error);
-};
 
 export const logoutUser = async (
 	dispatch: AppDispatch,

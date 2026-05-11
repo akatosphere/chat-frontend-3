@@ -32,6 +32,7 @@ import { chatApi } from '../../api/chatApi/chatApi';
 import { ModalChats } from '../ModalChats/ModalChats';
 
 import cls from './ChatView.module.scss';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
 
 interface ChatViewProps {
 	chatUid: string;
@@ -42,16 +43,6 @@ interface ChatViewProps {
 		isOnline?: boolean;
 	};
 }
-
-const getErrorMessage = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-	if (typeof error === 'string') {
-		return error;
-	}
-	return String(error);
-};
 
 export const ChatView = ({
 	chatUid,

@@ -29,21 +29,13 @@ import { useStartPlusofonMutation } from '../../../api/authApi';
 import { formItems } from '../model/const/formItems';
 import { FormItemAutocomplete } from '@/shared/ui/FormComponent/FormItems/model/types';
 import { logger } from '@/shared/lib/logger/logger';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
+
 import cls from './EnterPhoneForm.module.scss';
 
 interface LoginPhoneForm {
 	phone_number: string;
 }
-
-const getErrorMessage = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-	if (typeof error === 'string') {
-		return error;
-	}
-	return String(error);
-};
 
 export const EnterPhoneForm = ({
 	containerRef

@@ -57,7 +57,6 @@ const stopPingKeepalive = () => {
 	}
 };
 
-// ✅ Фикс: async + токен в URL (временный фикс)
 const getWebSocketUrl = async (): Promise<string> => {
 	const baseUrl = process.env.NEXT_PUBLIC_WS_URL;
 	if (!baseUrl) {
@@ -68,7 +67,6 @@ const getWebSocketUrl = async (): Promise<string> => {
 		throw new Error('WebSocket URL not configured');
 	}
 
-	// 🔥 Временный фикс: добавляем токен в URL
 	const token = await tokenManager.getToken();
 	if (token) {
 		return `${baseUrl}?authorization=${encodeURIComponent(token)}`;
@@ -155,7 +153,6 @@ const routeIncomingMessage = (response: WSResponse) => {
 			try {
 				handler(response);
 			} catch (err) {
-				// ✅ Фикс: используем хелпер wsError
 				logger.wsError(
 					`Handler error for ${response.action}`,
 					getErrorMessage(err)
@@ -230,7 +227,6 @@ const reconnectWithNewToken = async (newToken: string): Promise<void> => {
 				const response: WSResponse = JSON.parse(event.data);
 
 				if (response.action === 'pong') {
-					// ✅ Фикс: используем wsPing для тихих логов
 					logger.wsPing('Pong received');
 					return;
 				}
@@ -282,7 +278,6 @@ const reconnectWithNewToken = async (newToken: string): Promise<void> => {
 			connectPromise = null;
 		};
 
-		// ✅ Фикс: правильный формат для нового logger
 		socket!.onerror = (event: Event) => {
 			stopPingKeepalive();
 			if (reconnectAttempts > 3) {
@@ -375,7 +370,6 @@ export const setupSocket = async (): Promise<WebSocket> => {
 			resolve(socket!);
 		};
 
-		// ✅ Фикс: правильный формат для нового logger
 		socket.onerror = (event: Event) => {
 			stopPingKeepalive();
 			isConnecting = false;

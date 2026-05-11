@@ -37,28 +37,15 @@ import {
 	CONTACTS_SEARCH_DEBOUNCE_MS
 } from '@/shared/model';
 import { logger } from '@/shared/lib/logger/logger';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { getErrorMessage } from '@/shared/lib/errorMessage/errorMessage';
 
 import cls from './ContactsList.module.scss';
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-
 export interface ContactsListProps {
 	selectedContactUid?: string | null;
 	onSelectContact?: (uid: string) => void;
 	onContactDeleted?: (uid: string) => void;
 }
-
-// ─────────────────────────────────────────────────────────────
-//  Хелпер для безопасного получения строки ошибки (без any)
-// ─────────────────────────────────────────────────────────────
-const getErrorMessage = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-	if (typeof error === 'string') {
-		return error;
-	}
-	return String(error);
-};
 
 // ─────────────────────────────────────────────────────────────
 // FILTER WRAPPER: адаптирует filterContacts под ContactsSchema

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/shared/lib/logger/logger';
+import getLogPrefix from '@/shared/lib/getLogPrefix/getLogPrefix';
 
 const handler = (request: NextRequest) => handleProxy(request);
 export { handler as DELETE, handler as GET, handler as POST, handler as PUT };
@@ -28,17 +29,6 @@ const AUTH_COOKIE_PATHS = [
 	'/auth/getAccessToken',
 	'/auth/logout'
 ];
-
-//  Хелпер для безопасного получения строки ошибки (без any)
-const getLogPrefix = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-	if (typeof error === 'string') {
-		return error;
-	}
-	return String(error);
-};
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
 	const path = request.nextUrl.pathname.replace(
